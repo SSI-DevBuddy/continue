@@ -1,9 +1,4 @@
-import {
-  ChatMessage,
-  CompletionOptions,
-  LLMOptions,
-  TextMessagePart,
-} from "../../index.js";
+import { ChatMessage, CompletionOptions, LLMOptions } from "../../index.js";
 import { BaseLLM } from "../index.js";
 
 class Asksage extends BaseLLM {
@@ -19,8 +14,8 @@ class Asksage extends BaseLLM {
     "gpt4-gov": "gpt4-gov", // Works
     "gpt-gov": "gpt-gov", // Works
     "gpt-4o": "gpt-4o", // Works
-    "gpt-4o-mini": "gpt-4o-mini", // Works
-    gpt4: "gpt4", // Works
+    "gpt-4o-mini": "gpt-4o-mini", // Works 
+    "gpt4": "gpt4", // Works
     "gpt4-32k": "gpt4-32k",
     "gpt-o1": "gpt-o1", // Works
     "gpt-o1-mini": "gpt-o1-mini", // Works
@@ -30,7 +25,7 @@ class Asksage extends BaseLLM {
     "claude-3-opus-20240229": "claude-3-opus", // Works
     "claude-3-sonnet-20240229": "claude-3-sonnet", // Works
     "grok-beta": "xai-grok",
-    "groq-llama33": "groq-llama33",
+    "groq-llama33": "groq-llama33", 
     "groq-70b": "groq-70b",
     "mistral-large-latest": "mistral-large", // Works
     "llama3-70b": "llma3", // Works
@@ -55,10 +50,7 @@ class Asksage extends BaseLLM {
       message:
         typeof message.content === "string"
           ? message.content
-          : message.content
-              .filter((part) => part.type === "text")
-              .map((part) => (part as TextMessagePart).text)
-              .join(""),
+          : message.content.map((part) => part.text).join(""),
     };
   }
 

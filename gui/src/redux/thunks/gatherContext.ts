@@ -96,7 +96,7 @@ export const gatherContext = createAsyncThunk<
     if (promptPreamble) {
       if (typeof content === "string") {
         content = promptPreamble + content;
-      } else if (content[0].type === "text") {
+      } else {
         content[0].text = promptPreamble + content[0].text;
       }
     }

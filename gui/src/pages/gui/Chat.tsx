@@ -256,7 +256,7 @@ export function Chat() {
             posthog?.capture("ftc_reached");
             ideMessenger.ide.showToast(
               "info",
-              "You've reached the free trial limit. Please configure a model to continue.",
+              "You've reached the free trial limit. Please configure a model to ssidevbuddy.",
             );
             return;
           }
@@ -540,7 +540,7 @@ export function Chat() {
 
           {history.length === 0 && (
             <>
-              {onboardingCard.show && (
+              {/* {onboardingCard.show && (
                 <div className="mx-2 mt-10">
                   {usePlatform ? (
                     <PlatformOnboardingCard />
@@ -548,7 +548,7 @@ export function Chat() {
                     <OnboardingCard />
                   )}
                 </div>
-              )}
+              )} */}
 
               {showTutorialCard !== false && !onboardingCard.open && (
                 <div className="flex w-full justify-center">

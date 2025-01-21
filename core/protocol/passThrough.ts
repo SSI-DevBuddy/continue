@@ -58,6 +58,8 @@ export const WEBVIEW_TO_CORE_PASS_THROUGH: (keyof ToCoreFromWebviewProtocol)[] =
     "profiles/switch",
     "didChangeSelectedProfile",
     "tools/call",
+    "auth/login",
+    "auth/logout",
   ];
 
 // Message types to pass through from core to webview
@@ -66,7 +68,6 @@ export const WEBVIEW_TO_CORE_PASS_THROUGH: (keyof ToCoreFromWebviewProtocol)[] =
 export const CORE_TO_WEBVIEW_PASS_THROUGH: (keyof ToWebviewFromCoreProtocol)[] =
   [
     "configUpdate",
-    "configError",
     "getDefaultModelTitle",
     "indexProgress", // Codebase
     "indexing/statusUpdate", // Docs, etc.

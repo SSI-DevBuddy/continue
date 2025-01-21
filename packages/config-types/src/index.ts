@@ -57,7 +57,8 @@ export const modelDescriptionSchema = z.object({
     "azure",
     "continue-proxy",
     "nebius",
-    "scaleway",
+    "ssi-dev-buddy",
+    "scaleway"
   ]),
   model: z.string(),
   apiKey: z.string().optional(),
@@ -202,11 +203,10 @@ export type DevData = z.infer<typeof devDataSchema>;
 
 export const siteIndexingConfigSchema = z.object({
   startUrl: z.string(),
-  // rootUrl: z.string(),
+  rootUrl: z.string(),
   title: z.string(),
   maxDepth: z.string().optional(),
   faviconUrl: z.string().optional(),
-  useLocalCrawling: z.boolean().optional(),
 });
 
 export const controlPlaneConfigSchema = z.object({

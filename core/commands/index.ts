@@ -37,21 +37,16 @@ export function slashFromCustomCommand(
 
         if (
           Array.isArray(content) &&
-          content.some(
-            (part) =>
-              "text" in part && part.text?.startsWith(`/${customCommand.name}`),
+          content.some((part) =>
+            part.text?.startsWith(`/${customCommand.name}`),
           )
         ) {
           messages[i] = {
             ...message,
             content: content.map((part) => {
-              if (
-                "text" in part &&
-                part.text.startsWith(`/${customCommand.name}`)
-              ) {
-                return { type: "text", text: promptUserInput };
-              }
-              return part;
+              return part.text?.startsWith(`/${customCommand.name}`)
+                ? { ...part, text: promptUserInput }
+                : part;
             }),
           };
           break;

@@ -44,16 +44,14 @@ class DocsCrawler {
     startUrl: URL,
   ): AsyncGenerator<PageData, DocsCrawlerType, undefined> {
     if (startUrl.host === this.GITHUB_HOST) {
-      yield* new GitHubCrawler(startUrl, this.githubToken).crawl();
+      yield* new GitHubCrawler(startUrl).crawl();
       return "github";
     }
 
     if (!this.useLocalCrawling) {
       try {
         const pageData = await new DefaultCrawler(
-          startUrl,
-          this.maxRequestsPerCrawl,
-          this.maxDepth,
+          startUrl
         ).crawl();
         if (pageData.length > 0) {
           yield* pageData;
@@ -67,8 +65,7 @@ class DocsCrawler {
     if (this.shouldUseChromium()) {
       yield* new ChromiumCrawler(
         startUrl,
-        this.maxRequestsPerCrawl,
-        this.maxDepth,
+        this.maxRequestsPerCrawl
       ).crawl();
       return "chromium";
     } else {
@@ -76,8 +73,7 @@ class DocsCrawler {
 
       for await (const pageData of new CheerioCrawler(
         startUrl,
-        this.maxRequestsPerCrawl,
-        this.maxDepth,
+        this.maxRequestsPerCrawl
       ).crawl()) {
         yield pageData;
         didCrawlSinglePage = true;
@@ -103,8 +99,7 @@ class DocsCrawler {
 
           yield* new ChromiumCrawler(
             startUrl,
-            this.maxRequestsPerCrawl,
-            this.maxDepth,
+            this.maxRequestsPerCrawl
           ).crawl();
           return "chromium";
         }

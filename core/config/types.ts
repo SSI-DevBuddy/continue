@@ -220,8 +220,16 @@ declare global {
   export interface SiteIndexingConfig {
     title: string;
     startUrl: string;
+    rootUrl?: string;
     maxDepth?: number;
     faviconUrl?: string;
+  }
+  
+  export interface SiteIndexingConfig {
+    startUrl: string;
+    rootUrl?: string;
+    title: string;
+    maxDepth?: number;
   }
   
   export interface IContextProvider {
@@ -734,6 +742,7 @@ declare global {
     | "file"
     | "issue"
     | "repo-map"
+    | "ssi-dev-buddy-context"
     | "url"
     | string;
   

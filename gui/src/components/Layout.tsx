@@ -8,6 +8,8 @@ import { setEditStatus, focusEdit } from "../redux/slices/editModeState";
 import { setDialogMessage, setShowDialog } from "../redux/slices/uiSlice";
 import {
   addCodeToEdit,
+  clearCodeToEdit,
+  setLoggedInUser,
   updateApplyState,
   setMode,
   newSession,
@@ -21,6 +23,7 @@ import { isNewUserOnboarding, useOnboardingCard } from "./OnboardingCard";
 import PostHogPageView from "./PosthogPageView";
 import AccountDialog from "./AccountDialog";
 import { AuthProvider } from "../context/Auth";
+import { jwtDecode } from 'jwt-decode';
 import { exitEditMode } from "../redux/thunks";
 import { loadLastSession, saveCurrentSession } from "../redux/thunks/session";
 
@@ -177,15 +180,17 @@ const Layout = () => {
   useWebviewListener(
     "openOnboardingCard",
     async () => {
-      onboardingCard.open("Best");
+      dispatch(setLoggedInUser(null));
+      navigate("/login");
+      // onboardingCard.open("Best");
     },
-    [],
+    [navigate],
   );
 
   useWebviewListener(
     "setupLocalConfig",
     async () => {
-      onboardingCard.open("Local");
+      //onboardingCard.open("Local");
     },
     [],
   );
@@ -262,15 +267,17 @@ const Layout = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
+
   }, []);
 
+
   useEffect(() => {
-    if (
-      isNewUserOnboarding() &&
-      (location.pathname === "/" || location.pathname === "/index.html")
-    ) {
-      onboardingCard.open("Quickstart");
-    }
+    // if (
+    //   isNewUserOnboarding() &&
+    //   (location.pathname === "/" || location.pathname === "/index.html")
+    // ) {
+    //   onboardingCard.open("Quickstart");
+    // }
   }, [location]);
 
   return (

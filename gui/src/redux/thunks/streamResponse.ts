@@ -1,11 +1,6 @@
 import { createAsyncThunk, unwrapResult } from "@reduxjs/toolkit";
 import { JSONContent } from "@tiptap/core";
-import {
-  InputModifiers,
-  MessageContent,
-  SlashCommandDescription,
-  TextMessagePart,
-} from "core";
+import { InputModifiers, MessageContent, SlashCommandDescription } from "core";
 import { constructMessages } from "core/llm/constructMessages";
 import { renderChatMessage } from "core/util/messageContent";
 import posthog from "posthog-js";
@@ -33,11 +28,7 @@ const getSlashCommandForInput = (
   let lastText =
     typeof input === "string"
       ? input
-      : (
-          input.filter((part) => part.type === "text").slice(-1)[0] as
-            | TextMessagePart
-            | undefined
-        )?.text || "";
+      : input.filter((part) => part.type === "text").slice(-1)[0]?.text || "";
 
   if (lastText.startsWith("/")) {
     slashCommandName = lastText.split(" ")[0].substring(1);

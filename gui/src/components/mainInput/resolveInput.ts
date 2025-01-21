@@ -6,7 +6,6 @@ import {
   MessageContent,
   MessagePart,
   RangeInFile,
-  TextMessagePart,
 } from "core";
 import { stripImages } from "core/util/messageContent";
 import { IIdeMessenger } from "../../context/IdeMessenger";
@@ -66,7 +65,7 @@ async function resolveEditorContent({
         }
 
         if (parts[parts.length - 1]?.type === "text") {
-          (parts[parts.length - 1] as TextMessagePart).text += "\n" + text;
+          parts[parts.length - 1].text += "\n" + text;
         } else {
           parts.push({ type: "text", text });
         }
@@ -89,7 +88,7 @@ async function resolveEditorContent({
               contextItem.content +
               "\n```";
             if (parts[parts.length - 1]?.type === "text") {
-              (parts[parts.length - 1] as TextMessagePart).text += "\n" + text;
+              parts[parts.length - 1].text += "\n" + text;
             } else {
               parts.push({
                 type: "text",
@@ -182,10 +181,9 @@ async function resolveEditorContent({
 
   if (slashCommand) {
     let lastTextIndex = findLastIndex(parts, (part) => part.type === "text");
-    const lastTextPart = parts[lastTextIndex] as TextMessagePart;
-    const lastPart = `${slashCommand} ${lastTextPart?.text || ""}`;
+    const lastPart = `${slashCommand} ${parts[lastTextIndex]?.text || ""}`;
     if (parts.length > 0) {
-      lastTextPart.text = lastPart;
+      parts[lastTextIndex].text = lastPart;
     } else {
       parts = [{ type: "text", text: lastPart }];
     }

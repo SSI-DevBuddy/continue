@@ -44,15 +44,6 @@ function useSetup() {
         return;
       }
       hasLoadedConfig.current = true;
-      // window.postMessage(
-      //   {
-      //     messageType: "refreshSubmenuItems",
-      //     data: {
-      //       providers: "all",
-      //     },
-      //   },
-      //   "*",
-      // );
       dispatch(setConfigResult(configResult));
       dispatch(setSelectedProfileId(profileId));
 

@@ -106,12 +106,9 @@ function countTokens(
   const encoding = encodingForModel(modelName);
   if (Array.isArray(content)) {
     return content.reduce((acc, part) => {
-      return (
-        acc +
-        (part.type === "text"
-          ? encoding.encode(part.text ?? "", "all", []).length
-          : countImageTokens(part))
-      );
+      return acc + part.type === "imageUrl"
+        ? countImageTokens(part)
+        : encoding.encode(part.text ?? "", "all", []).length;
     }, 0);
   } else {
     return encoding.encode(content ?? "", "all", []).length;
@@ -338,7 +335,7 @@ function messageIsEmpty(message: ChatMessage): boolean {
   }
   if (Array.isArray(message.content)) {
     return message.content.every(
-      (item) => item.type === "text" && item.text?.trim() === "",
+      (item) => !item.imageUrl && item.text?.trim() === "",
     );
   }
   return false;

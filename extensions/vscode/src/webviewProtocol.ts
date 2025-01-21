@@ -1,5 +1,6 @@
 import { FromWebviewProtocol, ToWebviewProtocol } from "core/protocol";
 import { Message } from "core/protocol/messenger";
+import { WebviewMessengerResult } from "core/protocol/util";
 import { extractMinimalStackTraceInfo } from "core/util/extractMinimalStackTraceInfo";
 import { Telemetry } from "core/util/posthog";
 import { v4 as uuidv4 } from "uuid";
@@ -50,55 +51,46 @@ export class VsCodeWebviewProtocol
     this._webview = webView;
     this._webviewListener?.dispose();
 
-    const handleMessage = async (msg: Message): Promise<void> => {
-      if (!("messageType" in msg) || !("messageId" in msg)) {
+    this._webviewListener = this._webview.onDidReceiveMessage(async (msg) => {
+      if (!msg.messageType || !msg.messageId) {
         throw new Error(`Invalid webview protocol msg: ${JSON.stringify(msg)}`);
       }
 
-      const respond = (message: any) =>
+      const respond = (message: WebviewMessengerResult<any>) =>
         this.send(msg.messageType, message, msg.messageId);
 
-      const handlers =
-        this.listeners.get(msg.messageType as keyof FromWebviewProtocol) || [];
+      const handlers = this.listeners.get(msg.messageType) || [];
       for (const handler of handlers) {
         try {
           const response = await handler(msg);
-          // For generator types e.g. llm/streamChat
           if (
             response &&
             typeof response[Symbol.asyncIterator] === "function"
           ) {
             let next = await response.next();
             while (!next.done) {
-              respond({
-                done: false,
-                content: next.value,
-                status: "success",
-              });
+              respond(next.value);
               next = await response.next();
             }
             respond({
               done: true,
-              content: next.value,
+              content: next.value?.content,
               status: "success",
             });
           } else {
-            respond({ content: response, status: "success" });
+            respond({ done: true, content: response ?? {}, status: "success" });
           }
         } catch (e: any) {
-          respond({ done: true, error: e.message, status: "error" });
 
           const stringified = JSON.stringify({ msg }, null, 2);
+          
+          // if(!stringified.includes("Unauthorized")){
+          //   respond({ done: true, error: e.message, status: "error" });
+          // }
+
           console.error(
             `Error handling webview message: ${stringified}\n\n${e}`,
           );
-
-          if (
-            stringified.includes("llm/streamChat") ||
-            stringified.includes("chatDescriber/describe")
-          ) {
-            return;
-          }
 
           let message = e.message;
           if (e.cause) {
@@ -110,46 +102,51 @@ export class VsCodeWebviewProtocol
               message = `The request failed with "${e.cause.name}": ${e.cause.message}. If you're having trouble setting up Continue, please see the troubleshooting guide for help.`;
             }
           }
+          
+          if (
+            (stringified.includes("llm/streamChat") ||
+            stringified.includes("chatDescriber/describe")) && !message.includes("https://apissidev")
+          ) {
+            // handle these errors in the GUI
+            return;
+          }
 
-          if (message.includes("https://proxy-server")) {
+          
+          if (message.includes("https://apissidev")) {
             message = message.split("\n").filter((l: string) => l !== "")[1];
             try {
               message = JSON.parse(message).message;
             } catch {}
-            if (message.includes("exceeded")) {
-              message +=
-                " To keep using Continue, you can set up a local model or use your own API key.";
-            }
+            
+            this.request("openOnboardingCard", undefined); // navigate to login screen
 
-            vscode.window
-              .showInformationMessage(message, "Add API Key", "Use Local Model")
-              .then((selection) => {
-                if (selection === "Add API Key") {
-                  this.request("addApiKey", undefined);
-                } else if (selection === "Use Local Model") {
-                  this.request("setupLocalConfig", undefined);
-                }
-              });
+            // vscode.window
+            //   .showInformationMessage(message, "Add API Key", "Use Local Model")
+            //   .then((selection) => {
+            //     if (selection === "Add API Key") {
+            //       this.request("addApiKey", undefined);
+            //     } else if (selection === "Use Local Model") {
+            //       this.request("setupLocalConfig", undefined);
+            //     }
+            //   });
           } else if (message.includes("Please sign in with GitHub")) {
-            showFreeTrialLoginMessage(message, this.reloadConfig, () =>
-              this.request("openOnboardingCard", undefined),
-            );
+            // showFreeTrialLoginMessage(message, this.reloadConfig, () =>
+            //   this.request("openOnboardingCard", undefined),
+            // );
           } else {
-            Telemetry.capture(
-              "webview_protocol_error",
-              {
-                messageType: msg.messageType,
-                errorMsg: message.split("\n\n")[0],
-                stack: extractMinimalStackTraceInfo(e.stack),
-              },
-              false,
-            );
+            // Telemetry.capture(
+            //   "webview_protocol_error",
+            //   {
+            //     messageType: msg.messageType,
+            //     errorMsg: message.split("\n\n")[0],
+            //     stack: extractMinimalStackTraceInfo(e.stack),
+            //   },
+            //   false,
+            // );
           }
         }
       }
-    };
-
-    this._webviewListener = this._webview.onDidReceiveMessage(handleMessage);
+    });
   }
 
   constructor(private readonly reloadConfig: () => void) {}

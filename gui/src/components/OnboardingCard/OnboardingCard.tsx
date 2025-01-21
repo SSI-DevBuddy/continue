@@ -23,36 +23,34 @@ export interface OnboardingCardState {
 export function OnboardingCard() {
   const onboardingCard = useOnboardingCard();
 
-  function renderTabContent() {
-    switch (onboardingCard.activeTab) {
-      case "Quickstart":
-        return <Tabs.Quickstart />;
-      case "Best":
-        return <Tabs.Best />;
-      case "Local":
-        return <Tabs.Local />;
-      default:
-        return <Tabs.Quickstart />;
-    }
-  }
+  // function renderTabContent() {
+  //   switch (onboardingCard.activeTab) {
+  //     case "Quickstart":
+  //       return <Tabs.Quickstart />;
+  //     case "Best":
+  //       return <Tabs.Best />;
+  //     case "Local":
+  //       return <Tabs.Local />;
+  //     default:
+  //       return null;
+  //   }
+  // }
 
   if (getLocalStorage("onboardingStatus") === undefined) {
-    setLocalStorage("onboardingStatus", "Started");
+    setLocalStorage("onboardingStatus", "Completed");
   }
 
   return (
-    <StyledCard
-      className="xs:py-4 xs:px-4 relative px-2 py-3"
-      data-testid="onboarding-card"
-    >
-      <OnboardingCardTabs
-        activeTab={onboardingCard.activeTab || "Best"}
-        onTabClick={onboardingCard.setActiveTab}
-      />
-      <CloseButton onClick={onboardingCard.close}>
-        <XMarkIcon className="mt-1.5 hidden h-5 w-5 hover:brightness-125 sm:flex" />
-      </CloseButton>
-      <div className="content py-4">{renderTabContent()}</div>
-    </StyledCard>
+    <></>
+    // <StyledCard className="xs:py-4 xs:px-4 relative px-2 py-3">
+    //   <OnboardingCardTabs
+    //     activeTab={onboardingCard.activeTab}
+    //     onTabClick={onboardingCard.setActiveTab}
+    //   />
+    //   <CloseButton onClick={onboardingCard.close}>
+    //     <XMarkIcon className="hidden h-5 w-5 sm:flex" />
+    //   </CloseButton>
+    //   <div className="content py-4">{renderTabContent()}</div>
+    // </StyledCard>
   );
 }

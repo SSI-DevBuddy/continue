@@ -1,21 +1,13 @@
 import { FimCreateParamsStreaming } from "@continuedev/openai-adapters/dist/apis/base";
 import {
-  Chat,
   ChatCompletion,
-  ChatCompletionAssistantMessageParam,
   ChatCompletionChunk,
   ChatCompletionCreateParams,
   ChatCompletionMessageParam,
-  ChatCompletionUserMessageParam,
   CompletionCreateParams,
 } from "openai/resources/index";
 
-import {
-  ChatMessage,
-  CompletionOptions,
-  MessageContent,
-  TextMessagePart,
-} from "..";
+import { ChatMessage, CompletionOptions } from "..";
 
 export function toChatMessage(
   message: ChatMessage,
@@ -34,55 +26,43 @@ export function toChatMessage(
     };
   }
 
-  if (message.role === "assistant") {
-    const msg: ChatCompletionAssistantMessageParam = {
-      role: "assistant",
-      content:
-        typeof message.content === "string"
-          ? message.content || " " // LM Studio (and other providers) don't accept empty content
-          : message.content
-              .filter((part) => part.type === "text")
-              .map((part) => part as TextMessagePart), // can remove with newer typescript version
-    };
-
-    if (message.toolCalls) {
-      msg.tool_calls = message.toolCalls.map((toolCall) => ({
-        id: toolCall.id!,
-        type: toolCall.type!,
-        function: {
-          name: toolCall.function?.name!,
-          arguments: toolCall.function?.arguments!,
-        },
-      }));
-    }
-    return msg;
-  } else {
-    return {
-      role: "user",
-      content:
-        typeof message.content === "string"
-          ? message.content || " " // LM Studio (and other providers) don't accept empty content
-          : // If no multi-media is in the message, just send as text
+  let msg: ChatCompletionMessageParam = {
+    role: message.role,
+    content:
+      typeof message.content === "string"
+        ? message.content || " " // LM Studio (and other providers) don't accept empty content
+        : !message.content.some((item) => item.type !== "text")
+          ? // If no multi-media is in the message, just send as text
             // for compatibility with OpenAI-"compatible" servers
             // that don't support multi-media format
-            message.content.some((item) => item.type !== "text")
-            ? message.content
-                .map((item) => (item as TextMessagePart).text)
-                .join("") || " "
-            : message.content.map((part) => {
-                if (part.type === "imageUrl") {
-                  return {
-                    type: "image_url" as const,
-                    image_url: {
-                      url: part.imageUrl.url,
-                      detail: "auto" as const,
-                    },
-                  };
-                }
-                return part;
-              }),
-    };
+            message.content.map((item) => item.text).join("") || " "
+          : message.content.map((part) => {
+              const msg: any = {
+                type: part.type,
+                text: part.text,
+              };
+              if (part.type === "imageUrl") {
+                msg.image_url = { ...part.imageUrl, detail: "auto" };
+                msg.type = "image_url";
+              }
+              return msg;
+            }),
+  };
+  if (
+    msg.role === "assistant" &&
+    message.role === "assistant" &&
+    message.toolCalls
+  ) {
+    msg.tool_calls = message.toolCalls.map((toolCall) => ({
+      id: toolCall.id!,
+      type: toolCall.type!,
+      function: {
+        name: toolCall.function?.name!,
+        arguments: toolCall.function?.arguments!,
+      },
+    }));
   }
+  return msg;
 }
 
 export function toChatBody(

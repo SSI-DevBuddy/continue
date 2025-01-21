@@ -14,11 +14,11 @@ import {
   setupLocalConfigAfterFreeTrial,
   setupQuickstartConfig,
 } from "./config/onboarding";
-import { addContextProvider, addModel, deleteModel } from "./config/util";
+import { addContextProvider, addModel, deleteModel, addUserTokenForSSIDevBuddy } from "./config/util";
 import { recentlyEditedFilesCache } from "./context/retrieval/recentlyEditedFilesCache";
 import { ContinueServerClient } from "./continueServer/stubs/client";
 import { getAuthUrlForTokenPage } from "./control-plane/auth/index";
-import { ControlPlaneClient } from "./control-plane/client";
+import { ControlPlaneClient, TRIAL_PROXY_URL } from "./control-plane/client";
 import { streamDiffLines } from "./edit/streamDiffLines";
 import { CodebaseIndexer, PauseToken } from "./indexing/CodebaseIndexer";
 import DocsService from "./indexing/docs/DocsService";
@@ -43,18 +43,11 @@ import { Telemetry } from "./util/posthog";
 import { getSymbolsForManyFiles } from "./util/treeSitter";
 import { TTS } from "./util/tts";
 
-import {
-  ChatMessage,
-  DiffLine,
-  PromptLog,
-  type ContextItemId,
-  type IDE,
-  type IndexingProgressUpdate,
-} from ".";
-
+import { type ContextItemId, type IDE, type IndexingProgressUpdate } from ".";
 import { usePlatform } from "./control-plane/flags";
 import type { FromCoreProtocol, ToCoreProtocol } from "./protocol";
 import type { IMessenger, Message } from "./protocol/messenger";
+import { getHeaders } from "./continueServer/stubs/headers";
 
 export class Core {
   // implements IMessenger<ToCoreProtocol, FromCoreProtocol>
@@ -404,7 +397,7 @@ export class Core {
       configHandler: ConfigHandler,
       abortedMessageIds: Set<string>,
       msg: Message<ToCoreProtocol["llm/streamChat"][0]>,
-    ): AsyncGenerator<ChatMessage, PromptLog> {
+    ) {
       const { config } = await configHandler.loadConfig();
       if (!config) {
         throw new Error("Config not loaded");
@@ -440,7 +433,7 @@ export class Core {
 
         const chunk = next.value;
 
-        yield chunk;
+        yield { content: chunk };
         next = await gen.next();
       }
 
@@ -457,11 +450,7 @@ export class Core {
         true,
       );
 
-      if (!next.done) {
-        throw new Error("Will never happen");
-      }
-
-      return next.value;
+      return { done: true, content: next.value };
     }
 
     on("llm/streamChat", (msg) =>
@@ -471,8 +460,9 @@ export class Core {
     async function* llmStreamComplete(
       configHandler: ConfigHandler,
       abortedMessageIds: Set<string>,
+
       msg: Message<ToCoreProtocol["llm/streamComplete"][0]>,
-    ): AsyncGenerator<string, PromptLog> {
+    ) {
       const model = await configHandler.llmFromTitle(msg.data.title);
       const gen = model.streamComplete(
         msg.data.prompt,
@@ -494,13 +484,11 @@ export class Core {
           });
           break;
         }
-        yield next.value;
+        yield { content: next.value };
         next = await gen.next();
       }
-      if (!next.done) {
-        throw new Error("This will never happen");
-      }
-      return next.value;
+
+      return { done: true, content: next.value };
     }
 
     on("llm/streamComplete", (msg) =>
@@ -562,7 +550,7 @@ export class Core {
       abortedMessageIds: Set<string>,
       msg: Message<ToCoreProtocol["command/run"][0]>,
       messenger: IMessenger<ToCoreProtocol, FromCoreProtocol>,
-    ): AsyncGenerator<string> {
+    ) {
       const {
         input,
         history,
@@ -627,7 +615,7 @@ export class Core {
             break;
           }
           if (content) {
-            yield content;
+            yield { content };
           }
         }
       } catch (e) {
@@ -635,6 +623,7 @@ export class Core {
       } finally {
         clearInterval(checkActiveInterval);
       }
+      yield { done: true, content: "" };
     }
     on("command/run", (msg) =>
       runNodeJsSlashCommand(
@@ -665,7 +654,7 @@ export class Core {
       configHandler: ConfigHandler,
       abortedMessageIds: Set<string>,
       msg: Message<ToCoreProtocol["streamDiffLines"][0]>,
-    ): AsyncGenerator<DiffLine> {
+    ) {
       const data = msg.data;
       const llm = await configHandler.llmFromTitle(msg.data.modelTitle);
       for await (const diffLine of streamDiffLines(
@@ -680,8 +669,10 @@ export class Core {
           abortedMessageIds.delete(msg.messageId);
           break;
         }
-        yield diffLine;
+        yield { content: diffLine };
       }
+
+      return { done: true };
     }
 
     on("streamDiffLines", (msg) =>
@@ -914,6 +905,40 @@ export class Core {
       );
 
       return { contextItems };
+    });
+
+    on("auth/login", async (msg:any) => {
+      let data:any = {};
+      try {
+        const ur = new URL("/api/auth/signin", TRIAL_PROXY_URL);
+        const resp = await fetch(ur, {
+          method: "POST",
+          body: JSON.stringify({ email: msg.data.username, password: msg.data.password }),
+          headers: {
+            "Content-Type": "application/json",
+            ...(await getHeaders())
+          }
+        });
+
+        if (!resp.ok) {
+          throw new Error(await resp.text());
+        }
+
+        data = (await resp.json()) as any;
+        const token = data.token;
+        addUserTokenForSSIDevBuddy(token);
+        return { success:true, accessToken: token, user: {} };
+      }
+      catch (ex) {
+        console.log(ex);
+        return { success:false, accessToken: "-", user: "-" };
+      }
+      return { success:false, accessToken: "-", user: "-" };
+    });
+
+    on("auth/logout", (msg) => {
+      const token = "";
+      addUserTokenForSSIDevBuddy(token);
     });
   }
 

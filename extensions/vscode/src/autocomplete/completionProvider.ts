@@ -51,16 +51,16 @@ export class ContinueCompletionProvider
       options.unshift("Start Ollama"); // We want "Start" to be the default choice
     }
 
-    if (e.message.includes("Please sign in with GitHub")) {
-      showFreeTrialLoginMessage(
-        e.message,
-        this.configHandler.reloadConfig.bind(this.configHandler),
-        () => {
-          void this.webviewProtocol.request("openOnboardingCard", undefined);
-        },
-      );
-      return;
-    }
+    // if (e.message.includes("Please sign in with GitHub")) {
+    //   showFreeTrialLoginMessage(
+    //     e.message,
+    //     this.configHandler.reloadConfig.bind(this.configHandler),
+    //     () => {
+    //       void this.webviewProtocol.request("openOnboardingCard", undefined);
+    //     },
+    //   );
+    //   return;
+    // }
     vscode.window.showErrorMessage(e.message, ...options).then((val) => {
       if (val === "Documentation") {
         vscode.env.openExternal(
@@ -317,7 +317,7 @@ export class ContinueCompletionProvider
         range,
         {
           title: "Log Autocomplete Outcome",
-          command: "continue.logAutocompleteOutcome",
+          command: "ssidevbuddy.logAutocompleteOutcome",
           arguments: [input.completionId, this.completionProvider],
         },
       );

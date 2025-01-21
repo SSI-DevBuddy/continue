@@ -57,6 +57,7 @@ type SessionState = {
     states: ApplyState[];
     curIndex: number;
   };
+  loggeedInUser: any;
 };
 
 function isCodeToEditEqual(a: CodeToEdit, b: CodeToEdit) {
@@ -101,6 +102,7 @@ const initialState: SessionState = {
     states: [],
     curIndex: 0,
   },
+  loggeedInUser: undefined,
   lastSessionId: undefined,
 };
 
@@ -332,13 +334,13 @@ export const sessionSlice = createSlice({
             const historyItem: ChatHistoryItemWithMessageId = {
               message: {
                 ...message,
-                content: renderChatMessage(message),
                 id: uuidv4(),
               },
               contextItems: [],
             };
             if (message.role === "assistant" && message.toolCalls?.[0]) {
               const toolCallDelta = message.toolCalls[0];
+
               if (
                 toolCallDelta.id &&
                 toolCallDelta.function?.arguments &&
@@ -356,8 +358,6 @@ export const sessionSlice = createSlice({
           } else {
             // Add to the existing message
             if (message.content) {
-              // Note this only works because new message above
-              // was already rendered from parts to string
               lastMessage.content += renderChatMessage(message);
             } else if (
               message.role === "assistant" &&
@@ -617,6 +617,26 @@ export const sessionSlice = createSlice({
 
       toolCallState.status = "calling";
     },
+    setLoggedInUser: (
+      state,
+      { payload }: PayloadAction<any>,
+    ) => {
+      localStorage.setItem('loggedInUser',JSON.stringify(payload));
+      return {
+        ...state,
+        loggeedInUser: payload,
+      };
+    },
+    logOutUser: (
+      state,
+      { payload }: PayloadAction<any>,
+    ) => {
+      localStorage.removeItem('loggedInUser')
+      return {
+        ...state,
+        loggeedInUser: null,
+      };
+    },
     setMode: (state, action: PayloadAction<MessageModes>) => {
       state.mode = action.payload;
     },
@@ -713,6 +733,8 @@ export const {
   acceptToolCall,
   setToolGenerated,
   setToolCallOutput,
+  setLoggedInUser,
+  logOutUser,
   setMode,
   setAllSessionMetadata,
   addSessionMetadata,

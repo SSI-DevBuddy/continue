@@ -1,3 +1,6 @@
+import { AutocompleteInput } from "../autocomplete/util/types";
+import { ProfileDescription } from "../config/ConfigHandler";
+
 import { ConfigResult } from "@continuedev/config-yaml";
 import type {
   BrowserSerializedContinueConfig,
@@ -12,7 +15,6 @@ import type {
   LLMFullCompletionOptions,
   ModelDescription,
   ModelRoles,
-  PromptLog,
   RangeInFile,
   SerializedContinueConfig,
   Session,
@@ -20,8 +22,27 @@ import type {
   SiteIndexingConfig,
   ToolCall,
 } from "../";
-import { AutocompleteInput } from "../autocomplete/util/types";
-import { ProfileDescription } from "../config/ConfigHandler";
+
+export type ProtocolGeneratorYield<T> = {
+  done?: boolean;
+  content: T;
+};
+export type ProtocolGeneratorType<Y> = AsyncGenerator<
+  ProtocolGeneratorYield<Y>
+>;
+
+export type AsyncGeneratorYieldType<T> =
+  T extends AsyncGenerator<infer Y, any, any>
+    ? Y extends ProtocolGeneratorYield<infer PR>
+      ? PR
+      : never
+    : never;
+// export type AsyncGeneratorReturnType<T> =
+//   T extends AsyncGenerator<any, infer R, any>
+//     ? R extends ProtocolGeneratorYield<infer PR>
+//       ? PR
+//       : never
+//     : never;
 
 export type OnboardingModes =
   | "Local"
@@ -99,7 +120,7 @@ export type ToCoreFromIdeOrWebviewProtocol = {
       historyIndex: number;
       selectedCode: RangeInFile[];
     },
-    AsyncGenerator<string>,
+    ProtocolGeneratorType<string>,
   ];
   "llm/complete": [
     {
@@ -116,7 +137,7 @@ export type ToCoreFromIdeOrWebviewProtocol = {
       completionOptions: LLMFullCompletionOptions;
       title: string;
     },
-    AsyncGenerator<string>,
+    ProtocolGeneratorType<string>,
   ];
   "llm/streamChat": [
     {
@@ -124,7 +145,7 @@ export type ToCoreFromIdeOrWebviewProtocol = {
       completionOptions: LLMFullCompletionOptions;
       title: string;
     },
-    AsyncGenerator<ChatMessage, PromptLog>,
+    ProtocolGeneratorType<ChatMessage>,
   ];
   streamDiffLines: [
     {
@@ -135,7 +156,7 @@ export type ToCoreFromIdeOrWebviewProtocol = {
       language: string | undefined;
       modelTitle: string | undefined;
     },
-    AsyncGenerator<DiffLine>,
+    ProtocolGeneratorType<DiffLine>,
   ];
   "chatDescriber/describe": [
     {
@@ -191,4 +212,8 @@ export type ToCoreFromIdeOrWebviewProtocol = {
     { contextItems: ContextItem[] },
   ];
   "clipboardCache/add": [{ content: string }, void];
+
+  
+  "auth/login": [{ username: string, password: string }, { accessToken: string, user: any }];
+  "auth/logout": [undefined, void];
 };

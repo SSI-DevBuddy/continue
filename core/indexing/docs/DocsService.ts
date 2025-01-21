@@ -25,13 +25,9 @@ import {
 } from "../../util/paths";
 import { Telemetry } from "../../util/posthog";
 
-import {
-  ArticleWithChunks,
-  htmlPageToArticleWithChunks,
-  markdownPageToArticleWithChunks,
-} from "./article";
-import DocsCrawler, { DocsCrawlerType, PageData } from "./crawlers/DocsCrawler";
 import { ConfigResult } from "@continuedev/config-yaml";
+import { Article, chunkArticle, pageToArticle } from "./article";
+import DocsCrawler from "./DocsCrawler";
 import { runLanceMigrations, runSqliteMigrations } from "./migrations";
 import {
   downloadFromS3,
@@ -77,6 +73,8 @@ export type AddParams = {
     - delete
     - reindex all
     - add/index one
+  - Currently a full reindex deletes all docs rather than storing PER embeddings provider
+  - The last successful embeddings provider is stored in global context and updated AFTER an indexing process is successful
 */
 export default class DocsService {
   static lanceTableName = "docs";
@@ -94,8 +92,8 @@ export default class DocsService {
   private config!: ContinueConfig;
   private sqliteDb?: Database;
 
+  private docsCrawler!: DocsCrawler;
   private ideInfoPromise: Promise<IdeInfo>;
-  private githubToken?: string;
 
   constructor(
     configHandler: ConfigHandler,
@@ -104,10 +102,6 @@ export default class DocsService {
   ) {
     this.ideInfoPromise = this.ide.getIdeInfo();
     this.isInitialized = this.init(configHandler);
-  }
-
-  setGithubToken(token: string) {
-    this.githubToken = token;
   }
 
   // Singleton pattern: only one service globally
@@ -202,7 +196,6 @@ export default class DocsService {
     }
   }
 
-  // Used to check periodically during indexing if should cancel indexing
   shouldCancel(startUrl: string, startedWithEmbedder: string) {
     // Check if aborted
     const isAborted = this.statuses.get(startUrl)?.status === "aborted";
@@ -221,6 +214,21 @@ export default class DocsService {
     }
     return false;
   }
+
+  // NOTE Pausing not supported for docs yet
+  // setPaused(startUrl: string, pause: boolean) {
+  //   const status = this.statuses.get(startUrl);
+  //   if (status) {
+  //     this.handleStatusUpdate({
+  //       ...status,
+  //       status: pause ? "paused" : "indexing",
+  //     });
+  //   }
+  // }
+
+  // isPaused(startUrl: string) {
+  //   return this.statuses.get(startUrl)?.status === "paused";
+  // }
 
   /*
    * Currently, we generate and host embeddings for pre-indexed docs using transformers.
@@ -243,29 +251,14 @@ export default class DocsService {
     return isPreIndexedDocsProvider && !canUsePreindexedDocs;
   }
 
-  // Determines if using preIndexed and returns proper embeddings provider
-  async getEmbeddingsProvider(startUrl: string) {
-    // Conditions for using a pre-indexed doc
+  async getEmbeddingsProvider(isPreIndexedDoc: boolean = false): Promise<ILLM> {
+    const canUsePreindexedDocs = await this.canUsePreindexedDocs();
 
-    // Must be in pre indexed docs file
-    const preIndexedDoc = preIndexedDocs[startUrl];
-    if (preIndexedDoc) {
-      // Most not be overriden by config
-      if (!this.config?.docs?.find((doc) => doc.startUrl === startUrl)) {
-        // Must be supported
-        const canUsePreindexedDocs = await this.canUsePreindexedDocs();
-        if (canUsePreindexedDocs) {
-          return {
-            provider: DocsService.preIndexedDocsEmbeddingsProvider,
-            isPreindexed: true,
-          };
-        }
-      }
+    if (canUsePreindexedDocs && isPreIndexedDoc) {
+      return DocsService.preIndexedDocsEmbeddingsProvider;
     }
-    return {
-      provider: this.config.embeddingsProvider,
-      isPreindexed: false,
-    };
+
+    return this.config.embeddingsProvider;
   }
 
   private async handleConfigUpdate({
@@ -274,6 +267,8 @@ export default class DocsService {
     if (newConfig) {
       const oldConfig = this.config;
       this.config = newConfig; // IMPORTANT - need to set up top, other methods below use this without passing it in
+
+      this.docsCrawler = new DocsCrawler(this.ide, newConfig);
 
       if (this.config.disableIndexing) {
         return;
@@ -370,13 +365,16 @@ export default class DocsService {
       console.warn("Attempting to add/index docs when indexing is disabled");
       return;
     }
-    const { startUrl, useLocalCrawling, maxDepth } = siteIndexingConfig;
+    const { startUrl } = siteIndexingConfig;
 
-    const { isPreindexed, provider } =
-      await this.getEmbeddingsProvider(startUrl);
-    if (isPreindexed) {
-      console.warn("Attempted to indexAndAdd pre-indexed doc");
-      return;
+    const canUsePreindexedDocs = await this.canUsePreindexedDocs();
+    if (canUsePreindexedDocs) {
+      const preIndexedDoc = preIndexedDocs[startUrl];
+      const isPreIndexedDoc = !!preIndexedDoc;
+      if (isPreIndexedDoc) {
+        console.warn("Can not override pre-indexed start urls");
+        return;
+      }
     }
 
     // Queue - indexAndAdd is invoked circularly by config edits. This prevents duplicate runs
@@ -384,7 +382,8 @@ export default class DocsService {
       return;
     }
 
-    const startedWithEmbedder = provider.embeddingId;
+    const embeddingsProvider = await this.getEmbeddingsProvider();
+    const startedWithEmbedder = this.config.embeddingsProvider.embeddingId;
     const indexExists = await this.hasMetadata(startUrl);
 
     // Build status update - most of it is fixed values
@@ -394,7 +393,7 @@ export default class DocsService {
     > = {
       type: "docs",
       id: siteIndexingConfig.startUrl,
-      embeddingsProviderId: provider.embeddingId,
+      embeddingsProviderId: embeddingsProvider.embeddingId,
       isReindexing: reIndex && indexExists,
       title: siteIndexingConfig.title,
       debugInfo: `max depth: ${siteIndexingConfig.maxDepth}`,
@@ -430,81 +429,47 @@ export default class DocsService {
         progress: 0,
       });
 
-      // Crawl pages to get page data
-      const pages: PageData[] = [];
+      const articles: Article[] = [];
       let processedPages = 0;
       let estimatedProgress = 0;
-      let done = false;
-      let usedCrawler: DocsCrawlerType | undefined = undefined;
 
-      const docsCrawler = new DocsCrawler(
-        this.ide,
-        this.config,
-        maxDepth,
-        undefined,
-        useLocalCrawling,
-        this.githubToken,
-      );
-      const crawlerGen = docsCrawler.crawl(new URL(startUrl));
+      // Crawl pages and retrieve info as articles
+      for await (const page of this.docsCrawler.crawl(new URL(startUrl))) {
+        estimatedProgress += 1 / 2 ** (processedPages + 1);
 
-      while (!done) {
-        const result = await crawlerGen.next();
-        if (result.done) {
-          done = true;
-          usedCrawler = result.value;
-        } else {
-          const page = result.value;
-          estimatedProgress += 1 / 2 ** (processedPages + 1);
-
-          // NOTE - during "indexing" phase, check if aborted before each status update
-          if (this.shouldCancel(startUrl, startedWithEmbedder)) {
-            return;
-          }
-          this.handleStatusUpdate({
-            ...fixedStatus,
-            description: `Finding subpages (${page.path})`,
-            status: "indexing",
-            progress:
-              0.15 * estimatedProgress +
-              Math.min(0.35, (0.35 * processedPages) / 500),
-            // For the first 50%, 15% is sum of series 1/(2^n) and the other 35% is based on number of files/ 500 max
-          });
-
-          pages.push(page);
-
-          processedPages++;
-
-          // Locks down GUI if no sleeping
-          // Wait proportional to how many docs are indexing
-          const toWait = 100 * this.docsIndexingQueue.size + 50;
-          await new Promise((resolve) => setTimeout(resolve, toWait));
+        // NOTE - during "indexing" phase, check if aborted before each status update
+        if (this.shouldCancel(startUrl, startedWithEmbedder)) {
+          return;
         }
+        this.handleStatusUpdate({
+          ...fixedStatus,
+          description: `Finding subpages (${page.path})`,
+          status: "indexing",
+          progress:
+            0.15 * estimatedProgress +
+            Math.min(0.35, (0.35 * processedPages) / 500),
+          // For the first 50%, 15% is sum of series 1/(2^n) and the other 35% is based on number of files/ 500 max
+        });
+
+        const article = pageToArticle(page);
+        if (!article) {
+          continue;
+        }
+        articles.push(article);
+
+        processedPages++;
+
+        // Locks down GUI if no sleeping
+        // Wait proportional to how many docs are indexing
+        const toWait = 100 * this.docsIndexingQueue.size + 50;
+        await new Promise((resolve) => setTimeout(resolve, toWait));
       }
 
       void Telemetry.capture("docs_pages_crawled", {
         count: processedPages,
       });
 
-      // Chunk pages based on which crawler was used
-      const articles: ArticleWithChunks[] = [];
       const chunks: Chunk[] = [];
-      const articleChunker =
-        usedCrawler === "github"
-          ? markdownPageToArticleWithChunks
-          : htmlPageToArticleWithChunks;
-      for (const page of pages) {
-        const articleWithChunks = await articleChunker(
-          page,
-          provider.maxEmbeddingChunkSize,
-        );
-        if (articleWithChunks) {
-          articles.push(articleWithChunks);
-        }
-        const toWait = 20 * this.docsIndexingQueue.size + 10;
-        await new Promise((resolve) => setTimeout(resolve, toWait));
-      }
-
-      // const chunks: Chunk[] = [];
       const embeddings: number[][] = [];
 
       // Create embeddings of retrieved articles
@@ -517,26 +482,35 @@ export default class DocsService {
         this.handleStatusUpdate({
           ...fixedStatus,
           status: "indexing",
-          description: `Creating Embeddings: ${article.article.subpath}`,
+          description: `Creating Embeddings: ${article.subpath}`,
           progress: 0.5 + 0.3 * (i / articles.length), // 50% -> 80%
         });
 
         try {
-          const subpathEmbeddings = await provider.embed(
-            article.chunks.map((c) => c.content),
+          const chunkedArticle = chunkArticle(
+            article,
+            embeddingsProvider.maxEmbeddingChunkSize,
           );
-          chunks.push(...article.chunks);
+
+          const chunkedArticleContents = chunkedArticle.map(
+            (chunk) => chunk.content,
+          );
+
+          chunks.push(...chunkedArticle);
+
+          const subpathEmbeddings = await embeddingsProvider.embed(
+            chunkedArticleContents,
+          );
+
           embeddings.push(...subpathEmbeddings);
-          const toWait = 100 * this.docsIndexingQueue.size + 50;
-          await new Promise((resolve) => setTimeout(resolve, toWait));
         } catch (e) {
-          console.warn("Error embedding article chunks: ", e);
+          console.warn("Error chunking article: ", e);
         }
       }
 
       if (embeddings.length === 0) {
         console.error(
-          `No embeddings were created for site: ${startUrl}\n Num chunks: ${chunks.length}`,
+          `No embeddings were created for site: ${siteIndexingConfig.startUrl}\n Num chunks: ${chunks.length}`,
         );
 
         if (this.shouldCancel(startUrl, startedWithEmbedder)) {
@@ -544,7 +518,7 @@ export default class DocsService {
         }
         this.handleStatusUpdate({
           ...fixedStatus,
-          description: `No embeddings were created for site: ${startUrl}`,
+          description: `No embeddings were created for site: ${siteIndexingConfig.startUrl}`,
           status: "failed",
           progress: 1,
         });
@@ -610,19 +584,10 @@ export default class DocsService {
         providers: ["docs"],
       });
     } catch (e) {
-      let description = `Error getting docs from: ${siteIndexingConfig.startUrl}`;
-      if (e instanceof Error) {
-        if (
-          e.message.includes("github.com") &&
-          e.message.includes("rate limit")
-        ) {
-          description = "Github rate limit exceeded";
-        }
-      }
       console.error("Error indexing docs", e);
       this.handleStatusUpdate({
         ...fixedStatus,
-        description,
+        description: `Error getting docs from: ${siteIndexingConfig.startUrl}`,
         status: "failed",
         progress: 1,
       });
@@ -635,12 +600,11 @@ export default class DocsService {
   // And pre-indexed embeddings are supported
   // Fetch pre-indexed embeddings from S3, add to Lance, and then search those
   private async fetchAndAddPreIndexedDocEmbeddings(title: string) {
+    const embeddingsProvider = await this.getEmbeddingsProvider(true);
+
     const data = await downloadFromS3(
       S3Buckets.continueIndexedDocs,
-      getS3Filename(
-        DocsService.preIndexedDocsEmbeddingsProvider.embeddingId,
-        title,
-      ),
+      getS3Filename(embeddingsProvider.embeddingId, title),
     );
 
     const siteEmbeddings = JSON.parse(data) as SiteIndexingResults;
@@ -681,18 +645,19 @@ export default class DocsService {
       return [];
     }
 
-    const { isPreindexed, provider } =
-      await this.getEmbeddingsProvider(startUrl);
-
-    if (isPreindexed) {
+    const preIndexedDoc = preIndexedDocs[startUrl];
+    if (!!preIndexedDoc) {
       void Telemetry.capture("docs_pre_indexed_doc_used", {
-        doc: preIndexedDocs[startUrl]!["title"],
+        doc: preIndexedDoc["title"],
       });
     }
 
-    const [vector] = await provider.embed([query]);
+    const embeddingsProvider =
+      await this.getEmbeddingsProvider(!!preIndexedDoc);
 
-    return await this.retrieveChunks(startUrl, vector, nRetrieve, isPreindexed);
+    const [vector] = await embeddingsProvider.embed([query]);
+
+    return await this.retrieveChunks(startUrl, vector, nRetrieve);
   }
 
   // This is split into its own function so that it can be recursive
@@ -701,13 +666,15 @@ export default class DocsService {
     startUrl: string,
     vector: number[],
     nRetrieve: number,
-    isPreindexed: boolean,
     isRetry: boolean = false,
   ): Promise<Chunk[]> {
+    const preIndexedDoc = preIndexedDocs[startUrl];
+    const isPreIndexedDoc = !!preIndexedDoc;
+
     // Lance doesn't have an embeddingsprovider column, instead it includes it in the table name
     const table = await this.getOrCreateLanceTable({
       initializationVector: vector,
-      startUrl,
+      isPreIndexedDoc,
     });
 
     let docs: LanceDbDocsRow[] = [];
@@ -722,14 +689,18 @@ export default class DocsService {
     }
 
     // No docs are found for preindexed? try fetching once
-    if (docs.length === 0 && isPreindexed) {
+    if (docs.length === 0 && isPreIndexedDoc) {
       if (isRetry) {
         return [];
       }
-      await this.fetchAndAddPreIndexedDocEmbeddings(
-        preIndexedDocs[startUrl]!["title"],
-      );
-      return await this.retrieveChunks(startUrl, vector, nRetrieve, true, true);
+      await this.fetchAndAddPreIndexedDocEmbeddings(preIndexedDoc.title);
+      return await this.retrieveChunks(startUrl, vector, nRetrieve, true);
+    }
+
+    if (isPreIndexedDoc) {
+      void Telemetry.capture("docs_pre_indexed_doc_used", {
+        doc: preIndexedDoc["title"],
+      });
     }
 
     return docs.map((doc) => ({
@@ -831,10 +802,13 @@ export default class DocsService {
           const oldConfigDoc = oldConfigDocs.find(
             (d) => d.startUrl === doc.startUrl,
           );
-
+          // const currentStatus = this.statuses.get(doc.startUrl);
           if (
+            // currentStatus?.status === "complete" &&
             oldConfigDoc &&
-            !this.siteIndexingConfigsAreEqual(oldConfigDoc, doc)
+            (oldConfigDoc.maxDepth !== doc.maxDepth ||
+              oldConfigDoc.title !== doc.title ||
+              oldConfigDoc.faviconUrl !== doc.faviconUrl)
           ) {
             changedDocs.push(doc);
           } else {
@@ -854,10 +828,7 @@ export default class DocsService {
             });
           }
         } else {
-          const currentStatus = this.statuses.get(doc.startUrl);
-          if (currentStatus?.status !== "failed") {
-            newDocs.push(doc);
-          }
+          newDocs.push(doc);
         }
       }
 
@@ -921,7 +892,10 @@ export default class DocsService {
     return name.replace(/[^a-zA-Z0-9_.-]/g, "_");
   }
 
-  private async getLanceTableName(embeddingsProvider: ILLM) {
+  private async getLanceTableName(isPreIndexedDoc: boolean) {
+    const embeddingsProvider =
+      await this.getEmbeddingsProvider(isPreIndexedDoc);
+
     const tableName = this.sanitizeLanceTableName(
       `${DocsService.lanceTableName}${embeddingsProvider.embeddingId}`,
     );
@@ -931,16 +905,15 @@ export default class DocsService {
 
   private async getOrCreateLanceTable({
     initializationVector,
-    startUrl,
+    isPreIndexedDoc,
   }: {
     initializationVector: number[];
-    startUrl: string;
+    isPreIndexedDoc?: boolean;
   }) {
     const conn = await lancedb.connect(getLanceDbPath());
     const tableNames = await conn.tableNames();
-    const { provider } = await this.getEmbeddingsProvider(startUrl);
     const tableNameFromEmbeddingsProvider =
-      await this.getLanceTableName(provider);
+      await this.getLanceTableName(!!isPreIndexedDoc);
 
     if (!tableNames.includes(tableNameFromEmbeddingsProvider)) {
       if (initializationVector) {
@@ -971,16 +944,16 @@ export default class DocsService {
     embeddings,
   }: AddParams) {
     const sampleVector = embeddings[0];
-    const { startUrl } = siteIndexingConfig;
+    const isPreIndexedDoc = !!preIndexedDocs[siteIndexingConfig.startUrl];
 
     const table = await this.getOrCreateLanceTable({
-      startUrl,
+      isPreIndexedDoc,
       initializationVector: sampleVector,
     });
 
     const rows: LanceDbDocsRow[] = chunks.map((chunk, i) => ({
       vector: embeddings[i],
-      starturl: startUrl,
+      starturl: siteIndexingConfig.startUrl,
       title: chunk.otherMetadata?.title || siteIndexingConfig.title,
       content: chunk.content,
       path: chunk.filepath,
@@ -1005,24 +978,16 @@ export default class DocsService {
     );
   }
 
-  private siteIndexingConfigsAreEqual(
-    config1: SiteIndexingConfig,
-    config2: SiteIndexingConfig,
-  ) {
-    return (
-      config1.startUrl === config2.startUrl &&
-      config1.faviconUrl === config2.faviconUrl &&
-      config1.title === config2.title &&
-      config1.maxDepth === config2.maxDepth &&
-      config1.useLocalCrawling === config2.useLocalCrawling
-    );
-  }
-
   private addToConfig(siteIndexingConfig: SiteIndexingConfig) {
     // Handles the case where a user has manually added the doc to config.json
     // so it already exists in the file
-    const doesEquivalentDocExist = this.config.docs?.some((doc) =>
-      this.siteIndexingConfigsAreEqual(doc, siteIndexingConfig),
+    const doesEquivalentDocExist = this.config.docs?.some(
+      (doc) =>
+        doc.startUrl === siteIndexingConfig.startUrl &&
+        doc.faviconUrl === siteIndexingConfig.faviconUrl &&
+        siteIndexingConfig.title === doc.title,
+      // siteIndexingConfig.maxDepth === doc.maxDepth &&
+      // doc.rootUrl === siteIndexingConfig.rootUrl,
     );
 
     if (!doesEquivalentDocExist) {
@@ -1080,7 +1045,7 @@ export default class DocsService {
     }
   }
 
-  private async deleteIndexes(startUrl: string) {
+  async deleteIndexes(startUrl: string) {
     await this.deleteEmbeddingsFromLance(startUrl);
     await this.deleteMetadataFromSqlite(startUrl);
   }

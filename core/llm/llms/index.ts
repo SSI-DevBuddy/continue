@@ -40,6 +40,7 @@ import Ollama from "./Ollama";
 import OpenAI from "./OpenAI";
 import OpenRouter from "./OpenRouter";
 import Replicate from "./Replicate";
+import SSIDevBuddy from "./SSIDevBuddy";
 import SageMaker from "./SageMaker";
 import SambaNova from "./SambaNova";
 import Scaleway from "./Scaleway";
@@ -99,6 +100,7 @@ export const LLMClasses = [
   VertexAI,
   xAI,
   SiliconFlow,
+  SSIDevBuddy,
   Scaleway,
 ];
 

@@ -18,6 +18,7 @@ const modelDescriptionSchema = z.object({
     "azure",
     "nebius",
     "siliconflow",
+    "ssi-dev-buddy",
     "scaleway",
   ]),
   model: z.string(),

@@ -96,7 +96,7 @@ export class VsCodeExtension {
     // Sidebar
     context.subscriptions.push(
       vscode.window.registerWebviewViewProvider(
-        "continue.continueGUIView",
+        "ssidevbuddy.ssidevbuddyGUIView",
         this.sidebar,
         {
           webviewOptions: { retainContextWhenHidden: true },
@@ -107,7 +107,7 @@ export class VsCodeExtension {
 
     // Config Handler with output channel
     const outputChannel = vscode.window.createOutputChannel(
-      "Continue - LLM Prompt/Completion",
+      "ssidevbuddy - LLM Prompt/Completion",
     );
     const inProcessMessenger = new InProcessMessenger<
       ToCoreProtocol,
@@ -297,7 +297,7 @@ export class VsCodeExtension {
       if (e.provider.id === controlPlaneEnv.AUTH_TYPE) {
         vscode.commands.executeCommand(
           "setContext",
-          "continue.isSignedInToControlPlane",
+          "ssidevbuddy.isSignedInToControlPlane",
           true,
         );
 
@@ -316,7 +316,7 @@ export class VsCodeExtension {
       } else {
         vscode.commands.executeCommand(
           "setContext",
-          "continue.isSignedInToControlPlane",
+          "ssidevbuddy.isSignedInToControlPlane",
           false,
         );
 

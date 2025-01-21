@@ -9,6 +9,7 @@ import {
   ModelDescription,
   ModelRoles,
 } from "../";
+import { TRIAL_PROXY_URL } from "../control-plane/client";
 import { GlobalContext } from "../util/GlobalContext";
 import { editConfigJson } from "../util/paths";
 
@@ -71,6 +72,40 @@ export function addOpenAIKey(key: string) {
         if (m.provider === "free-trial") {
           m.apiKey = key;
           m.provider = "openai";
+        }
+        return m;
+      });
+    return config;
+  });
+}
+
+export function addUserTokenForSSIDevBuddy(userToken: string) {
+  editConfigJson((config) => {
+    if (config.contextProviders) {
+      config.contextProviders = [
+        ...config.contextProviders.filter(
+          (ctx) =>
+            ctx.name !== "ssi-dev-buddy-context",
+        ),
+        {
+          "name": "ssi-dev-buddy-context",
+          "params": {
+            "url": `${TRIAL_PROXY_URL}/api/vscode/context_api`,
+            "options": {
+              "apiKey": userToken
+            }
+          }
+        }
+      ];
+    }
+    config.models = config.models
+      .filter(
+        (model) =>
+          model.provider === "ssi-dev-buddy",
+      )
+      .map((m: ModelDescription) => {
+        if (m.provider === "ssi-dev-buddy") {
+          m.apiKey = userToken;
         }
         return m;
       });

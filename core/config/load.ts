@@ -73,7 +73,6 @@ import {
 import { getSystemPromptDotFile } from "./getSystemPromptDotFile";
 // import { isSupportedLanceDbCpuTarget } from "./util";
 import { validateConfig } from "./validation.js";
-import { localPathToUri } from "../util/pathToUri";
 
 function resolveSerializedConfig(filepath: string): SerializedContinueConfig {
   let content = fs.readFileSync(filepath, "utf8");
@@ -254,6 +253,7 @@ async function intermediateToFinalConfig(
 
   // Auto-detect models
   let models: BaseLLM[] = [];
+  
   for (const desc of config.models) {
     if (isModelDescription(desc)) {
       const llm = await llmFromDescription(
@@ -349,7 +349,6 @@ async function intermediateToFinalConfig(
     // Remove free trial models
     models = models.filter((model) => model.providerName !== "free-trial");
   }
-
   // Tab autocomplete model
   let tabAutocompleteModels: BaseLLM[] = [];
   if (config.tabAutocompleteModel) {
@@ -814,7 +813,7 @@ async function loadFullConfigNode(
           "Could not load config.ts as absolute path, retrying as file url ...",
         );
         try {
-          module = await import(localPathToUri(configJsPath));
+          module = await import(`file://${configJsPath}`);
         } catch (e) {
           throw new Error("Could not load config.ts as file url either", {
             cause: e,
