@@ -7,6 +7,7 @@ export type ConfigState = {
   configError: ConfigValidationError[] | undefined;
   config: BrowserSerializedContinueConfig;
   defaultModelTitle: string;
+  defaultProjectId: number | undefined;
 };
 
 const initialState: ConfigState = {
@@ -28,6 +29,7 @@ const initialState: ConfigState = {
     tools: [],
     usePlatform: false,
   },
+  defaultProjectId: undefined,
 };
 
 export const configSlice = createSlice({
@@ -94,6 +96,15 @@ export const configSlice = createSlice({
         defaultModelTitle: state.config.models[nextIndex].title,
       };
     },
+    setDefaultProjectId: (
+      state,
+      { payload }: PayloadAction<{ value: number; force?: boolean }>,
+    ) => {
+      return {
+        ...state,
+        defaultProjectId: payload.value,
+      };
+    },
   },
   selectors: {
     selectDefaultModel: (state) => {
@@ -110,6 +121,9 @@ export const configSlice = createSlice({
     selectUIConfig: (state) => {
       return state.config?.ui ?? null;
     },
+    selectDefaultProjectId: (state) => {
+      return state.defaultProjectId;
+    },
   },
 });
 
@@ -119,12 +133,14 @@ export const {
   updateConfig,
   setConfigResult,
   setConfigError,
+  setDefaultProjectId,
 } = configSlice.actions;
 
 export const {
   selectDefaultModel,
   selectDefaultModelContextLength,
   selectUIConfig,
+  selectDefaultProjectId,
 } = configSlice.selectors;
 
 export default configSlice.reducer;

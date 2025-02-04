@@ -1,7 +1,10 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { ChatMessage, PromptLog } from "core";
 import { selectCurrentToolCall } from "../selectors/selectCurrentToolCall";
-import { selectDefaultModel } from "../slices/configSlice";
+import {
+  selectDefaultModel,
+  selectDefaultProjectId,
+} from "../slices/configSlice";
 import {
   abortStream,
   addPromptCompletionPair,
@@ -20,16 +23,15 @@ export const streamNormalInput = createAsyncThunk<
   // Gather state
   const state = getState();
   const defaultModel = selectDefaultModel(state);
+  const defaultProjectId = selectDefaultProjectId(state);
   const toolSettings = state.ui.toolSettings;
   const streamAborter = state.session.streamAborter;
   const useTools = state.ui.useTools;
   if (!defaultModel) {
     throw new Error("Default model not defined");
   }
-
   const includeTools =
     useTools && modelSupportsTools(defaultModel.model, defaultModel.provider);
-
   // Send request
   const gen = extra.ideMessenger.llmStreamChat(
     defaultModel.title,
@@ -42,6 +44,7 @@ export const streamNormalInput = createAsyncThunk<
           ),
         }
       : {},
+    defaultProjectId,
   );
 
   // Stream response

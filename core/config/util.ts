@@ -11,7 +11,7 @@ import {
 } from "../";
 import { TRIAL_PROXY_URL } from "../control-plane/client";
 import { GlobalContext } from "../util/GlobalContext";
-import { editConfigJson } from "../util/paths";
+import { editConfigJson, getConfigJson } from "../util/paths";
 
 function stringify(obj: any, indentation?: number): string {
   return JSON.stringify(
@@ -84,25 +84,21 @@ export function addUserTokenForSSIDevBuddy(userToken: string) {
     if (config.contextProviders) {
       config.contextProviders = [
         ...config.contextProviders.filter(
-          (ctx) =>
-            ctx.name !== "ssi-dev-buddy-context",
+          (ctx) => ctx.name !== "ssi-dev-buddy-context",
         ),
         {
-          "name": "ssi-dev-buddy-context",
-          "params": {
-            "url": `${TRIAL_PROXY_URL}/api/vscode/context_api`,
-            "options": {
-              "apiKey": userToken
-            }
-          }
-        }
+          name: "ssi-dev-buddy-context",
+          params: {
+            url: `${TRIAL_PROXY_URL}/api/vscode/context_api`,
+            options: {
+              apiKey: userToken,
+            },
+          },
+        },
       ];
     }
     config.models = config.models
-      .filter(
-        (model) =>
-          model.provider === "ssi-dev-buddy",
-      )
+      .filter((model) => model.provider === "ssi-dev-buddy")
       .map((m: ModelDescription) => {
         if (m.provider === "ssi-dev-buddy") {
           m.apiKey = userToken;
@@ -111,6 +107,14 @@ export function addUserTokenForSSIDevBuddy(userToken: string) {
       });
     return config;
   });
+}
+
+export function getUserTokenForSSIDevBuddy() {
+  let configJson = getConfigJson();
+  let ssiDevBuddyContextConfig = configJson.contextProviders.filter(
+    (ctx: { name: string }) => ctx.name === "ssi-dev-buddy-context",
+  );
+  return ssiDevBuddyContextConfig[0]?.params?.options?.apiKey;
 }
 
 export function deleteModel(title: string) {

@@ -29,6 +29,7 @@ import ModelSelect from "../modelSelection/ModelSelect";
 import AssistantAndModelSelect from "../modelSelection/platform/AssistantAndModelSelect";
 import HoverItem from "./InputToolbar/HoverItem";
 import ToggleToolsButton from "./InputToolbar/ToggleToolsButton";
+import ProjecSelect from "../projectSelection/ProjectSelect";
 
 const StyledDiv = styled.div<{ isHidden?: boolean }>`
   padding-top: 4px;
@@ -118,6 +119,7 @@ function InputToolbar(props: InputToolbarProps) {
       >
         <div className="flex items-center justify-start gap-2 whitespace-nowrap">
           {usePlatform ? <AssistantAndModelSelect /> : <ModelSelect />}
+          <ProjecSelect />
           <div className="xs:flex -mb-1 hidden items-center text-gray-400 transition-colors duration-200">
             {props.toolbarOptions?.hideImageUpload ||
               (supportsImages && (

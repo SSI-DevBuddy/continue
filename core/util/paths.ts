@@ -228,6 +228,12 @@ export function editConfigJson(
   }
 }
 
+export function getConfigJson(): any {
+  const config = fs.readFileSync(getConfigJsonPath(), "utf8");
+  let configJson = JSONC.parse(config);
+  return configJson;
+}
+
 function getMigrationsFolderPath(): string {
   const migrationsPath = path.join(getContinueGlobalPath(), ".migrations");
   if (!fs.existsSync(migrationsPath)) {

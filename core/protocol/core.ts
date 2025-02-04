@@ -144,6 +144,7 @@ export type ToCoreFromIdeOrWebviewProtocol = {
       messages: ChatMessage[];
       completionOptions: LLMFullCompletionOptions;
       title: string;
+      projectId: number;
     },
     ProtocolGeneratorType<ChatMessage>,
   ];
@@ -213,7 +214,11 @@ export type ToCoreFromIdeOrWebviewProtocol = {
   ];
   "clipboardCache/add": [{ content: string }, void];
 
-  
-  "auth/login": [{ username: string, password: string }, { accessToken: string, user: any }];
+  "auth/login": [
+    { username: string; password: string },
+    { accessToken: string; user: any },
+  ];
+
   "auth/logout": [undefined, void];
+  "projects/users": [undefined, { data: { Label: string; Value: number }[] }];
 };

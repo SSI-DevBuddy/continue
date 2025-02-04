@@ -53,7 +53,6 @@ class SSIDevBuddy extends BaseLLM {
     };
   }
 
-
   protected async *_streamComplete(
     prompt: string,
     signal: AbortSignal,
@@ -111,6 +110,7 @@ class SSIDevBuddy extends BaseLLM {
     messages: ChatMessage[],
     signal: AbortSignal,
     options: CompletionOptions,
+    projectId?: number,
   ): AsyncGenerator<ChatMessage> {
     const args = this._convertArgs(this.collectArgs(options));
 
@@ -119,12 +119,12 @@ class SSIDevBuddy extends BaseLLM {
     //   args.model,
     //   true,
     // );
-
     const response = await this.fetch(`${TRIAL_PROXY_URL}/api/vscode/chat`, {
       method: "POST",
       headers: await this._getHeaders(),
       body: JSON.stringify({
         messages: messages.map(this._convertMessage),
+        projectId: projectId,
         ...args,
       }),
       signal,
@@ -135,13 +135,10 @@ class SSIDevBuddy extends BaseLLM {
       try {
         yield {
           role: "assistant",
-          content: (JSON.parse(chunk))?.text ?? "",
+          content: JSON.parse(chunk)?.text ?? "",
         };
         completion += chunk;
-      }
-      catch (ex) {
-
-      }
+      } catch (ex) {}
     }
     // this._countTokens(completion, args.model, false);
   }

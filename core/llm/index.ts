@@ -378,7 +378,7 @@ export abstract class BaseLLM implements ILLM {
             text =
               "You may need to add pre-paid credits before using the OpenAI API.";
           } else if (
-            resp.status === 401 &&  // TODO: Update to logout or refresh token
+            resp.status === 401 && // TODO: Update to logout or refresh token
             (resp.url.includes("api.mistral.ai") ||
               resp.url.includes("codestral.mistral.ai"))
           ) {
@@ -712,6 +712,7 @@ export abstract class BaseLLM implements ILLM {
     _messages: ChatMessage[],
     signal: AbortSignal,
     options: LLMFullCompletionOptions = {},
+    projectId?: number,
   ): AsyncGenerator<ChatMessage, PromptLog> {
     let { completionOptions, log } = this._parseCompletionOptions(options);
 
@@ -778,6 +779,7 @@ export abstract class BaseLLM implements ILLM {
             messages,
             signal,
             completionOptions,
+            projectId,
           )) {
             completion += chunk.content;
             yield chunk;
@@ -865,6 +867,7 @@ export abstract class BaseLLM implements ILLM {
     prompt: string,
     signal: AbortSignal,
     options: CompletionOptions,
+    profileId?: number,
   ): AsyncGenerator<string> {
     throw new Error("Not implemented");
   }
@@ -873,6 +876,7 @@ export abstract class BaseLLM implements ILLM {
     messages: ChatMessage[],
     signal: AbortSignal,
     options: CompletionOptions,
+    projectId?: number,
   ): AsyncGenerator<ChatMessage> {
     if (!this.templateMessages) {
       throw new Error(
@@ -884,6 +888,7 @@ export abstract class BaseLLM implements ILLM {
       this.templateMessages(messages),
       signal,
       options,
+      projectId,
     )) {
       yield { role: "assistant", content: chunk };
     }

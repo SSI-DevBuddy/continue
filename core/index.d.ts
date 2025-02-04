@@ -129,6 +129,7 @@ export interface ILLM extends LLMOptions {
     messages: ChatMessage[],
     signal: AbortSignal,
     options?: LLMFullCompletionOptions,
+    profileId?: number,
   ): AsyncGenerator<ChatMessage, PromptLog>;
 
   chat(

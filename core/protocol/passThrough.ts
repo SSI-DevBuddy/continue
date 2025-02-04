@@ -60,6 +60,7 @@ export const WEBVIEW_TO_CORE_PASS_THROUGH: (keyof ToCoreFromWebviewProtocol)[] =
     "tools/call",
     "auth/login",
     "auth/logout",
+    "projects/users",
   ];
 
 // Message types to pass through from core to webview

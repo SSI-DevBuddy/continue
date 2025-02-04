@@ -14,7 +14,13 @@ import {
   setupLocalConfigAfterFreeTrial,
   setupQuickstartConfig,
 } from "./config/onboarding";
-import { addContextProvider, addModel, deleteModel, addUserTokenForSSIDevBuddy } from "./config/util";
+import {
+  addContextProvider,
+  addModel,
+  deleteModel,
+  addUserTokenForSSIDevBuddy,
+  getUserTokenForSSIDevBuddy,
+} from "./config/util";
 import { recentlyEditedFilesCache } from "./context/retrieval/recentlyEditedFilesCache";
 import { ContinueServerClient } from "./continueServer/stubs/client";
 import { getAuthUrlForTokenPage } from "./control-plane/auth/index";
@@ -414,6 +420,7 @@ export class Core {
         msg.data.messages,
         new AbortController().signal,
         msg.data.completionOptions,
+        msg.data.projectId,
       );
       let next = await gen.next();
       while (!next.done) {
@@ -907,17 +914,20 @@ export class Core {
       return { contextItems };
     });
 
-    on("auth/login", async (msg:any) => {
-      let data:any = {};
+    on("auth/login", async (msg: any) => {
+      let data: any = {};
       try {
         const ur = new URL("/api/auth/signin", TRIAL_PROXY_URL);
         const resp = await fetch(ur, {
           method: "POST",
-          body: JSON.stringify({ email: msg.data.username, password: msg.data.password }),
+          body: JSON.stringify({
+            email: msg.data.username,
+            password: msg.data.password,
+          }),
           headers: {
             "Content-Type": "application/json",
-            ...(await getHeaders())
-          }
+            ...(await getHeaders()),
+          },
         });
 
         if (!resp.ok) {
@@ -927,18 +937,49 @@ export class Core {
         data = (await resp.json()) as any;
         const token = data.token;
         addUserTokenForSSIDevBuddy(token);
-        return { success:true, accessToken: token, user: {} };
-      }
-      catch (ex) {
+        return { success: true, accessToken: token, user: {} };
+      } catch (ex) {
         console.log(ex);
-        return { success:false, accessToken: "-", user: "-" };
+        return { success: false, accessToken: "-", user: "-" };
       }
-      return { success:false, accessToken: "-", user: "-" };
+      return { success: false, accessToken: "-", user: "-" };
     });
 
     on("auth/logout", (msg) => {
       const token = "";
       addUserTokenForSSIDevBuddy(token);
+    });
+
+    on("projects/users", async (msg) => {
+      const token = getUserTokenForSSIDevBuddy();
+
+      if (token) {
+        let data: { Label: string; Value: number }[] = [];
+        try {
+          const ur = new URL(`/api/projects/users/${4}`, TRIAL_PROXY_URL);
+          const resp = await fetch(ur, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+              ...(await getHeaders()),
+            },
+          });
+          if (resp.status == 401) {
+            const token = "";
+            addUserTokenForSSIDevBuddy(token);
+          }
+          if (!resp.ok) {
+            throw new Error(await resp.text());
+          }
+          data = (await resp.json()) as any;
+          return { success: true, data: data };
+        } catch (ex) {
+          console.log(ex);
+          return { success: false, data: [] };
+        }
+      }
+      return { success: false, data: [] };
     });
   }
 
