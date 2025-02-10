@@ -50,6 +50,7 @@ export const gatherContext = createAsyncThunk<
         defaultContextProviders,
         dispatch,
         selectedModelTitle: state.config.defaultModelTitle,
+        selectedProjectId: state.config.defaultProjectId,
       });
 
     // Automatically use currently open file

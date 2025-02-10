@@ -20,8 +20,7 @@ class SSIDevBuddyContextProvider extends BaseContextProvider {
       title: this.options.title || "ssi-dev-buddy-context",
       displayTitle: this.options.displayTitle || "SSI DevBuddy Context",
       description:
-        this.options.description ||
-        "Retrieve a context item from SSI DevBuddy",
+        this.options.description || "Retrieve a context item from SSI DevBuddy",
       type: "normal",
     };
   }
@@ -33,17 +32,20 @@ class SSIDevBuddyContextProvider extends BaseContextProvider {
     const body = {
       query: query || "",
       fullInput: extras.fullInput,
-      options: this.options.options,
+      projectId: extras.selectedProjectId,
+      messages: [],
     };
-    
-    const response = await extras.fetch(new URL("/api/vscode/context_api", TRIAL_PROXY_URL), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.options.apiKey}`,
+    const response = await extras.fetch(
+      new URL("/api/vscode/context_api", TRIAL_PROXY_URL),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.options.options.apiKey}`,
+        },
+        body: JSON.stringify(body),
       },
-      body: JSON.stringify(body),
-    });
+    );
 
     const json = await response.json();
 

@@ -13,6 +13,7 @@ import { Dispatch } from "@reduxjs/toolkit";
 import { setIsGatheringContext } from "../../redux/slices/sessionSlice";
 import { ctxItemToRifWithContents } from "core/commands/util";
 import { getUriFileExtension } from "core/util/uri";
+import { constructMessages } from "core/llm/constructMessages";
 
 interface MentionAttrs {
   label: string;
@@ -28,6 +29,7 @@ interface ResolveEditorContentInput {
   defaultContextProviders: DefaultContextProvider[];
   selectedModelTitle: string;
   dispatch: Dispatch;
+  selectedProjectId?: number;
 }
 
 /**
@@ -41,6 +43,7 @@ async function resolveEditorContent({
   defaultContextProviders,
   selectedModelTitle,
   dispatch,
+  selectedProjectId,
 }: ResolveEditorContentInput): Promise<
   [ContextItemWithId[], RangeInFile[], MessageContent]
 > {
@@ -127,6 +130,7 @@ async function resolveEditorContent({
       fullInput: stripImages(parts),
       selectedCode,
       selectedModelTitle,
+      selectedProjectId,
     });
     if (result.status === "success") {
       const resolvedItems = result.content;
@@ -145,6 +149,7 @@ async function resolveEditorContent({
       fullInput: stripImages(parts),
       selectedCode,
       selectedModelTitle,
+      selectedProjectId,
     });
 
     if (result.status === "success") {
@@ -165,6 +170,7 @@ async function resolveEditorContent({
         fullInput: stripImages(parts),
         selectedCode,
         selectedModelTitle,
+        selectedProjectId,
       });
       if (result.status === "success") {
         return result.content;

@@ -98,6 +98,7 @@ export type ToCoreFromIdeOrWebviewProtocol = {
       fullInput: string;
       selectedCode: RangeInFile[];
       selectedModelTitle: string;
+      selectedProjectId?: number;
     },
     ContextItemWithId[],
   ];

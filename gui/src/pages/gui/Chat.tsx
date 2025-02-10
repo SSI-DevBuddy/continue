@@ -191,6 +191,9 @@ export function Chat() {
   const selectedModelTitle = useAppSelector(
     (store) => store.config.defaultModelTitle,
   );
+  const selectedProjectId = useAppSelector(
+    (store) => store.config.defaultProjectId,
+  );
   const defaultModel = useAppSelector(selectDefaultModel);
   const ttsActive = useAppSelector((state) => state.ui.ttsActive);
   const isStreaming = useAppSelector((state) => state.session.isStreaming);
@@ -315,6 +318,7 @@ export function Chat() {
       defaultContextProviders: [],
       dispatch,
       selectedModelTitle,
+      selectedProjectId: selectedProjectId,
     });
 
     const prompt = [

@@ -324,8 +324,14 @@ export class Core {
     });
 
     on("context/getContextItems", async (msg) => {
-      const { name, query, fullInput, selectedCode, selectedModelTitle } =
-        msg.data;
+      const {
+        name,
+        query,
+        fullInput,
+        selectedCode,
+        selectedModelTitle,
+        selectedProjectId,
+      } = msg.data;
       const config = await this.config();
       if (!config) {
         return [];
@@ -353,6 +359,7 @@ export class Core {
           ide,
           selectedCode,
           reranker: config.reranker,
+          selectedProjectId: selectedProjectId,
           fetch: (url, init) =>
             fetchwithRequestOptions(url, init, config.requestOptions),
         });

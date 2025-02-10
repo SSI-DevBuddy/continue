@@ -184,6 +184,7 @@ export interface ContextProviderExtras {
   ide: IDE;
   selectedCode: RangeInFile[];
   fetch: FetchFunction;
+  selectedProjectId?: number | undefined;
 }
 
 export interface LoadSubmenuItemsArgs {
