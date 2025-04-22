@@ -3,11 +3,17 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { BrowserSerializedContinueConfig } from "core";
 import { DEFAULT_MAX_TOKENS } from "core/llm/constants";
 
+type UserProject = {
+  title: string;
+  value: number;
+};
+
 export type ConfigState = {
   configError: ConfigValidationError[] | undefined;
   config: BrowserSerializedContinueConfig;
   defaultModelTitle: string;
   defaultProjectId: number | undefined;
+  userProjects: UserProject[] | undefined;
 };
 
 const initialState: ConfigState = {
@@ -30,6 +36,7 @@ const initialState: ConfigState = {
     usePlatform: false,
   },
   defaultProjectId: undefined,
+  userProjects: undefined,
 };
 
 export const configSlice = createSlice({
@@ -105,6 +112,15 @@ export const configSlice = createSlice({
         defaultProjectId: payload.value,
       };
     },
+    setUserProjects: (
+      state,
+      { payload }: PayloadAction<{ value: UserProject[]; force?: boolean }>,
+    ) => {
+      return {
+        ...state,
+        userProjects: payload.value,
+      };
+    },
   },
   selectors: {
     selectDefaultModel: (state) => {
@@ -124,6 +140,9 @@ export const configSlice = createSlice({
     selectDefaultProjectId: (state) => {
       return state.defaultProjectId;
     },
+    selectUserProjects: (state) => {
+      return state.userProjects;
+    },
   },
 });
 
@@ -134,6 +153,7 @@ export const {
   setConfigResult,
   setConfigError,
   setDefaultProjectId,
+  setUserProjects,
 } = configSlice.actions;
 
 export const {
@@ -141,6 +161,7 @@ export const {
   selectDefaultModelContextLength,
   selectUIConfig,
   selectDefaultProjectId,
+  selectUserProjects,
 } = configSlice.selectors;
 
 export default configSlice.reducer;

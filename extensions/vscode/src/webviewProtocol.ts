@@ -81,9 +81,8 @@ export class VsCodeWebviewProtocol
             respond({ done: true, content: response ?? {}, status: "success" });
           }
         } catch (e: any) {
-
           const stringified = JSON.stringify({ msg }, null, 2);
-          
+
           // if(!stringified.includes("Unauthorized")){
           //   respond({ done: true, error: e.message, status: "error" });
           // }
@@ -102,22 +101,22 @@ export class VsCodeWebviewProtocol
               message = `The request failed with "${e.cause.name}": ${e.cause.message}. If you're having trouble setting up Continue, please see the troubleshooting guide for help.`;
             }
           }
-          
+
           if (
             (stringified.includes("llm/streamChat") ||
-            stringified.includes("chatDescriber/describe")) && !message.includes("https://apissidev")
+              stringified.includes("chatDescriber/describe")) &&
+            !message.includes("https://apidev")
           ) {
             // handle these errors in the GUI
             return;
           }
 
-          
-          if (message.includes("https://apissidev")) {
+          if (message.includes("https://apidev")) {
             message = message.split("\n").filter((l: string) => l !== "")[1];
             try {
               message = JSON.parse(message).message;
             } catch {}
-            
+
             this.request("openOnboardingCard", undefined); // navigate to login screen
 
             // vscode.window

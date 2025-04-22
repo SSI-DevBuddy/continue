@@ -42,7 +42,10 @@ import { useWebviewListener } from "../../hooks/useWebviewListener";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { selectUsePlatform } from "../../redux/selectors";
 import { selectCurrentToolCall } from "../../redux/selectors/selectCurrentToolCall";
-import { selectDefaultModel } from "../../redux/slices/configSlice";
+import {
+  selectDefaultModel,
+  setUserProjects,
+} from "../../redux/slices/configSlice";
 import { submitEdit } from "../../redux/slices/editModeState";
 import {
   clearLastEmptyResponse,
@@ -73,6 +76,7 @@ import ConfigErrorIndicator from "./ConfigError";
 import { ToolCallDiv } from "./ToolCallDiv";
 import { ToolCallButtons } from "./ToolCallDiv/ToolCallButtonsDiv";
 import ToolOutput from "./ToolCallDiv/ToolOutput";
+import { useNavigate } from "react-router-dom";
 
 const StopButton = styled.div`
   background-color: ${vscBackground};
@@ -221,6 +225,7 @@ export function Chat() {
   );
   const lastSessionId = useAppSelector((state) => state.session.lastSessionId);
   const usePlatform = useAppSelector(selectUsePlatform);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Cmd + Backspace to delete current step
@@ -239,6 +244,25 @@ export function Chat() {
       window.removeEventListener("keydown", listener);
     };
   }, [isStreaming]);
+
+  useEffect(() => {
+    const fetchUserProject = async () => {
+      try {
+        const result = await ideMessenger.request("projects/users", undefined);
+        if (result.status != "error" && result.content) {
+          const projectOptions = result?.content?.data?.map((con) => ({
+            title: con.Label,
+            value: con.Value,
+          }));
+          dispatch(setUserProjects({ value: projectOptions }));
+        }
+      } catch (err) {
+        navigate("/login");
+      }
+    };
+
+    fetchUserProject();
+  }, []);
 
   const { widget, highlights } = useFindWidget(stepsDivRef);
 

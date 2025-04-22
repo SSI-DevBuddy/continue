@@ -62,22 +62,26 @@ class SSIDevBuddy extends BaseLLM {
 
     await this._countTokens(prompt, args.model, true);
 
-    const response = await this.fetch(`${TRIAL_PROXY_URL}/stream_complete`, {
-      method: "POST",
-      headers: await this._getHeaders(),
-      body: JSON.stringify({
-        prompt,
-        ...args,
-      }),
-      signal,
-    });
+    const response = await this.fetch(
+      `${TRIAL_PROXY_URL}/api/vscode/stream_complete`,
+      {
+        method: "POST",
+        headers: await this._getHeaders(),
+        body: JSON.stringify({
+          prompt,
+          ...args,
+        }),
+        signal,
+      },
+    );
 
     let completion = "";
     for await (const value of streamResponse(response)) {
-      yield value;
-      completion += value;
+      const answer = JSON.parse(value)?.text ?? "";
+      yield answer;
+      completion += answer;
     }
-    void this._countTokens(completion, args.model, false);
+    //void this._countTokens(completion, args.model, false);
   }
 
   protected _convertMessage(message: ChatMessage) {

@@ -15,6 +15,7 @@ import { getFontSize, isMetaEquivalentKeyPressed } from "../../util";
 import {
   setDefaultProjectId,
   selectDefaultProjectId,
+  selectUserProjects,
 } from "../../redux/slices/configSlice";
 import { useNavigate } from "react-router-dom";
 
@@ -159,7 +160,6 @@ function ProjectOption({ option, idx }: ProjectOptionProps) {
 
 function ProjecSelect() {
   const dispatch = useDispatch();
-  const ideMessenger = useContext(IdeMessengerContext);
   const [showAbove, setShowAbove] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [options, setOptions] = useState<Option[]>([]);
@@ -167,27 +167,21 @@ function ProjecSelect() {
     (store) => store.session.selectedProfileId,
   );
   const defaultProjectId = useAppSelector(selectDefaultProjectId);
+  const userProjects = useAppSelector(selectUserProjects);
   const navigate = useNavigate();
   // Sort so that options without an API key are at the end
   useEffect(() => {
-    const fetchUserProject = async () => {
-      try {
-        const result = await ideMessenger.request("projects/users", undefined);
-        if (result.status != "error" && result.content) {
-          const projectOptions = result?.content?.data?.map((con) => ({
-            title: con.Label,
-            value: con.Value,
-          }));
-          setDefaultProjectId({ value: projectOptions[0].value });
-          setOptions(projectOptions);
-        }
-      } catch (err) {
-        navigate("/login");
+    if (userProjects) {
+      const projectOptions = userProjects?.map((con: any) => ({
+        title: con.title,
+        value: con.value,
+      }));
+      if (projectOptions?.length == 1) {
+        setDefaultProjectId({ value: projectOptions[0]?.value });
       }
-    };
-
-    fetchUserProject();
-  }, []);
+      setOptions(projectOptions);
+    }
+  }, [userProjects]);
 
   useEffect(() => {
     const handleResize = () => calculatePosition();
@@ -257,7 +251,7 @@ function ProjecSelect() {
           className="z-50 max-w-[90vw]"
         >
           <div className={`max-h-[${MAX_HEIGHT_PX}px]`}>
-            {options.map((option, idx) => (
+            {options?.map((option, idx) => (
               <ProjectOption option={option} idx={idx} key={idx} />
             ))}
           </div>
