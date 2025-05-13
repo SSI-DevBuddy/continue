@@ -22,7 +22,7 @@ export interface ControlPlaneWorkspace {
 }
 
 export interface ControlPlaneModelDescription extends ModelDescription {}
-export const TRIAL_PROXY_URL = "https://apidevbuddy.ssidecisions.com";
+export const TRIAL_PROXY_URL = "https://apidevbuddy-demo.ssi-group.de";
 // "https://proxy-server-blue-l6vsfbzhba-uw.a.run.app";
 
 export class ControlPlaneClient {
