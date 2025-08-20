@@ -75,6 +75,8 @@ class MessageTypes {
         // core/protocol/passThrough.ts
         val PASS_THROUGH_TO_CORE = listOf(
             "abort",
+            "auth/login",
+            "auth/logout",
             "history/list",
             "history/delete",
             "history/load",
@@ -136,6 +138,7 @@ class MessageTypes {
             "isItemTooBig",
             "process/markAsBackgrounded",
             "process/isBackgrounded",
+            "projects/users",
         )
     }
 }
