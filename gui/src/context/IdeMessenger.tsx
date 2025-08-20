@@ -1,3 +1,4 @@
+//----- more changes needed
 import { ChatMessage, IDE, PromptLog } from "core";
 import type {
   FromWebviewProtocol,
@@ -9,9 +10,8 @@ import { MessageIde } from "core/protocol/messenger/messageIde";
 import {
   GeneratorReturnType,
   GeneratorYieldType,
+  WebviewMessengerResult,
   WebviewProtocolGeneratorMessage,
-  WebviewSingleMessage,
-  WebviewSingleProtocolMessage,
 } from "core/protocol/util";
 import { createContext } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -40,7 +40,7 @@ export interface IIdeMessenger {
   request<T extends keyof FromWebviewProtocol>(
     messageType: T,
     data: FromWebviewProtocol[T][0],
-  ): Promise<WebviewSingleProtocolMessage<T>>;
+  ): Promise<WebviewMessengerResult<T>>;
 
   streamRequest<T extends keyof FromWebviewProtocol>(
     messageType: T,
@@ -146,18 +146,17 @@ export class IdeMessenger implements IIdeMessenger {
   request<T extends keyof FromWebviewProtocol>(
     messageType: T,
     data: FromWebviewProtocol[T][0],
-  ): Promise<WebviewSingleMessage<T>> {
+  ): Promise<WebviewMessengerResult<T>> {
     const messageId = uuidv4();
 
     return new Promise((resolve) => {
       const handler = (event: any) => {
         if (event.data.messageId === messageId) {
           window.removeEventListener("message", handler);
-          resolve(event.data.data as WebviewSingleMessage<T>);
+          resolve(event.data.data as WebviewMessengerResult<T>);
         }
       };
       window.addEventListener("message", handler);
-
       this.post(messageType, data, messageId);
     });
   }

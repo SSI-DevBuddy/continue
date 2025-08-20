@@ -10,6 +10,8 @@ export const WEBVIEW_TO_CORE_PASS_THROUGH: (keyof ToCoreFromWebviewProtocol)[] =
   [
     "ping",
     "abort",
+    "auth/login",
+    "auth/logout",
     "history/list",
     "history/delete",
     "history/load",
@@ -71,6 +73,7 @@ export const WEBVIEW_TO_CORE_PASS_THROUGH: (keyof ToCoreFromWebviewProtocol)[] =
     "isItemTooBig",
     "process/markAsBackgrounded",
     "process/isBackgrounded",
+    "projects/users",
     "controlPlane/getFreeTrialStatus",
   ];
 

@@ -1,3 +1,4 @@
+//// ---- more changes needed
 import { fetchwithRequestOptions } from "@continuedev/fetch";
 import * as URI from "uri-js";
 import { v4 as uuidv4 } from "uuid";
@@ -9,7 +10,12 @@ import {
 } from "./autocomplete/util/openedFilesLruCache";
 import { ConfigHandler } from "./config/ConfigHandler";
 import { SYSTEM_PROMPT_DOT_FILE } from "./config/getWorkspaceContinueRuleDotFiles";
-import { addModel, deleteModel } from "./config/util";
+import {
+  addModel,
+  addUserTokenForSSIDevBuddy,
+  deleteModel,
+  getUserTokenForSSIDevBuddy,
+} from "./config/util";
 import CurrentFileContextProvider from "./context/providers/CurrentFileContextProvider";
 import { getAuthUrlForTokenPage } from "./control-plane/auth/index";
 import { getControlPlaneEnv } from "./control-plane/env";
@@ -50,6 +56,7 @@ import {
 } from ".";
 
 import { BLOCK_TYPES, ConfigYaml } from "@continuedev/config-yaml";
+import { SSI_DEVBUDDY_CONFIG } from "../SSI_DEVBUDDY_CONFIG";
 import { getDiffFn, GitDiffCache } from "./autocomplete/snippets/gitDiffCache";
 import { stringifyMcpPrompt } from "./commands/slash/mcpSlashCommand";
 import { isLocalDefinitionFile } from "./config/loadLocalAssistants";
@@ -61,6 +68,7 @@ import {
 } from "./config/onboarding";
 import { createNewWorkspaceBlockFile } from "./config/workspace/workspaceBlocks";
 import { MCPManagerSingleton } from "./context/mcp/MCPManagerSingleton";
+import { getHeaders } from "./continueServer/stubs/headers";
 import { setMdmLicenseKey } from "./control-plane/mdm/mdm";
 import { ApplyAbortManager } from "./edit/applyAbortManager";
 import { streamDiffLines } from "./edit/streamDiffLines";
@@ -935,6 +943,77 @@ export class Core {
       const isValid = setMdmLicenseKey(licenseKey);
       return isValid;
     });
+
+    on("auth/login", async (msg: any) => {
+      let data: any = {};
+      try {
+        const ur = new URL("/api/auth/signin", SSI_DEVBUDDY_CONFIG.API_BASE);
+        const resp = await fetch(ur, {
+          method: "POST",
+          body: JSON.stringify({
+            email: msg.data.username,
+            password: msg.data.password,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            ...(await getHeaders()),
+          },
+        });
+
+        if (!resp.ok) {
+          throw new Error(await resp.text());
+        }
+
+        data = (await resp.json()) as any;
+        const token = data.token;
+        addUserTokenForSSIDevBuddy(token);
+        return { success: true, accessToken: token, user: {} };
+      } catch (ex) {
+        console.log(ex);
+        return { success: false, accessToken: "-", user: "-" };
+      }
+      return { success: false, accessToken: "-", user: "-" };
+    });
+
+    on("auth/logout", (msg) => {
+      const token = "";
+      addUserTokenForSSIDevBuddy(token);
+    });
+
+    on("projects/users", async (msg) => {
+      const token = getUserTokenForSSIDevBuddy();
+
+      if (token) {
+        let data: { Label: string; Value: number }[] = [];
+        try {
+          const ur = new URL(
+            `/api/projects/users/${4}`,
+            SSI_DEVBUDDY_CONFIG.API_BASE,
+          );
+          const resp = await fetch(ur, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+              ...(await getHeaders()),
+            },
+          });
+          if (resp.status == 401) {
+            const token = "";
+            addUserTokenForSSIDevBuddy(token);
+          }
+          if (!resp.ok) {
+            throw new Error(await resp.text());
+          }
+          data = (await resp.json()) as any;
+          return { success: true, data: data };
+        } catch (ex) {
+          console.log(ex);
+          return { success: false, data: [] };
+        }
+      }
+      return { success: false, data: [] };
+    });
   }
 
   private async handleToolCall(toolCall: ToolCall) {
@@ -1175,6 +1254,7 @@ export class Core {
       fullInput: string;
       selectedCode: RangeInFile[];
       isInAgentMode: boolean;
+      selectedProjectId?: number;
     }>,
   ) => {
     const { config } = await this.configHandler.loadConfig();
@@ -1182,7 +1262,8 @@ export class Core {
       return [];
     }
 
-    const { name, query, fullInput, selectedCode } = msg.data;
+    const { name, query, fullInput, selectedCode, selectedProjectId } =
+      msg.data;
 
     const llm = (await this.configHandler.loadConfig()).config
       ?.selectedModelByRole.chat;
@@ -1217,6 +1298,7 @@ export class Core {
         ide: this.ide,
         selectedCode,
         reranker: config.selectedModelByRole.rerank,
+        selectedProjectId: selectedProjectId,
         fetch: (url, init) =>
           fetchwithRequestOptions(url, init, config.requestOptions),
         isInAgentMode: msg.data.isInAgentMode,

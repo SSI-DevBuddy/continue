@@ -5,11 +5,21 @@ export interface ErrorWebviewMessage {
   error: string;
   done: true;
 }
-
+interface ErrorWebviewMessengerResult {
+  status: "error";
+  error: string;
+  done: boolean;
+}
 export interface SuccessWebviewSingleMessage<T> {
   done: true;
   status: "success";
   content: T;
+}
+
+interface SuccessWebviewMessengerResult<T extends keyof FromWebviewProtocol> {
+  done: boolean;
+  status: "success";
+  content: FromWebviewProtocol[T][1];
 }
 
 export type WebviewSingleMessage<T> =
@@ -51,3 +61,7 @@ export type WebviewProtocolGeneratorMessage<
 export type WebviewMessage<T = unknown, R = unknown> =
   | WebviewSingleMessage<T>
   | WebviewGeneratorMessage<T, R>;
+
+export type WebviewMessengerResult<T extends keyof FromWebviewProtocol> =
+  | ErrorWebviewMessengerResult
+  | SuccessWebviewMessengerResult<T>;

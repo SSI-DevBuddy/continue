@@ -60,6 +60,7 @@ export const modelDescriptionSchema = z.object({
     "continue-proxy",
     "nebius",
     "scaleway",
+    "ssi-devbuddy",
     "watsonx",
   ]),
   model: z.string(),

@@ -8,11 +8,13 @@ import {
   IDE,
   ILLM,
   JSONModelDescription,
+  ModelDescription,
   PromptTemplate,
 } from "../";
+import { SSI_DEVBUDDY_CONFIG } from "../../SSI_DEVBUDDY_CONFIG";
 import { DEFAULT_CHAT_SYSTEM_MESSAGE } from "../llm/defaultSystemMessages";
 import { GlobalContext } from "../util/GlobalContext";
-import { editConfigFile } from "../util/paths";
+import { editConfigFile, getConfigJson } from "../util/paths";
 
 function stringify(obj: any, indentation?: number): string {
   return JSON.stringify(
@@ -208,4 +210,47 @@ export function serializePromptTemplates(
       return [key, serialized];
     }),
   );
+}
+
+export function addUserTokenForSSIDevBuddy(userToken: string) {
+  editConfigFile(
+    (config) => {
+      if (config.contextProviders) {
+        config.contextProviders = [
+          ...config.contextProviders.filter(
+            (ctx) => ctx.name !== "ssi-devbuddy-context",
+          ),
+          {
+            name: "ssi-devbuddy-context",
+            params: {
+              url: `${SSI_DEVBUDDY_CONFIG.API_BASE}/api/vscode/context_api`,
+              options: {
+                apiKey: userToken,
+              },
+            },
+          },
+        ];
+      }
+      config.models = config.models
+        .filter((model) => model.provider === "ssi-devbuddy")
+        .map((m: ModelDescription) => {
+          if (m.provider === "ssi-devbuddy") {
+            m.apiKey = userToken;
+          }
+          return m;
+        });
+      return config;
+    },
+    (config) => {
+      return config;
+    },
+  );
+}
+
+export function getUserTokenForSSIDevBuddy() {
+  let configJson = getConfigJson();
+  let ssiDevBuddyContextConfig = configJson.contextProviders.filter(
+    (ctx: { name: string }) => ctx.name === "ssi-devbuddy-context",
+  );
+  return ssiDevBuddyContextConfig[0]?.params?.options?.apiKey;
 }

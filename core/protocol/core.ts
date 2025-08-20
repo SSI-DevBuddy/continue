@@ -122,6 +122,7 @@ export type ToCoreFromIdeOrWebviewProtocol = {
       fullInput: string;
       selectedCode: RangeInFile[];
       isInAgentMode: boolean;
+      selectedProjectId?: number;
     },
     ContextItemWithId[],
   ];
@@ -261,4 +262,11 @@ export type ToCoreFromIdeOrWebviewProtocol = {
   "process/markAsBackgrounded": [{ toolCallId: string }, void];
   "process/isBackgrounded": [{ toolCallId: string }, boolean];
   "mdm/setLicenseKey": [{ licenseKey: string }, boolean];
+
+  "auth/login": [
+    { username: string; password: string },
+    { accessToken: string; user: any },
+  ];
+  "auth/logout": [undefined, void];
+  "projects/users": [undefined, { data: { Label: string; Value: number }[] }];
 };

@@ -1,11 +1,11 @@
 import Handlebars from "handlebars";
 import {
-  BaseCompletionOptions,
-  IdeSettings,
-  ILLM,
-  ILLMLogger,
-  JSONModelDescription,
-  LLMOptions,
+    BaseCompletionOptions,
+    IdeSettings,
+    ILLM,
+    ILLMLogger,
+    JSONModelDescription,
+    LLMOptions,
 } from "../..";
 import { renderTemplatedString } from "../../util/handlebars/renderTemplatedString";
 import { BaseLLM } from "../index";
@@ -52,6 +52,7 @@ import SageMaker from "./SageMaker";
 import SambaNova from "./SambaNova";
 import Scaleway from "./Scaleway";
 import SiliconFlow from "./SiliconFlow";
+import SSIDevBuddy from "./SSIDevBuddy";
 import ContinueProxy from "./stubs/ContinueProxy";
 import TestLLM from "./Test";
 import TextGenWebUI from "./TextGenWebUI";
@@ -107,6 +108,7 @@ export const LLMClasses = [
   Cerebras,
   Asksage,
   Nebius,
+  SSIDevBuddy,
   Venice,
   VertexAI,
   xAI,

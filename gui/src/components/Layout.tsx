@@ -1,4 +1,3 @@
-import { OnboardingModes } from "core/protocol/core";
 import { useContext, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
@@ -9,6 +8,7 @@ import { LocalStorageProvider } from "../context/LocalStorage";
 import { useWebviewListener } from "../hooks/useWebviewListener";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { setCodeToEdit } from "../redux/slices/editState";
+import { setLoggedInUser } from "../redux/slices/sessionSlice";
 import { setDialogMessage, setShowDialog } from "../redux/slices/uiSlice";
 import { enterEdit, exitEdit } from "../redux/thunks/edit";
 import { saveCurrentSession } from "../redux/thunks/session";
@@ -20,11 +20,7 @@ import TextDialog from "./dialogs";
 import { GenerateRuleDialog } from "./GenerateRuleDialog";
 import { LumpProvider } from "./mainInput/Lump/LumpContext";
 import { useMainEditor } from "./mainInput/TipTapEditor";
-import {
-  isNewUserOnboarding,
-  OnboardingCard,
-  useOnboardingCard,
-} from "./OnboardingCard";
+import { useOnboardingCard } from "./OnboardingCard";
 import OSRContextMenu from "./OSRContextMenu";
 import PostHogPageView from "./PosthogPageView";
 
@@ -33,7 +29,6 @@ const LayoutTopDiv = styled(CustomScrollbarDiv)`
   position: relative;
   overflow-x: hidden;
 `;
-
 const GridDiv = styled.div`
   display: grid;
   grid-template-rows: 1fr auto;
@@ -136,33 +131,35 @@ const Layout = () => {
   useWebviewListener(
     "setupLocalConfig",
     async () => {
-      onboardingCard.open(OnboardingModes.LOCAL);
+      // onboardingCard.open(OnboardingModes.LOCAL);
     },
     [],
   );
 
-  useWebviewListener(
-    "freeTrialExceeded",
-    async () => {
-      dispatch(setShowDialog(true));
-      onboardingCard.setActiveTab(OnboardingModes.MODELS_ADD_ON);
-      dispatch(
-        setDialogMessage(
-          <div className="flex-1">
-            <OnboardingCard isDialog showFreeTrialExceededAlert />
-          </div>,
-        ),
-      );
-    },
-    [],
-  );
+  // useWebviewListener(
+  //   "freeTrialExceeded",
+  //   async () => {
+  //     dispatch(setShowDialog(true));
+  //     onboardingCard.setActiveTab(OnboardingModes.MODELS_ADD_ON);
+  //     dispatch(
+  //       setDialogMessage(
+  //         <div className="flex-1">
+  //           <OnboardingCard isDialog showFreeTrialExceededAlert />
+  //         </div>,
+  //       ),
+  //     );
+  //   },
+  //   [],
+  // );
 
   useWebviewListener(
     "setupApiKey",
     async () => {
-      onboardingCard.open(OnboardingModes.API_KEY);
+      //onboardingCard.open(OnboardingModes.API_KEY);
+      dispatch(setLoggedInUser(null));
+      navigate("/login");
     },
-    [],
+    [navigate],
   );
 
   useWebviewListener(
@@ -224,12 +221,12 @@ const Layout = () => {
   }, []);
 
   useEffect(() => {
-    if (
-      isNewUserOnboarding() &&
-      (location.pathname === "/" || location.pathname === "/index.html")
-    ) {
-      onboardingCard.open();
-    }
+    // if (
+    //   isNewUserOnboarding() &&
+    //   (location.pathname === "/" || location.pathname === "/index.html")
+    // ) {
+    //   onboardingCard.open();
+    // }
   }, [location]);
 
   return (

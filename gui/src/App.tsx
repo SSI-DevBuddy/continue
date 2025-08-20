@@ -1,8 +1,10 @@
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
+import AuthWrapper from "./components/AuthWrapper";
 import Layout from "./components/Layout";
 import { MainEditorProvider } from "./components/mainInput/TipTapEditor";
 import { SubmenuContextProvidersProvider } from "./context/SubmenuContextProviders";
 import { VscThemeProvider } from "./context/VscTheme";
+import LoginForm from "./forms/LoginForm";
 import ParallelListeners from "./hooks/ParallelListeners";
 import ConfigPage from "./pages/config";
 import ErrorPage from "./pages/error";
@@ -14,8 +16,16 @@ import { ROUTES } from "./util/navigation";
 
 const router = createMemoryRouter([
   {
-    path: ROUTES.HOME,
-    element: <Layout />,
+    path: "/login",
+    element: <LoginForm />,
+  },
+  {
+    path: "/",
+    element: (
+      <AuthWrapper>
+        <Layout />
+      </AuthWrapper>
+    ),
     errorElement: <ErrorPage />,
     children: [
       {

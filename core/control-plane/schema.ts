@@ -20,6 +20,7 @@ const modelDescriptionSchema = z.object({
     "nebius",
     "siliconflow",
     "scaleway",
+    "ssi-devbuddy",
     "watsonx",
   ]),
   model: z.string(),

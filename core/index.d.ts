@@ -195,6 +195,7 @@ export interface ContextProviderExtras {
   selectedCode: RangeInFile[];
   fetch: FetchFunction;
   isInAgentMode: boolean;
+  selectedProjectId?: number | undefined;
 }
 
 export interface LoadSubmenuItemsArgs {
