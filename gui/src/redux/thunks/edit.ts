@@ -39,7 +39,7 @@ export const streamEditThunk = createAsyncThunk<
     await dispatch(
       streamThunkWrapper(async () => {
         dispatch(setActive());
-
+        const state = getState();
         const { selectedContextItems, content } = await resolveEditorContent({
           editorState,
           modifiers: {
@@ -51,6 +51,7 @@ export const streamEditThunk = createAsyncThunk<
           availableSlashCommands: [],
           dispatch,
           getState,
+          selectedProjectId: state.config.defaultProjectId,
         });
 
         const prompt = [

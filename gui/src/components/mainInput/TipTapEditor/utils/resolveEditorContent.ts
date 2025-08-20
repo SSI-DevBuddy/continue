@@ -25,6 +25,7 @@ interface ResolveEditorContentInput {
   availableSlashCommands: SlashCommandDescWithSource[];
   dispatch: Dispatch;
   getState: () => RootState;
+  selectedProjectId?: number;
 }
 
 interface ResolveEditorContentOutput {
@@ -51,6 +52,7 @@ export async function resolveEditorContent({
   availableSlashCommands,
   dispatch,
   getState,
+  selectedProjectId,
 }: ResolveEditorContentInput): Promise<ResolveEditorContentOutput> {
   const {
     parts,
@@ -91,6 +93,7 @@ export async function resolveEditorContent({
     parts: slashedParts,
     selectedCode,
     getState,
+    selectedProjectId,
   });
 
   if (shouldGatherContext) {
@@ -116,6 +119,7 @@ async function gatherContextItems({
   parts,
   selectedCode,
   getState,
+  selectedProjectId,
 }: {
   contextRequests: GetContextRequest[];
   modifiers: InputModifiers;
@@ -124,6 +128,7 @@ async function gatherContextItems({
   parts: MessagePart[];
   selectedCode: RangeInFile[];
   getState: () => RootState;
+  selectedProjectId?: number;
 }): Promise<ContextItemWithId[]> {
   const defaultRequests: GetContextRequest[] = defaultContextProviders.map(
     (def) => ({
@@ -155,6 +160,7 @@ async function gatherContextItems({
       fullInput: stripImages(parts),
       selectedCode,
       isInAgentMode,
+      selectedProjectId,
     });
     if (result.status === "success") {
       contextItems.push(...result.content);
@@ -172,6 +178,7 @@ async function gatherContextItems({
       fullInput: stripImages(parts),
       selectedCode,
       isInAgentMode,
+      selectedProjectId,
     });
 
     if (result.status === "success") {
@@ -192,6 +199,7 @@ async function gatherContextItems({
         fullInput: "",
         selectedCode: [],
         isInAgentMode,
+        selectedProjectId,
       },
     );
     if (currentFileResponse.status === "success") {

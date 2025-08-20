@@ -7,6 +7,7 @@ export type ConfigState = {
   configError: ConfigValidationError[] | undefined;
   config: BrowserSerializedContinueConfig;
   loading: boolean;
+  defaultProjectId: number | undefined;
 };
 
 export const EMPTY_CONFIG: BrowserSerializedContinueConfig = {
@@ -40,6 +41,7 @@ const initialState: ConfigState = {
   configError: undefined,
   config: EMPTY_CONFIG,
   loading: false,
+  defaultProjectId: undefined,
 };
 
 export const configSlice = createSlice({
@@ -79,6 +81,15 @@ export const configSlice = createSlice({
     setConfigLoading: (state, { payload: loading }: PayloadAction<boolean>) => {
       state.loading = loading;
     },
+    setDefaultProjectId: (
+      state,
+      { payload }: PayloadAction<{ value: number; force?: boolean }>,
+    ) => {
+      return {
+        ...state,
+        defaultProjectId: payload.value,
+      };
+    },
   },
   selectors: {
     selectSelectedChatModelContextLength: (state): number => {
@@ -93,16 +104,24 @@ export const configSlice = createSlice({
     selectUIConfig: (state) => {
       return state.config?.ui ?? null;
     },
+    selectDefaultProjectId: (state) => {
+      return state.defaultProjectId;
+    },
   },
 });
 
-export const { updateConfig, setConfigResult, setConfigLoading } =
-  configSlice.actions;
+export const {
+  updateConfig,
+  setConfigResult,
+  setConfigLoading,
+  setDefaultProjectId,
+} = configSlice.actions;
 
 export const {
   selectSelectedChatModelContextLength,
   selectUIConfig,
   selectSelectedChatModel,
+  selectDefaultProjectId,
 } = configSlice.selectors;
 
 export default configSlice.reducer;

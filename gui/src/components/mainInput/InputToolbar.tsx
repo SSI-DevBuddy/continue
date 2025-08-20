@@ -17,6 +17,7 @@ import { getAltKeyLabel, isMetaEquivalentKeyPressed } from "../../util";
 import { ToolTip } from "../gui/Tooltip";
 import ModelSelect from "../modelSelection/ModelSelect";
 import { ModeSelect } from "../ModeSelect";
+import ProjecSelect from "../ProjectSelect/ProjectSelect";
 import { Button } from "../ui";
 import { useFontSize } from "../ui/font";
 import ContextStatus from "./ContextStatus";
@@ -91,6 +92,12 @@ function InputToolbar(props: InputToolbarProps) {
             <ModelSelect />
             <ToolTip id="model-select-tooltip" place="top">
               Select Model
+            </ToolTip>
+          </HoverItem>
+          <HoverItem data-tooltip-id="project-select-tooltip" className="!p-0">
+            <ProjecSelect />
+            <ToolTip id="project-select-tooltip" place="left">
+              Select Project
             </ToolTip>
           </HoverItem>
           <div className="xs:flex text-description -mb-1 hidden items-center transition-colors duration-200">
