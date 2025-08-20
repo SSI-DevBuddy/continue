@@ -29,6 +29,7 @@ import ProblemsContextProvider from "./ProblemsContextProvider";
 import RepoMapContextProvider from "./RepoMapContextProvider";
 import RulesContextProvider from "./RulesContextProvider";
 import SearchContextProvider from "./SearchContextProvider";
+import SSIDevBuddyContextProvider from "./SSIDevBuddyContextProvider";
 import TerminalContextProvider from "./TerminalContextProvider";
 import URLContextProvider from "./URLContextProvider";
 import WebContextProvider from "./WebContextProvider";
@@ -71,6 +72,7 @@ export const Providers: (typeof BaseContextProvider)[] = [
   GitCommitContextProvider,
   ClipboardContextProvider,
   RulesContextProvider,
+  SSIDevBuddyContextProvider,
 ];
 
 export function contextProviderClassFromName(

@@ -502,3 +502,9 @@ export const isFileWithinFolder = (
     return false;
   }
 };
+
+export function getConfigJson(): any {
+  const config = fs.readFileSync(getConfigJsonPath(), "utf8");
+  let configJson = JSONC.parse(config);
+  return configJson;
+}
