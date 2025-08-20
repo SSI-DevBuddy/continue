@@ -1,4 +1,5 @@
 import {
+  ArrowRightEndOnRectangleIcon,
   CheckIcon,
   ChevronRightIcon,
   ExclamationTriangleIcon,
@@ -10,6 +11,7 @@ import {
 } from "core/config/sharedConfig";
 import { HubSessionInfo } from "core/control-plane/AuthTypes";
 import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "../../components";
 import NumberInput from "../../components/gui/NumberInput";
 import { Select } from "../../components/gui/Select";
@@ -20,12 +22,14 @@ import { useAuth } from "../../context/Auth";
 import { IdeMessengerContext } from "../../context/IdeMessenger";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { updateConfig } from "../../redux/slices/configSlice";
+import { logOutUser } from "../../redux/slices/sessionSlice";
 import { setLocalStorage } from "../../util/localStorage";
 import { ContinueFeaturesMenu } from "./ContinueFeaturesMenu";
 
 export function UserSettingsForm() {
   /////// User settings section //////
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const ideMessenger = useContext(IdeMessengerContext);
   const config = useAppSelector((state) => state.config.config);
   const [showExperimental, setShowExperimental] = useState(false);
@@ -124,6 +128,11 @@ export function UserSettingsForm() {
         .map((val) => val.trim())
         .filter((val) => !!val),
     });
+  };
+
+  const handleLogout = () => {
+    dispatch(logOutUser(null));
+    navigate("/login");
   };
 
   const [hubEnabled, setHubEnabled] = useState(false);
@@ -319,6 +328,7 @@ export function UserSettingsForm() {
                 max={2500}
               />
             </label>
+
             <form
               className="flex flex-col gap-1"
               onSubmit={(e) => {
@@ -365,7 +375,18 @@ export function UserSettingsForm() {
               </span>
             </form>
           </div>
-
+          {/* Logout Button */}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-left text-red-400">Account</span>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 rounded-md bg-red-600 px-3 py-1 text-sm text-white transition-colors hover:bg-red-600"
+              title="Logout"
+            >
+              <ArrowRightEndOnRectangleIcon className="h-4 w-4" />
+              Logout
+            </button>
+          </div>
           <div className="flex flex-col gap-x-2 gap-y-4">
             <div
               className="flex cursor-pointer items-center gap-2 text-left text-sm font-semibold"
