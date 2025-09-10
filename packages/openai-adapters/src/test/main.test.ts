@@ -1,5 +1,6 @@
 import { ModelConfig } from "@continuedev/config-yaml";
 import * as dotenv from "dotenv";
+import { vi } from "vitest";
 import { DEEPSEEK_API_BASE } from "../apis/DeepSeek.js";
 import { INCEPTION_API_BASE } from "../apis/Inception.js";
 import { OpenAIApi } from "../apis/OpenAI.js";
@@ -50,6 +51,20 @@ const TESTS: Omit<ModelConfig & { options?: TestConfigOptions }, "name">[] = [
     model: "gpt-4o",
     apiKey: process.env.OPENAI_API_KEY!,
     roles: ["chat"],
+    options: {
+      skipTools: false,
+      expectUsage: true,
+    },
+  },
+  {
+    provider: "openai",
+    model: "gpt-4o-mini",
+    apiKey: process.env.OPENAI_API_KEY!,
+    roles: ["chat"],
+    options: {
+      skipTools: false,
+      expectUsage: true,
+    },
   },
   {
     provider: "anthropic",
@@ -66,14 +81,31 @@ const TESTS: Omit<ModelConfig & { options?: TestConfigOptions }, "name">[] = [
     model: "gemini-1.5-flash-latest",
     apiKey: process.env.GEMINI_API_KEY!,
     roles: ["chat"],
+    options: {
+      skipTools: false,
+      expectUsage: true,
+    },
   },
-  // {
-  //   provider: "mistral",
-  //   model: "codestral-latest",
-  //   apiKey: process.env.MISTRAL_API_KEY!,
-  //   apiBase: "https://api.mistral.ai/v1",
-  //   roles: ["autocomplete"],
-  // },
+  {
+    provider: "gemini",
+    model: "gemini-2.5-flash",
+    apiKey: process.env.GEMINI_API_KEY!,
+    roles: ["chat"],
+    options: {
+      skipTools: false,
+      expectUsage: true,
+    },
+  },
+  {
+    provider: "mistral",
+    model: "codestral",
+    apiKey: process.env.MISTRAL_API_KEY!,
+    roles: ["chat"],
+    options: {
+      skipTools: false,
+      expectUsage: true,
+    },
+  },
   // {
   //   provider: "deepseek",
   //   model: "deepseek-coder",
@@ -110,6 +142,26 @@ const TESTS: Omit<ModelConfig & { options?: TestConfigOptions }, "name">[] = [
     apiKey: process.env.VOYAGE_API_KEY!,
     roles: ["rerank"],
   },
+  {
+    provider: "relace",
+    model: "instant-apply",
+    apiKey: process.env.RELACE_API_KEY!,
+    roles: ["chat"],
+    options: {
+      skipTools: true,
+      expectUsage: true,
+    },
+  },
+  {
+    provider: "inception",
+    model: "mercury-coder",
+    apiKey: process.env.INCEPTION_API_KEY!,
+    roles: ["chat"],
+    options: {
+      skipTools: false,
+      expectUsage: true,
+    },
+  },
   // {
   //   provider: "cohere",
   //   model: "rerank-v3.5",
@@ -137,6 +189,7 @@ if (process.env.IGNORE_API_KEY_TESTS === "true") {
 } else {
   TESTS.forEach((config) => {
     describe(`${config.provider}/${config.model}`, () => {
+      vi.setConfig({ testTimeout: 30000 });
       testConfig({ name: config.model, ...config });
     });
   });

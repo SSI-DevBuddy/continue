@@ -50,10 +50,7 @@ import { findChatHistoryItemByToolCallId, findToolCallById } from "../util";
 function filterMultipleEditToolCalls(
   toolCalls: ToolCallDelta[],
 ): ToolCallDelta[] {
-  const editToolNames = [
-    BuiltInToolNames.EditExistingFile,
-    BuiltInToolNames.SearchAndReplaceInFile,
-  ];
+  const editToolNames = [BuiltInToolNames.EditExistingFile];
   let hasSeenEditTool = false;
 
   return toolCalls.filter((toolCall) => {
@@ -851,6 +848,21 @@ export const sessionSlice = createSlice({
         );
       }
     },
+    setToolCallArgs: (
+      state,
+      action: PayloadAction<{
+        toolCallId: string;
+        newArgs: Record<string, any>;
+      }>,
+    ) => {
+      const toolCallState = findToolCallById(
+        state.history,
+        action.payload.toolCallId,
+      );
+      if (toolCallState) {
+        toolCallState.parsedArgs = action.payload.newArgs;
+      }
+    },
     cancelToolCall: (
       state,
       action: PayloadAction<{
@@ -1040,6 +1052,7 @@ export const {
   acceptToolCall,
   setToolGenerated,
   updateToolCallOutput,
+  setToolCallArgs,
   setMode,
   setIsSessionMetadataLoading,
   setAllSessionMetadata,

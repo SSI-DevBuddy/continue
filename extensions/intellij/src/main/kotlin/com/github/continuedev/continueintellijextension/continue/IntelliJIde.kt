@@ -4,7 +4,7 @@ import com.github.continuedev.continueintellijextension.*
 import com.github.continuedev.continueintellijextension.constants.ContinueConstants
 import com.github.continuedev.continueintellijextension.constants.getContinueGlobalPath
 import com.github.continuedev.continueintellijextension.`continue`.file.FileUtils
-import com.github.continuedev.continueintellijextension.error.ContinueErrorService
+import com.github.continuedev.continueintellijextension.error.ContinueSentryService
 import com.github.continuedev.continueintellijextension.services.ContinueExtensionSettings
 import com.github.continuedev.continueintellijextension.services.ContinuePluginService
 import com.github.continuedev.continueintellijextension.utils.*
@@ -28,7 +28,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightVirtualFile
@@ -48,7 +47,7 @@ class IntelliJIDE(
     ) : IDE {
 
     private val gitService = GitService(project, continuePluginService)
-    private val fileUtils = FileUtils()
+    private val fileUtils = FileUtils(project)
     private val ripgrep: String = getRipgrepPath()
 
     init {
@@ -184,7 +183,9 @@ class IntelliJIDE(
         fileUtils.fileExists(filepath)
 
     override suspend fun writeFile(path: String, contents: String) =
-        fileUtils.writeFile(path, contents)
+        withContext(Dispatchers.EDT) {
+            fileUtils.writeFile(path, contents)
+        }
 
     override suspend fun showVirtualFile(title: String, contents: String) {
         val virtualFile = LightVirtualFile(title, contents)
@@ -197,20 +198,10 @@ class IntelliJIDE(
         return getContinueGlobalPath()
     }
 
-    override suspend fun openFile(path: String) {
-        // Convert URI path to absolute file path
-        val filePath = UriUtils.uriToFile(path).absolutePath
-        // Find the file using the absolute path
-        val file = withContext(Dispatchers.IO) {
-            LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    override suspend fun openFile(path: String) =
+        withContext(Dispatchers.EDT) {
+            fileUtils.openFile(path)
         }
-
-        file?.let {
-            ApplicationManager.getApplication().invokeLater {
-                FileEditorManager.getInstance(project).openFile(it, true)
-            }
-        }
-    }
 
     override suspend fun openUrl(url: String) {
         withContext(Dispatchers.IO) {
@@ -279,18 +270,10 @@ class IntelliJIDE(
         }
     }
 
-    override suspend fun saveFile(filepath: String) {
-        ApplicationManager.getApplication().invokeLater {
-            val file =
-                LocalFileSystem.getInstance().findFileByPath(UriUtils.parseUri(filepath).path) ?: return@invokeLater
-            val fileDocumentManager = FileDocumentManager.getInstance()
-            val document = fileDocumentManager.getDocument(file)
-
-            document?.let {
-                fileDocumentManager.saveDocument(it)
-            }
+    override suspend fun saveFile(filepath: String) =
+        withContext(Dispatchers.EDT) {
+            fileUtils.saveFile(filepath)
         }
-    }
 
     override suspend fun readFile(filepath: String): String =
         fileUtils.readFile(filepath)
@@ -374,7 +357,7 @@ class IntelliJIDE(
                 return results.split("\n")
             } catch (exception: Exception) {
                 val message = "Error executing ripgrep: ${exception.message}"
-                service<ContinueErrorService>().report(exception, message)
+                service<ContinueSentryService>().report(exception, message)
                 showToast(ToastType.ERROR, message)
                 return emptyList()
             }
@@ -416,7 +399,7 @@ class IntelliJIDE(
                 return ExecUtil.execAndGetOutput(command).stdout
             } catch (exception: Exception) {
                 val message = "Error executing ripgrep: ${exception.message}"
-                service<ContinueErrorService>().report(exception, message)
+                service<ContinueSentryService>().report(exception, message)
                 showToast(ToastType.ERROR, message)
                 return "Error: Unable to execute ripgrep command."
             }
@@ -605,11 +588,8 @@ class IntelliJIDE(
     override suspend fun listDir(dir: String): List<List<Any>> =
         fileUtils.listDir(dir)
 
-    override suspend fun getFileStats(files: List<String>): Map<String, FileStats> {
-        return files.associateWith { file ->
-            FileStats(UriUtils.uriToFile(file).lastModified(), UriUtils.uriToFile(file).length())
-        }
-    }
+    override suspend fun getFileStats(files: List<String>): Map<String, FileStats> =
+        fileUtils.getFileStats(files)
 
     override suspend fun gotoDefinition(location: Location): List<RangeInFile> {
         throw NotImplementedError("gotoDefinition not implemented yet")
@@ -621,6 +601,14 @@ class IntelliJIDE(
 
     override suspend fun getSignatureHelp(location: Location): SignatureHelp? {
         throw NotImplementedError("getSignatureHelp not implemented yet")
+    }
+
+    override suspend fun getReferences(location: Location): List<RangeInFile> {
+        throw NotImplementedError("getReferences not implemented yet")
+    }
+
+    override suspend fun getDocumentSymbols(textDocumentIdentifier: String): List<DocumentSymbol> {
+        throw NotImplementedError("getDocumentSymbols not implemented yet")
     }
 
     override fun onDidChangeActiveTextEditor(callback: (filepath: String) -> Unit) {

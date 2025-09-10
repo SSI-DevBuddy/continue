@@ -1,10 +1,11 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { CustomScrollbarDiv } from ".";
 import { AuthProvider } from "../context/Auth";
 import { IdeMessengerContext } from "../context/IdeMessenger";
 import { LocalStorageProvider } from "../context/LocalStorage";
+import TelemetryProviders from "../hooks/TelemetryProviders";
 import { useWebviewListener } from "../hooks/useWebviewListener";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { setCodeToEdit } from "../redux/slices/editState";
@@ -18,7 +19,6 @@ import { ROUTES } from "../util/navigation";
 import { FatalErrorIndicator } from "./config/FatalErrorNotice";
 import TextDialog from "./dialogs";
 import { GenerateRuleDialog } from "./GenerateRuleDialog";
-import { LumpProvider } from "./mainInput/Lump/LumpContext";
 import { useMainEditor } from "./mainInput/TipTapEditor";
 import { useOnboardingCard } from "./OnboardingCard";
 import OSRContextMenu from "./OSRContextMenu";
@@ -37,18 +37,29 @@ const GridDiv = styled.div`
 `;
 
 const Layout = () => {
+  const [showStagingIndicator, setShowStagingIndicator] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
   const onboardingCard = useOnboardingCard();
   const ideMessenger = useContext(IdeMessengerContext);
-  const currentSessionId = useAppSelector((state) => state.session.id);
 
   const { mainEditor } = useMainEditor();
   const dialogMessage = useAppSelector((state) => state.ui.dialogMessage);
 
   const showDialog = useAppSelector((state) => state.ui.showDialog);
   const isInEdit = useAppSelector((store) => store.session.isInEdit);
+
+  useEffect(() => {
+    (async () => {
+      const response = await ideMessenger.request(
+        "controlPlane/getEnvironment",
+        undefined,
+      );
+      response.status === "success" &&
+        setShowStagingIndicator(response.content.AUTH_TYPE.includes("staging"));
+    })();
+  }, []);
 
   useWebviewListener(
     "newSession",
@@ -232,8 +243,17 @@ const Layout = () => {
   return (
     <LocalStorageProvider>
       <AuthProvider>
-        <LayoutTopDiv>
-          <LumpProvider>
+        <TelemetryProviders>
+          <LayoutTopDiv>
+            {showStagingIndicator && (
+              <span
+                title="Staging environment"
+                className="absolute right-0 mx-1.5 h-1.5 w-1.5 rounded-full"
+                style={{
+                  backgroundColor: "var(--vscode-list-warningForeground)",
+                }}
+              />
+            )}
             <OSRContextMenu />
             <div
               style={{
@@ -254,15 +274,15 @@ const Layout = () => {
                 message={dialogMessage}
               />
 
-              <GridDiv className="">
+              <GridDiv>
                 <PostHogPageView />
                 <Outlet />
                 <FatalErrorIndicator />
               </GridDiv>
             </div>
             <div style={{ fontSize: fontSize(-4) }} id="tooltip-portal-div" />
-          </LumpProvider>
-        </LayoutTopDiv>
+          </LayoutTopDiv>
+        </TelemetryProviders>
       </AuthProvider>
     </LocalStorageProvider>
   );

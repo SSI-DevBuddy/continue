@@ -41,7 +41,7 @@ const router = createMemoryRouter([
         element: <History />,
       },
       {
-        path: "/stats",
+        path: ROUTES.STATS,
         element: <Stats />,
       },
       {

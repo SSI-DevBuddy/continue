@@ -19,7 +19,6 @@ export const sharedConfigSchema = z
     readResponseTTS: z.boolean(),
     promptPath: z.string(),
     useCurrentFileAsContext: z.boolean(),
-    optInNextEditFeature: z.boolean(),
     enableExperimentalTools: z.boolean(),
     onlyUseSystemMessageTools: z.boolean(),
     codebaseToolCallingOnly: z.boolean(),
@@ -33,6 +32,7 @@ export const sharedConfigSchema = z
     displayRawMarkdown: z.boolean(),
     showChatScrollbar: z.boolean(),
     autoAcceptEditToolDiffs: z.boolean(),
+    continueAfterToolRejection: z.boolean(),
 
     // `tabAutocompleteOptions` in `ContinueConfig`
     useAutocompleteCache: z.boolean(),
@@ -159,6 +159,11 @@ export function modifyAnyConfigWithSharedConfig<
     configCopy.ui.showSessionTabs = sharedConfig.showSessionTabs;
   }
 
+  if (sharedConfig.continueAfterToolRejection !== undefined) {
+    configCopy.ui.continueAfterToolRejection =
+      sharedConfig.continueAfterToolRejection;
+  }
+
   configCopy.experimental = {
     ...configCopy.experimental,
   };
@@ -182,10 +187,7 @@ export function modifyAnyConfigWithSharedConfig<
     configCopy.experimental.useCurrentFileAsContext =
       sharedConfig.useCurrentFileAsContext;
   }
-  if (sharedConfig.optInNextEditFeature !== undefined) {
-    configCopy.experimental.optInNextEditFeature =
-      sharedConfig.optInNextEditFeature;
-  }
+
   if (sharedConfig.onlyUseSystemMessageTools !== undefined) {
     configCopy.experimental.onlyUseSystemMessageTools =
       sharedConfig.onlyUseSystemMessageTools;

@@ -173,6 +173,11 @@ export interface ModelInstaller {
 }
 
 export type ContextProviderType = "normal" | "query" | "submenu";
+export type ContextIndexingType =
+  | "chunk"
+  | "embeddings"
+  | "fullTextSearch"
+  | "codeSnippets";
 
 export interface ContextProviderDescription {
   title: ContextProviderName;
@@ -180,7 +185,7 @@ export interface ContextProviderDescription {
   description: string;
   renderInlineAs?: string;
   type: ContextProviderType;
-  dependsOnIndexing?: boolean;
+  dependsOnIndexing?: ContextIndexingType[];
 }
 
 export type FetchFunction = (url: string | URL, init?: any) => Promise<any>;
@@ -257,6 +262,8 @@ export interface IContextProvider {
   ): Promise<ContextItem[]>;
 
   loadSubmenuItems(args: LoadSubmenuItemsArgs): Promise<ContextSubmenuItem[]>;
+
+  get deprecationMessage(): string | null;
 }
 
 export interface Session {
@@ -454,7 +461,7 @@ export type FileSymbolMap = Record<string, SymbolWithRange[]>;
 
 export interface PromptLog {
   modelTitle: string;
-  completionOptions: CompletionOptions;
+  modelProvider: string;
   prompt: string;
   completion: string;
 }
@@ -664,6 +671,7 @@ export interface LLMOptions {
   env?: Record<string, string | number | boolean>;
 
   sourceFile?: string;
+  isFromAutoDetect?: boolean;
 }
 
 type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<
@@ -875,6 +883,8 @@ export interface IDE {
   gotoDefinition(location: Location): Promise<RangeInFile[]>;
   gotoTypeDefinition(location: Location): Promise<RangeInFile[]>; // TODO: add to jetbrains
   getSignatureHelp(location: Location): Promise<SignatureHelp | null>; // TODO: add to jetbrains
+  getReferences(location: Location): Promise<RangeInFile[]>;
+  getDocumentSymbols(textDocumentIdentifier: string): Promise<DocumentSymbol[]>;
 
   // Callbacks
   onDidChangeActiveTextEditor(callback: (fileUri: string) => void): void;
@@ -1085,7 +1095,15 @@ export interface Tool {
   faviconUrl?: string;
   group: string;
   originalFunctionName?: string;
-  systemMessageDescription?: string;
+  systemMessageDescription?: {
+    prefix: string;
+    exampleArgs?: Array<[string, string | number]>;
+  };
+  defaultToolPolicy?: ToolPolicy;
+  evaluateToolCallPolicy?: (
+    basePolicy: ToolPolicy,
+    parsedArgs: Record<string, unknown>,
+  ) => ToolPolicy;
 }
 
 interface ToolChoice {
@@ -1098,6 +1116,9 @@ interface ToolChoice {
 export interface ConfigDependentToolParams {
   rules: RuleWithSource[];
   enableExperimentalTools: boolean;
+  isSignedIn: boolean;
+  isRemote: boolean;
+  modelName: string | undefined;
 }
 
 export type GetTool = (params: ConfigDependentToolParams) => Tool;
@@ -1129,6 +1150,7 @@ export interface BaseCompletionOptions {
 export interface ModelCapability {
   uploadImage?: boolean;
   tools?: boolean;
+  nextEdit?: boolean;
 }
 
 export interface ModelDescription {
@@ -1160,6 +1182,7 @@ export interface ModelDescription {
   configurationStatus?: LLMConfigurationStatuses;
 
   sourceFile?: string;
+  isFromAutoDetect?: boolean;
 }
 
 export interface JSONEmbedOptions {
@@ -1265,6 +1288,7 @@ export type MCPConnectionStatus =
   | "connecting"
   | "connected"
   | "error"
+  | "authenticating"
   | "not-connected";
 
 export type MCPPromptArgs = {
@@ -1310,6 +1334,7 @@ export interface MCPTool {
 export interface MCPServerStatus extends MCPOptions {
   status: MCPConnectionStatus;
   errors: string[];
+  isProtectedResource: boolean;
 
   prompts: MCPPrompt[];
   tools: MCPTool[];
@@ -1326,6 +1351,7 @@ export interface ContinueUIConfig {
   codeWrap?: boolean;
   showSessionTabs?: boolean;
   autoAcceptEditToolDiffs?: boolean;
+  continueAfterToolRejection?: boolean;
 }
 
 export interface ContextMenuConfig {
@@ -1543,11 +1569,6 @@ export interface ExperimentalConfig {
   useCurrentFileAsContext?: boolean;
 
   /**
-   * If enabled, will enable next edit in place of autocomplete
-   */
-  optInNextEditFeature?: boolean;
-
-  /**
    * If enabled, @codebase will only use tool calling
    * instead of embeddings, FTS, recently edited files, etc.
    */
@@ -1593,6 +1614,7 @@ export interface JSONModelDescription {
   aiGatewaySlug?: string;
   useLegacyCompletionsEndpoint?: boolean;
   deploymentId?: string;
+  isFromAutoDetect?: boolean;
 }
 
 // config.json
@@ -1670,6 +1692,7 @@ export interface Config {
   experimental?: ExperimentalConfig;
   /** Analytics configuration */
   analytics?: AnalyticsConfig;
+  docs?: SiteIndexingConfig[];
   data?: DataDestination[];
 }
 
@@ -1800,4 +1823,57 @@ export interface CompiledMessagesResult {
 
 export interface MessageOption {
   precompiled: boolean;
+}
+
+/* LSP-specific interfaces. */
+
+// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#symbolKind.
+// We shift this one index down to match vscode.SymbolKind.
+export enum SymbolKind {
+  File = 0,
+  Module = 1,
+  Namespace = 2,
+  Package = 3,
+  Class = 4,
+  Method = 5,
+  Property = 6,
+  Field = 7,
+  Constructor = 8,
+  Enum = 9,
+  Interface = 10,
+  Function = 11,
+  Variable = 12,
+  Constant = 13,
+  String = 14,
+  Number = 15,
+  Boolean = 16,
+  Array = 17,
+  Object = 18,
+  Key = 19,
+  Null = 20,
+  EnumMember = 21,
+  Struct = 22,
+  Event = 23,
+  Operator = 24,
+  TypeParameter = 25,
+}
+
+// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#symbolTag.
+export namespace SymbolTag {
+  export const Deprecated: 1 = 1;
+}
+
+// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#symbolTag.
+export type SymbolTag = 1;
+
+// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbol.
+export interface DocumentSymbol {
+  name: string;
+  detail?: string;
+  kind: SymbolKind;
+  tags?: SymbolTag[];
+  deprecated?: boolean;
+  range: Range;
+  selectionRange: Range;
+  children?: DocumentSymbol[];
 }
