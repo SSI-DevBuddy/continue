@@ -14,16 +14,16 @@ const val DEFAULT_CONFIG =
 {
   "models": [
     {
-      "model": "claude-3-5-sonnet-latest",
-      "provider": "anthropic",
+      "model": "claude",
+      "provider": "ssi-devbuddy",
       "apiKey": "",
-      "title": "Claude 3.5 Sonnet"
+      "title": "SSI DevBuddy"
     }
   ],
   "tabAutocompleteModel": {
-    "title": "Codestral",
-    "provider": "mistral",
-    "model": "codestral-latest",
+    "title": "SSI DevBuddy",
+    "provider": "ssi-devbuddy",
+    "model": "claude",
     "apiKey": "" 
   },
   "customCommands": [
@@ -34,6 +34,10 @@ const val DEFAULT_CONFIG =
     }
   ],
   "contextProviders": [
+    {
+      "name": "ssi-devbuddy-context",
+      "params": {}
+    },
     {
       "name": "diff",
       "params": {}

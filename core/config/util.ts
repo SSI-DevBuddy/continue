@@ -1,5 +1,6 @@
 import fs from "fs";
 import os from "os";
+import * as YAML from "yaml";
 
 import { ModelConfig } from "@continuedev/config-yaml";
 import {
@@ -13,7 +14,7 @@ import {
 } from "../";
 import { SSI_DEVBUDDY_CONFIG } from "../../SSI_DEVBUDDY_CONFIG";
 import { GlobalContext } from "../util/GlobalContext";
-import { editConfigFile, getConfigJson } from "../util/paths";
+import { editConfigFile, getConfigJson, getConfigYamlPath } from "../util/paths";
 
 function stringify(obj: any, indentation?: number): string {
   return JSON.stringify(
@@ -235,12 +236,55 @@ export function addUserTokenForSSIDevBuddy(userToken: string) {
       return config;
     },
     (config) => {
+      // Update YAML configuration
+      if (config.models) {
+        config.models = config.models.map((model: any) => {
+          if (model.provider === "ssi-devbuddy") {
+            return {
+              ...model,
+              apiKey: userToken,
+            };
+          }
+          return model;
+        });
+      }
+      
+      if (config.context) {
+        config.context = config.context.map((ctx: any) => {
+          if (ctx.provider === "ssi-devbuddy-context") {
+            return {
+              ...ctx,
+              params: {
+                options: {
+                  apiKey: userToken,
+                },
+              },
+            };
+          }
+          return ctx;
+        });
+      }
+      
       return config;
     },
   );
 }
 
 export function getUserTokenForSSIDevBuddy() {
+  // Check YAML config first
+  if (fs.existsSync(getConfigYamlPath())) {
+    try {
+      const configYaml = YAML.parse(fs.readFileSync(getConfigYamlPath(), "utf8"));
+      const ssiDevBuddyContextConfig = configYaml.context?.filter(
+        (ctx: any) => ctx.provider === "ssi-devbuddy-context",
+      );
+      return ssiDevBuddyContextConfig?.[0]?.params?.options?.apiKey;
+    } catch (error) {
+      console.warn("Failed to parse YAML config:", error);
+    }
+  }
+  
+  // Fallback to JSON config
   let configJson = getConfigJson();
   let ssiDevBuddyContextConfig = configJson.contextProviders.filter(
     (ctx: { name: string }) => ctx.name === "ssi-devbuddy-context",
