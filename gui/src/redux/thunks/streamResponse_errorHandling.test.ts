@@ -115,6 +115,7 @@ function setupTest() {
       newestToolbarPreviewForInput: {},
       compactionLoading: {},
       inlineErrorMessage: undefined,
+      loggedInUser: {},
     },
     config: {
       config: {
@@ -184,6 +185,7 @@ describe("streamResponseThunk", () => {
         newestToolbarPreviewForInput: {},
         compactionLoading: {},
         inlineErrorMessage: undefined,
+        loggedInUser: {},
       },
       config: {
         config: {

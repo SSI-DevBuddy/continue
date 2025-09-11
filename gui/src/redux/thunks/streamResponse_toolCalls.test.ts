@@ -115,6 +115,7 @@ function setupTest() {
       newestToolbarPreviewForInput: {},
       compactionLoading: {},
       inlineErrorMessage: undefined,
+      loggedInUser: {},
     },
     config: {
       config: {
@@ -188,6 +189,7 @@ describe("streamResponseThunk - tool calls", () => {
         newestToolbarPreviewForInput: {},
         compactionLoading: {},
         inlineErrorMessage: undefined,
+        loggedInUser: {},
       },
       config: {
         config: {
@@ -797,6 +799,7 @@ describe("streamResponseThunk - tool calls", () => {
         newestToolbarPreviewForInput: {},
         compactionLoading: {},
         inlineErrorMessage: undefined,
+        loggedInUser: {},
       },
       config: {
         config: {
@@ -1454,6 +1457,7 @@ describe("streamResponseThunk - tool calls", () => {
         newestToolbarPreviewForInput: {},
         compactionLoading: {},
         inlineErrorMessage: undefined,
+        loggedInUser: {},
       },
       config: {
         config: {
@@ -2096,6 +2100,7 @@ describe("streamResponseThunk - tool calls", () => {
         newestToolbarPreviewForInput: {},
         compactionLoading: {},
         inlineErrorMessage: undefined,
+        loggedInUser: {},
       },
       config: {
         config: {

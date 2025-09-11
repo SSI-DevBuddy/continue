@@ -93,9 +93,8 @@ function InputToolbar(props: InputToolbarProps) {
             </HoverItem>
           </ToolTip>
           <HoverItem data-tooltip-id="project-select-tooltip" className="!p-0">
-            <ProjecSelect />
-            <ToolTip id="project-select-tooltip" place="left">
-              Select Project
+            <ToolTip place="left" content="Select Project">
+              <ProjecSelect />
             </ToolTip>
           </HoverItem>
           <div className="xs:flex text-description -mb-1 hidden items-center transition-colors duration-200">
