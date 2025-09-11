@@ -146,7 +146,7 @@ export function setupStatusBar(
 
   statusBarItem.text = statusBarItemText(status, loading, statusBarError);
   statusBarItem.tooltip = statusBarItemTooltip(status ?? statusBarStatus);
-  statusBarItem.command = "continue.openTabAutocompleteConfigMenu";
+  statusBarItem.command = "devbuddy.openTabAutocompleteConfigMenu";
 
   statusBarItem.show();
   if (status !== undefined) {

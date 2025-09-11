@@ -570,7 +570,7 @@ export class ContinueCompletionProvider
         range,
         {
           title: "Log Autocomplete Outcome",
-          command: "continue.logAutocompleteOutcome",
+          command: "devbuddy.logAutocompleteOutcome",
           arguments: [completionId, this.completionProvider],
         },
       );
@@ -640,7 +640,7 @@ export class ContinueCompletionProvider
           ),
           {
             title: "Log Next Edit Outcome",
-            command: "continue.logNextEditOutcomeAccept",
+            command: "devbuddy.logNextEditOutcomeAccept",
             arguments: [completionId, this.nextEditLoggingService],
           },
         );

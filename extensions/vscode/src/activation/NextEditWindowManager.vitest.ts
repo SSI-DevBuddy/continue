@@ -1,11 +1,11 @@
 import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  MockedFunction,
-  vi,
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    MockedFunction,
+    vi,
 } from "vitest";
 
 // Mock all modules FIRST with inline factories (no external references)
@@ -78,7 +78,7 @@ vi.mock("vscode", () => ({
 }));
 
 vi.mock("core/control-plane/env", () => ({
-  EXTENSION_NAME: "continue",
+  EXTENSION_NAME: "devbuddy",
 }));
 
 vi.mock("../util/getTheme", () => ({
@@ -123,9 +123,9 @@ vi.mock("core/nextEdit/diff/diff", () => ({
 import * as vscode from "vscode";
 
 import {
-  ACCEPT_NEXT_EDIT_SUGGESTION_COMMAND,
-  HIDE_NEXT_EDIT_SUGGESTION_COMMAND,
-  NextEditWindowManager,
+    ACCEPT_NEXT_EDIT_SUGGESTION_COMMAND,
+    HIDE_NEXT_EDIT_SUGGESTION_COMMAND,
+    NextEditWindowManager,
 } from "./NextEditWindowManager";
 
 const mockVscode = vi.mocked(vscode);
