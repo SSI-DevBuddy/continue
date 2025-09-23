@@ -13,6 +13,12 @@ export const defaultConfigYaml: AssistantUnrolled = {
     {
       provider: "ssi-devbuddy-context",
     },
+    {
+      provider: "codebase",
+    },
+    {
+      provider: "folder",
+    },
   ],
   name: "Local Agent",
   version: "1.0.0",
@@ -31,6 +37,12 @@ export const defaultConfigYamlJetBrains: AssistantUnrolled = {
   context: [
     {
       provider: "ssi-devbuddy-context",
+    },
+    {
+      provider: "codebase",
+    },
+    {
+      provider: "folder",
     },
   ],
   name: "Local Agent",

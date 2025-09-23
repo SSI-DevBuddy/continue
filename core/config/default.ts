@@ -16,5 +16,11 @@ export const defaultConfig: ConfigYaml = {
     {
       provider: "ssi-devbuddy-context",
     },
+    {
+      provider: "codebase",
+    },
+    {
+      provider: "folder",
+    },
   ],
 };

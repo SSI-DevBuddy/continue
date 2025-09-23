@@ -1,34 +1,34 @@
 import {
-    ActionReducerMapBuilder,
-    AsyncThunk,
-    PayloadAction,
-    createSelector,
-    createSlice,
+  ActionReducerMapBuilder,
+  AsyncThunk,
+  PayloadAction,
+  createSelector,
+  createSlice,
 } from "@reduxjs/toolkit";
 import { JSONContent } from "@tiptap/react";
 import {
-    ApplyState,
-    AssistantChatMessage,
-    ChatHistoryItem,
-    ChatMessage,
-    ContextItem,
-    ContextItemWithId,
-    FileSymbolMap,
-    MessageModes,
-    PromptLog,
-    RuleWithSource,
-    Session,
-    SessionMetadata,
-    ThinkingChatMessage,
-    Tool,
-    ToolCallDelta,
-    ToolCallState,
+  ApplyState,
+  AssistantChatMessage,
+  ChatHistoryItem,
+  ChatMessage,
+  ContextItem,
+  ContextItemWithId,
+  FileSymbolMap,
+  MessageModes,
+  PromptLog,
+  RuleWithSource,
+  Session,
+  SessionMetadata,
+  ThinkingChatMessage,
+  Tool,
+  ToolCallDelta,
+  ToolCallState,
 } from "core";
 import { BuiltInToolNames } from "core/tools/builtIn";
 import { NEW_SESSION_TITLE } from "core/util/constants";
 import {
-    renderChatMessage,
-    renderContextItems,
+  renderChatMessage,
+  renderContextItems,
 } from "core/util/messageContent";
 import { findUriInDirs, getUriPathBasename } from "core/util/uri";
 import { findLastIndex } from "lodash";
@@ -237,7 +237,7 @@ const initialState: SessionState = {
   id: uuidv4(),
   streamAborter: new AbortController(),
   symbols: {},
-  mode: "agent",
+  mode: "chat",
   isInEdit: false,
   codeBlockApplyStates: {
     states: [],
