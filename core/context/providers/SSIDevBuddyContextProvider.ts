@@ -39,7 +39,7 @@ class SSIDevBuddyContextProvider extends BaseContextProvider {
     console.log("edta", extras);
 
     const response = await extras.fetch(
-      new URL("/api/vscode/context_api", SSI_DEVBUDDY_CONFIG.API_BASE),
+      new URL("/chat/fetch_context", SSI_DEVBUDDY_CONFIG.CHAT_URL),
       {
         method: "POST",
         headers: {

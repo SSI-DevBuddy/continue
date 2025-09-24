@@ -19,6 +19,17 @@ export const singleFindAndReplaceImpl: ClientToolImpl = async (
     replace_all = false,
     editingFileContents,
   } = args;
+  const detectLineEndings = (content: string): 'crlf' | 'lf' => {
+    return content.includes('\r\n') ? 'crlf' : 'lf';
+  };
+
+  const normalizeForMatching = (text: string): string => {
+    return text.replace(/\r\n/g, '\n');
+  };
+
+  const restoreLineEndings = (text: string, format: 'crlf' | 'lf'): string => {
+    return format === 'crlf' ? text.replace(/\n/g, '\r\n') : text;
+  };
 
   const streamId = uuid();
 
@@ -41,14 +52,21 @@ export const singleFindAndReplaceImpl: ClientToolImpl = async (
   const originalContent =
     editingFileContents ??
     (await extras.ideMessenger.ide.readFile(resolvedFilepath));
-
+  
+  const originalLineEndings = detectLineEndings(originalContent);
+  const normalizedContent = normalizeForMatching(originalContent);
+  const normalizedOldString = normalizeForMatching(old_string);
+  const normalizedNewString = normalizeForMatching(new_string);
   // Perform the find and replace operation
-  const newContent = performFindAndReplace(
-    originalContent,
-    old_string,
-    new_string,
+  const tempResult = performFindAndReplace(
+    normalizedContent,
+    normalizedOldString,
+    normalizedNewString,
     replace_all,
   );
+
+  // 🔧 ADD: Restore line endings
+  const newContent = restoreLineEndings(tempResult, originalLineEndings);
 
   // Apply the changes to the file
   void extras.dispatch(

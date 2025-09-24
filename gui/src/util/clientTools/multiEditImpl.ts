@@ -20,6 +20,19 @@ export const multiEditImpl: ClientToolImpl = async (
 
   const streamId = uuid();
 
+  const detectLineEndings = (content: string): 'crlf' | 'lf' => {
+    return content.includes('\r\n') ? 'crlf' : 'lf';
+  };
+
+  const normalizeForMatching = (text: string): string => {
+    return text.replace(/\r\n/g, '\n');
+  };
+
+  const restoreLineEndings = (text: string, format: 'crlf' | 'lf'): string => {
+    return format === 'crlf' ? text.replace(/\n/g, '\r\n') : text;
+  };
+
+
   // Validate arguments
   if (!filepath) {
     throw new Error("filepath is required");
@@ -67,16 +80,21 @@ export const multiEditImpl: ClientToolImpl = async (
     newContent =
       editingFileContents ??
       (await extras.ideMessenger.ide.readFile(resolvedUri));
+    const originalLineEndings = detectLineEndings(newContent);
     fileUri = resolvedUri;
     for (let i = 0; i < edits.length; i++) {
       const { old_string, new_string, replace_all } = edits[i];
-      newContent = performFindAndReplace(
-        newContent,
-        old_string,
-        new_string,
+      const normalizedContent = normalizeForMatching(newContent);
+      const normalizedOldString = normalizeForMatching(old_string);
+      const normalizedNewString = normalizeForMatching(new_string);
+      const tempResult = performFindAndReplace(
+        normalizedContent,
+        normalizedOldString,
+        normalizedNewString,
         replace_all,
         i,
       );
+      newContent = restoreLineEndings(tempResult, originalLineEndings);
     }
   }
 
