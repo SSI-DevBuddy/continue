@@ -113,24 +113,27 @@ export function FindAndReplaceDisplay({
 
     try {
       // Apply all edits sequentially
-      let newContent = currentFileContent;
+      const normalizedOldContent = currentFileContent.replace(/\r\n/g, "\n");
+      let newContent = normalizedOldContent;
       for (let i = 0; i < edits.length; i++) {
         const {
           old_string: oldString,
           new_string: newString,
           replace_all: replaceAll,
         } = edits[i];
+        const normalizedOldString = oldString.replace(/\r\n/g, "\n");
+        const normalizedNewString = newString.replace(/\r\n/g, "\n");
         newContent = performFindAndReplace(
-          newContent,
-          oldString,
-          newString,
+          newContent, // Now consistently LF
+          normalizedOldString, // Now consistently LF
+          normalizedNewString, // Now consistently LF
           replaceAll,
           i,
         );
       }
 
       // Generate diff between original and final content
-      const diff = diffLines(currentFileContent, newContent);
+      const diff = diffLines(normalizedOldContent, newContent);
       return { diff, newContent, error: null };
     } catch (error) {
       return {

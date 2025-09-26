@@ -29,7 +29,10 @@ export const multiEditImpl: ClientToolImpl = async (
   };
 
   const restoreLineEndings = (text: string, format: 'crlf' | 'lf'): string => {
-    return format === 'crlf' ? text.replace(/\n/g, '\r\n') : text;
+    if (format === 'crlf') {
+      return text.replace(/\r/g, '').replace(/\n/g, '\r\n');
+    }
+    return text.replace(/\r\n/g, '\n');
   };
 
 
