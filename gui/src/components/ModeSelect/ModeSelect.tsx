@@ -1,12 +1,10 @@
 import {
   CheckIcon,
   ChevronDownIcon,
-  ExclamationTriangleIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { MessageModes } from "core";
 import { isRecommendedAgentModel } from "core/llm/toolSupport";
-import { capitalize } from "lodash";
 import { useCallback, useEffect, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { selectSelectedChatModel } from "../../redux/slices/configSlice";
@@ -75,7 +73,7 @@ export function ModeSelect() {
 
   const notGreatAtAgent = (
     <>
-      <ToolTip
+      {/* <ToolTip
         style={{
           zIndex: 200001, // in front of listbox
         }}
@@ -83,7 +81,7 @@ export function ModeSelect() {
         content={`${capitalize(mode)} might not work well with this model.`}
       >
         <ExclamationTriangleIcon className="text-warning h-2.5 w-2.5" />
-      </ToolTip>
+      </ToolTip> */}
     </>
   );
 
@@ -127,7 +125,7 @@ export function ModeSelect() {
             </div>
             {mode === "chat" && <CheckIcon className="ml-auto h-3 w-3" />}
           </ListboxOption>
-          <ListboxOption value="plan" className={"gap-1"}>
+          {/* <ListboxOption value="plan" className={"gap-1"}>
             <div className="flex flex-row items-center gap-1.5">
               <ModeIcon mode="plan" />
               <span className="">Plan</span>
@@ -144,7 +142,7 @@ export function ModeSelect() {
             <CheckIcon
               className={`ml-auto h-3 w-3 ${mode === "plan" ? "" : "opacity-0"}`}
             />
-          </ListboxOption>
+          </ListboxOption> */}
 
           <ListboxOption value="agent" className={"gap-1"}>
             <div className="flex flex-row items-center gap-1.5">
