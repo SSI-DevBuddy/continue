@@ -66,6 +66,7 @@ export class SystemMessageToolCodeblocksFramework
   }
 
   systemMessagePrefix = `You have access to several "tools" that you can use at any time to retrieve information and/or perform tasks for the User.
+After you call a tool, the system will provide the result. Some tools return information, while others perform an action and may not return any output. **A tool call with no output is a confirmation of success, unless an explicit error message is shown.**
 To use a tool, respond with a tool code block (\`\`\`tool) using the syntax shown in the examples below:`;
 
   systemMessageSuffix = `If it seems like the User's request could be solved with one of the tools, choose the BEST one for the job based on the user's request and the tool descriptions

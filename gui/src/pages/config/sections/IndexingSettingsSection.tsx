@@ -3,8 +3,7 @@ import {
   modifyAnyConfigWithSharedConfig,
 } from "core/config/sharedConfig";
 import { useContext } from "react";
-import Alert from "../../../components/gui/Alert";
-import { Card, Divider } from "../../../components/ui";
+import { Card } from "../../../components/ui";
 import { IdeMessengerContext } from "../../../context/IdeMessenger";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
 import { updateConfig } from "../../../redux/slices/configSlice";
@@ -85,7 +84,7 @@ export function IndexingSettingsSection() {
     <>
       <ConfigHeader title="Indexing" />
 
-      <Alert type="warning" className="mb-6">
+      {/* <Alert type="warning" className="mb-6">
         <div className="space-y-4">
           <div>
             <div className="-mt-0.5 text-sm font-medium">
@@ -106,7 +105,7 @@ export function IndexingSettingsSection() {
           <Divider className="border-inherit" />
           <EnableIndexingSetting />
         </div>
-      </Alert>
+      </Alert> */}
 
       {!disableIndexing && (
         <div className="space-y-8">

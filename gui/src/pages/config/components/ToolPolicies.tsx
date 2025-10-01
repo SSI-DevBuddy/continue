@@ -1,4 +1,3 @@
-import Alert from "../../../components/gui/Alert";
 import { Card } from "../../../components/ui";
 import { useToolPolicies } from "../hooks/useToolPolicies";
 import { ToolPoliciesGroup } from "./ToolPoliciesGroup";
@@ -27,13 +26,13 @@ export function ToolPolicies() {
 
   return (
     <div>
-      {(mode === "chat" || mode === "plan") && (
+      {/* {(mode === "chat" || mode === "plan") && (
         <div className="mb-4">
           <Alert type="info" size="sm">
             <span className="text-2xs italic">{message}</span>
           </Alert>
         </div>
-      )}
+      )} */}
 
       <div className="space-y-4">
         {toolsByGroup.map(([groupName, tools]) => {

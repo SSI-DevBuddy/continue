@@ -165,20 +165,20 @@ export default async function doLoadConfig(options: {
 
   // Show deprecation warnings for providers
   const globalContext = new GlobalContext();
-  newConfig.contextProviders.forEach((provider) => {
-    if (provider.deprecationMessage) {
-      const providerTitle = provider.description.title;
-      const shownWarnings =
-        globalContext.get("shownDeprecatedProviderWarnings") ?? {};
-      if (!shownWarnings[providerTitle]) {
-        void ide.showToast("warning", provider.deprecationMessage);
-        globalContext.update("shownDeprecatedProviderWarnings", {
-          ...shownWarnings,
-          [providerTitle]: true,
-        });
-      }
-    }
-  });
+  // newConfig.contextProviders.forEach((provider) => {
+  //   if (provider.deprecationMessage) {
+  //     const providerTitle = provider.description.title;
+  //     const shownWarnings =
+  //       globalContext.get("shownDeprecatedProviderWarnings") ?? {};
+  //     if (!shownWarnings[providerTitle]) {
+  //       void ide.showToast("warning", provider.deprecationMessage);
+  //       globalContext.update("shownDeprecatedProviderWarnings", {
+  //         ...shownWarnings,
+  //         [providerTitle]: true,
+  //       });
+  //     }
+  //   }
+  // });
 
   // Rectify model selections for each role
   newConfig = rectifySelectedModelsFromGlobalContext(newConfig, profileId);
