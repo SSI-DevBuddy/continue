@@ -222,8 +222,8 @@ export function FindAndReplaceDisplay({
 
   if (diffResult?.error) {
     return renderContainer(
-      <div className="text-error p-3 text-sm">
-        <strong>Error generating diff</strong>
+      <div className="text-yellow p-3 text-sm">
+        <p>Could not edit file, click Accept to try again.</p>
       </div>,
     );
   }
