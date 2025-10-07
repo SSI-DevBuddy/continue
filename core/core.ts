@@ -287,6 +287,7 @@ export class Core {
   /* eslint-disable max-lines-per-function */
   private registerMessageHandlers(ideSettingsPromise: Promise<IdeSettings>) {
     const on = this.messenger.on.bind(this.messenger);
+    const API_KEY_STORAGE_KEY = "ssi-devbuddy-api-key";
 
     // Note, VsCode's in-process messenger doesn't do anything with this
     // It will only show for jetbrains
@@ -1076,34 +1077,56 @@ export class Core {
     });
 
     on("auth/login", async (msg: any) => {
-      let data: any = {};
-      try {
-        const ur = new URL("/api/auth/signin", SSI_DEVBUDDY_CONFIG.API_BASE);
+      
+        const ur = new URL("/api/extension-keys/exchange-key", SSI_DEVBUDDY_CONFIG.API_BASE);
         const resp = await fetch(ur, {
-          method: "POST",
-          body: JSON.stringify({
-            email: msg.data.username,
-            password: msg.data.password,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-            ...(await getHeaders()),
-          },
+            method: "POST",
+            body: JSON.stringify({ apiKey: msg.data.apiKey }),
+            headers: {
+                "Content-Type": "application/json",
+                ...(await getHeaders()),
+            },
         });
 
         if (!resp.ok) {
-          throw new Error(await resp.text());
-        }
+            return { success: true, accessToken: "failed", user: "-" };
+        }else{
 
-        data = (await resp.json()) as any;
-        const token = data.token;
-        addUserTokenForSSIDevBuddy(token);
-        return { success: true, accessToken: token, user: {} };
-      } catch (ex) {
-        console.log(ex);
-        return { success: false, accessToken: "-", user: "-" };
+          const data = await resp.json();
+          const token = data.token;
+
+          addUserTokenForSSIDevBuddy(token);
+          
+          return { success: true, accessToken: token, user: {} };
+        }
+    });
+
+    on("auth/saveApiKey", async (msg: any) => {
+        await this.ide.storeSecret(API_KEY_STORAGE_KEY, msg.data.apiKey);
+        return { success: true };
+    });
+
+    // Retrieves the long-lived API key from secure storage
+    on("auth/getApiKey", async (msg) => {
+        const apiKey = await this.ide.getSecret(API_KEY_STORAGE_KEY);
+        return { apiKey: apiKey };
+    });
+
+    // Deletes the long-lived API key from secure storage
+    on("auth/deleteApiKey", async (msg) => {
+        await this.ide.deleteSecret(API_KEY_STORAGE_KEY);
+        return { success: true };
+    });
+
+    on("auth/initialize", async (msg) => {
+      const apiKey = await this.ide.getSecret(API_KEY_STORAGE_KEY);
+      console.log("Core: ide.getSecret() returnedd:", apiKey);
+      if (!apiKey) {
+        return { success: false }; // No key stored, do nothing.
       }
-      return { success: false, accessToken: "-", user: "-" };
+      console.log("Core: API key found. Exchanging for token...");
+      // Key found, attempt to exchange it for a session token.
+      return this.exchangeApiKeyForToken(apiKey);
     });
 
     on("auth/logout", (msg) => {
@@ -1146,6 +1169,30 @@ export class Core {
       return { success: false, data: [] };
     });
   }
+
+  public async exchangeApiKeyForToken(apiKey: string): Promise<any> {
+        const ur = new URL("/api/extension-keys/exchange-key", SSI_DEVBUDDY_CONFIG.API_BASE);
+        const resp = await fetch(ur, {
+            method: "POST",
+            body: JSON.stringify({ apiKey: apiKey }),
+            headers: {
+                "Content-Type": "application/json",
+                ...(await getHeaders()),
+            },
+        });
+
+        if (!resp.ok) {
+            return { success: true, accessToken: "failed", user: "-" };
+        }else{
+
+          const data = await resp.json();
+          const token = data.token;
+
+          addUserTokenForSSIDevBuddy(token);
+          
+          return { success: true, accessToken: token, user: {} };
+        }
+      }
 
   private async handleToolCall(toolCall: ToolCall) {
     const { config } = await this.configHandler.loadConfig();

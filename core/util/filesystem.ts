@@ -36,6 +36,21 @@ class FileSystemIde implements IDE {
     return Promise.resolve();
   }
 
+  private secrets = new Map<string, string>();
+
+  async storeSecret(key: string, value: string): Promise<void> {
+    this.secrets.set(key, value);
+  }
+
+  async getSecret(key: string): Promise<string | undefined> {
+    return this.secrets.get(key);
+  }
+
+  async deleteSecret(key: string): Promise<void> {
+    this.secrets.delete(key);
+  }
+
+
   fileExists(fileUri: string): Promise<boolean> {
     const filepath = fileURLToPath(fileUri);
     return Promise.resolve(fs.existsSync(filepath));

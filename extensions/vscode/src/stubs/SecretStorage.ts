@@ -105,4 +105,18 @@ export class SecretStorage {
     }
     return undefined;
   }
+
+  async delete(key: string): Promise<void> {
+    const filePath = this.keyToFilepath(key);
+    try {
+      // Use unlinkSync to delete the file, matching the synchronous style of your other methods
+      fs.unlinkSync(filePath);
+    } catch (error: any) {
+      // If the file doesn't exist, that's okay. The goal is for it to be gone.
+      // We only need to log other errors (like a permissions issue).
+      if (error.code !== 'ENOENT') {
+        console.error(`[Continue] Error deleting secret for key "${key}":`, error);
+      }
+    }
+  }
 }

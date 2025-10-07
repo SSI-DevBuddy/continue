@@ -658,6 +658,9 @@ declare global {
   }
   
   export interface IDE {
+    storeSecret(key: string, value: string): Promise<void>;
+    getSecret(key: string): Promise<string | undefined>;
+    deleteSecret(key: string): Promise<void>;
     getIdeInfo(): Promise<IdeInfo>;
   
     getIdeSettings(): Promise<IdeSettings>;

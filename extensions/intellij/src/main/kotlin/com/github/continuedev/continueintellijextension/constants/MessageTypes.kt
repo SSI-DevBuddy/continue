@@ -75,6 +75,10 @@ class MessageTypes {
         val PASS_THROUGH_TO_CORE = listOf(
             "abort",
             "auth/login",
+            "auth/saveApiKey",
+            "auth/getApiKey",
+            "auth/deleteApiKey",
+            "auth/initialize",
             "auth/logout",
             "history/list",
             "history/delete",

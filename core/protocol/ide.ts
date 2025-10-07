@@ -66,7 +66,9 @@ export type ToIdeFromWebviewOrCoreProtocol = {
   readSecrets: [{ keys: string[] }, Record<string, string>];
   writeSecrets: [{ secrets: Record<string, string> }, void];
   // end methods from IDE type
-
+  storeSecret: [{ key: string; value: string }, void];
+  getSecret: [{ key: string }, string | undefined];
+  deleteSecret: [{ key: string }, void];
   getIdeSettings: [undefined, IdeSettings];
 
   // Git

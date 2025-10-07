@@ -317,8 +317,24 @@ export type ToCoreFromIdeOrWebviewProtocol = {
   "mdm/setLicenseKey": [{ licenseKey: string }, boolean];
 
   "auth/login": [
-    { username: string; password: string },
+    { apiKey: string },
     { accessToken: string; user: any },
+  ];
+  "auth/saveApiKey": [
+    { apiKey: string },
+    { success: boolean },
+  ];
+  "auth/getApiKey": [
+    undefined,
+    { apiKey: string | undefined },
+  ];
+  "auth/deleteApiKey": [
+    undefined,
+    { success: boolean },
+  ];
+  "auth/initialize": [
+    undefined,
+    { success: boolean; accessToken?: string; user?: any }
   ];
   "auth/logout": [undefined, void];
   "projects/users": [undefined, { data: { Label: string; Value: number }[] }];

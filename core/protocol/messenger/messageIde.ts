@@ -30,6 +30,18 @@ export class MessageIde implements IDE {
     ) => void,
   ) {}
 
+  storeSecret(key: string, value: string): Promise<void> {
+    return this.request("storeSecret", { key, value });
+  }
+
+  getSecret(key: string): Promise<string | undefined> {
+    return this.request("getSecret", { key });
+  }
+
+  deleteSecret(key: string): Promise<void> {
+    return this.request("deleteSecret", { key });
+  }
+
   async readSecrets(keys: string[]): Promise<Record<string, string>> {
     return this.request("readSecrets", { keys });
   }

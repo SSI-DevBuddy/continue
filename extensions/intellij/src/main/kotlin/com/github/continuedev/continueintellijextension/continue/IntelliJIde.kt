@@ -39,6 +39,9 @@ import java.awt.datatransfer.DataFlavor
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
+import com.intellij.ide.passwordSafe.PasswordSafe
 
 class IntelliJIDE(
     private val project: Project,
@@ -49,6 +52,39 @@ class IntelliJIDE(
     private val gitService = GitService(project, continuePluginService)
     private val fileUtils = FileUtils(project)
     private val ripgrep: String = getRipgrepPath()
+
+    private fun createCredentialAttributes(key: String): CredentialAttributes {
+        // CORRECTED: Use the constructor directly instead of createAsync
+        return CredentialAttributes("SSI_DEVBUDDY_PLUGIN", key, this.javaClass, false)
+    }
+
+    // --- Secret Storage Implementation ---
+    override suspend fun storeSecret(key: String, value: String) {
+        val attributes = createCredentialAttributes(key)
+        val credentials = Credentials(key, value)
+        // CORRECTED: Use the 'instance' property
+        PasswordSafe.instance.set(attributes, credentials)
+    }
+
+    override suspend fun getSecret(key: String): String? {
+        val attributes = createCredentialAttributes(key)
+        return try {
+            println("IntelliJIDE: Attempting to get secret from PasswordSafe...") // <-- ADD THIS
+            val password = PasswordSafe.instance.getPassword(attributes)
+            println("IntelliJIDE: PasswordSafe returned a value.") // <-- ADD THIS
+            password
+        } catch (e: Exception) {
+            println("IntelliJIDE: ERROR getting secret from PasswordSafe: ${e.message}") // <-- ADD THIS
+            e.printStackTrace()
+            null
+        }
+    }
+
+    override suspend fun deleteSecret(key: String) {
+        val attributes = createCredentialAttributes(key)
+        // CORRECTED: Use the 'instance' property
+        PasswordSafe.instance.set(attributes, null)
+    }
 
     init {
         try {

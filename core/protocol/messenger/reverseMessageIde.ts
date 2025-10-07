@@ -46,6 +46,18 @@ export class ReverseMessageIde {
       return this.ide.listDir(data.dir);
     });
 
+    this.on("storeSecret", (data) => {
+      return this.ide.storeSecret(data.key, data.value);
+    });
+
+    this.on("getSecret", (data) => {
+      return this.ide.getSecret(data.key);
+    });
+
+    this.on("deleteSecret", (data) => {
+      return this.ide.deleteSecret(data.key);
+    });
+
     this.on("showToast", (data) => {
       return this.ide.showToast(...data);
     });

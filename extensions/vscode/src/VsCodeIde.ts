@@ -46,6 +46,18 @@ class VsCodeIde implements IDE {
     this.secretStorage = new SecretStorage(context);
   }
 
+  async storeSecret(key: string, value: string): Promise<void> {
+    await this.secretStorage.store(key, value);
+  }
+
+  async getSecret(key: string): Promise<string | undefined> {
+    return this.secretStorage.get(key);
+  }
+
+  async deleteSecret(key: string): Promise<void> {
+    await this.secretStorage.delete(key);
+  }
+
   async readSecrets(keys: string[]): Promise<Record<string, string>> {
     const secretValuePromises = keys.map((key) => this.secretStorage.get(key));
     const secretValues = await Promise.all(secretValuePromises);
@@ -678,3 +690,4 @@ class VsCodeIde implements IDE {
 }
 
 export { VsCodeIde };
+

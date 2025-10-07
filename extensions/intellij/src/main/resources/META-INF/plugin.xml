@@ -2,9 +2,7 @@
 <idea-plugin>
     <id>com.github.continuedev.continueintellijextension</id>
     <name>SSI Devbuddy</name>
-    <vendor url="https://www.continue.dev/">StrategicSystemsInternational</vendor>
-    <change-notes>
-        <![CDATA[View the latest release notes on <a href="https://github.com/continuedev/continue/releases">GitHub</a>]]></change-notes>
+    <vendor>StrategicSystemsInternational</vendor>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>org.jetbrains.plugins.terminal</depends>
