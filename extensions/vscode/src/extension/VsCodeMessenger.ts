@@ -425,6 +425,18 @@ export class VsCodeMessenger {
       return await ide.isTelemetryEnabled();
     });
 
+    this.onWebviewOrCore("storeSecret", async (msg) => {
+      return await ide.storeSecret(msg.data.key, msg.data.value);
+    });
+
+    this.onWebviewOrCore("getSecret", async (msg) => {
+      return await ide.getSecret(msg.data.key);
+    });
+
+    this.onWebviewOrCore("deleteSecret", async (msg) => {
+      return await ide.deleteSecret(msg.data.key);
+    });
+
     this.onWebviewOrCore("getUniqueId", async (msg) => {
       return await ide.getUniqueId();
     });

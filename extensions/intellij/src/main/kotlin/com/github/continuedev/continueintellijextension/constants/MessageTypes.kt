@@ -5,6 +5,9 @@ class MessageTypes {
         val IDE_MESSAGE_TYPES = listOf(
             "readRangeInFile",
             "isTelemetryEnabled",
+            "getSecret",
+            "storeSecret",
+            "deleteSecret",
             "getUniqueId",
             "getDiff",
             "getTerminalContents",
