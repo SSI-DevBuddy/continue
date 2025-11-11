@@ -158,6 +158,9 @@ data class TerminalOptions(
 )
 
 interface IDE {
+    suspend fun storeSecret(key: String, value: String)
+    suspend fun getSecret(key: String): String?
+    suspend fun deleteSecret(key: String)
     suspend fun getIdeInfo(): IdeInfo
 
     suspend fun getIdeSettings(): IdeSettings
