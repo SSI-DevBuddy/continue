@@ -1,7 +1,6 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { IdeMessengerContext } from "../context/IdeMessenger";
 import { setLoggedInUser } from "../redux/slices/sessionSlice";
 import { RootState } from "../redux/store";
 
@@ -12,49 +11,31 @@ interface AuthWrapperProps {
 function AuthWrapper({ children }: AuthWrapperProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const ideMessenger = useContext(IdeMessengerContext);
-  const loggedInUser = useSelector(
-    (state: RootState) => state.session.loggedInUser,
-  );
-  const [isInitializing, setIsInitializing] = useState(true);
+  const loggedInUser = useSelector((state: RootState) => state.session.loggedInUser);
 
   useEffect(() => {
-    // This effect runs only once on the initial mount
-    async function attemptAutoLogin() {
+    // Check if user is logged in from localStorage on component mount
+    const storedUser = localStorage.getItem("loggedInUser");
+    if (storedUser && !loggedInUser) {
       try {
-        console.log("AuthWrapper: Sending 'auth/initialize' to core...");
-        const result: any = await ideMessenger.request(
-          "auth/initialize",
-          undefined,
-        );
-        console.log(
-          "AuthWrapper: Received response for 'auth/initialize':",
-          result,
-        );
-        if (result.content.accessToken !== "failed") {
-          dispatch(setLoggedInUser({ content: result }));
-          navigate("/");
-        }
-      } catch (e) {
-        console.error("Auto-login failed:", e);
-      } finally {
-        // Mark initialization as complete, regardless of success or failure
-        setIsInitializing(false);
+        const userData = JSON.parse(storedUser);
+        dispatch(setLoggedInUser(userData));
+      } catch (error) {
+        console.error("Error parsing stored user data:", error);
+        localStorage.removeItem("loggedInUser");
       }
     }
-
-    attemptAutoLogin();
-  }, [dispatch, ideMessenger]); // Runs only once
+  }, [dispatch, loggedInUser]);
 
   useEffect(() => {
-    // This effect handles redirection, but waits for initialization to finish
-    if (!isInitializing && !loggedInUser) {
+    // If no user is logged in, redirect to login page
+    if (!loggedInUser) {
       navigate("/login");
     }
-  }, [loggedInUser, isInitializing, navigate]);
+  }, [loggedInUser, navigate]);
 
   // Show loading or nothing while checking authentication
-  if (isInitializing || !loggedInUser) {
+  if (!loggedInUser) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -68,4 +49,4 @@ function AuthWrapper({ children }: AuthWrapperProps) {
   return <>{children}</>;
 }
 
-export default AuthWrapper;
+export default AuthWrapper; 

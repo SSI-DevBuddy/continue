@@ -20,22 +20,29 @@ function LoginForm() {
     setError("");
 
     try {
-      const result: any = await ideMessenger.request("auth/login", {
-        apiKey: formObj.apiKey,
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(
+          () => reject(new Error("Request timeout - no response received")),
+          5000,
+        );
       });
 
-      if (result.content.accessToken !== "failed") {
-        await ideMessenger.request("auth/saveApiKey", {
-          apiKey: formObj.apiKey,
-        });
-        dispatch(setLoggedInUser({ content: result })); // Adapt to your Redux slice's needs
+      const authPromise = ideMessenger.request("auth/login", {
+        username: formObj.username,
+        password: formObj.password,
+      });
+
+      const result: any = await Promise.race([authPromise, timeoutPromise]);
+
+      if (result.status != "error" && result.content?.success) {
+        dispatch(setLoggedInUser(result));
         navigate("/");
       } else {
-        setError(result.error || "Failed to authenticate with API Key.");
+        setError(result.error || "Username or password is incorrect");
       }
-    } catch (ex: any) {
-      console.error("Login error:", ex);
-      setError(ex.message || "An unknown error occurred.");
+    } catch (ex) {
+      console.log("Login error:", ex);
+      setError(ex instanceof Error ? ex.message : "Unknown error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -45,10 +52,7 @@ function LoginForm() {
     <FormProvider {...formMethods}>
       <form onSubmit={formMethods.handleSubmit(onSubmit)}>
         <div className="mx-auto max-w-md p-6">
-          <h1 className="mb-2 text-center text-2xl">Connect to SSI DevBuddy</h1>
-          <p className="text-center text-sm text-gray-500">
-            Enter your API Key from your user profile to connect.
-          </p>
+          <h1 className="mb-0 text-center text-2xl">Login SSI DevBuddy</h1>
 
           {error && (
             <div className="mt-4 rounded border border-red-400 bg-red-100 p-3 text-red-700">
@@ -58,12 +62,24 @@ function LoginForm() {
 
           <div className="my-8 flex flex-col gap-6">
             <div>
-              <label className="mb-1 block text-sm font-medium">API Key</label>
+              <label className="mb-1 block text-sm font-medium">Username</label>
               <Input
-                id="apiKey"
+                id="username"
                 className="w-full"
-                placeholder="ext_live_..."
-                {...formMethods.register("apiKey")}
+                placeholder={`Enter your username`}
+                {...formMethods.register("username")}
+                required={true}
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium">Password</label>
+              <Input
+                id="password"
+                type="password"
+                className="w-full"
+                placeholder={`Enter your password`}
+                {...formMethods.register("password")}
                 required={true}
               />
             </div>
@@ -71,7 +87,7 @@ function LoginForm() {
 
           <div className="mt-4 w-full">
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Connecting..." : "Connect"}
+              {isLoading ? "Logging in ..." : "Login"}
             </Button>
           </div>
         </div>

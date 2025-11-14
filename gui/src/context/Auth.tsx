@@ -10,7 +10,6 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { useNavigate } from "react-router-dom";
 import { useWebviewListener } from "../hooks/useWebviewListener";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { setConfigLoading } from "../redux/slices/configSlice";
@@ -38,7 +37,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const ideMessenger = useContext(IdeMessengerContext);
   // Session
   const [session, setSession] = useState<ControlPlaneSessionInfo | undefined>(
@@ -73,16 +71,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
-  const logout = async () => {
-    await ideMessenger.request("auth/deleteApiKey", undefined);
-    await ideMessenger.request("auth/logout", undefined);
-
+  const logout = () => {
+    ideMessenger.post("logoutOfControlPlane", undefined);
     dispatch(setOrganizations(orgs.filter((org) => org.id === "personal")));
     dispatch(setSelectedOrgId("personal"));
     setSession(undefined);
-
-    // Step C: Redirect the user to the login page
-    navigate("/login");
   };
 
   useEffect(() => {
