@@ -175,6 +175,31 @@ class IdeProtocolClient(
                         respond(contents)
                     }
 
+                    "storeSecret" -> {
+                        val params = Gson().fromJson(
+                            dataElement.toString(),
+                            StoreSecretParams::class.java
+                        )
+                        ide.storeSecret(params.key, params.value)
+                        respond(null)
+                    }
+
+                    "getSecret" -> {
+                        val params = Gson().fromJson(dataElement.toString(), GetSecretParams::class.java)
+                        // Just call the method on the 'ide' object
+                        val secret = ide.getSecret(params.key)
+                        respond(secret)
+                    }
+
+                    "deleteSecret" -> {
+                        val params = Gson().fromJson(
+                            dataElement.toString(),
+                            GetSecretParams::class.java // Can reuse the same param class as it just needs the key
+                        )
+                        ide.deleteSecret(params.key)
+                        respond(null)
+                    }
+
                     "getWorkspaceDirs" -> {
                         val dirs = ide.getWorkspaceDirs()
                         respond(dirs)
@@ -481,3 +506,5 @@ class IdeProtocolClient(
         project.getBrowser()?.sendToWebview("deleteAtIndex", DeleteAtIndex(index))
     }
 }
+data class StoreSecretParams(val key: String, val value: String)
+data class GetSecretParams(val key: String)

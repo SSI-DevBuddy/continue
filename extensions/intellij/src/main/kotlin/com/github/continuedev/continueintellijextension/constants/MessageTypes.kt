@@ -5,6 +5,9 @@ class MessageTypes {
         val IDE_MESSAGE_TYPES = listOf(
             "readRangeInFile",
             "isTelemetryEnabled",
+            "getSecret",
+            "storeSecret",
+            "deleteSecret",
             "getUniqueId",
             "getDiff",
             "getTerminalContents",
@@ -75,6 +78,10 @@ class MessageTypes {
         val PASS_THROUGH_TO_CORE = listOf(
             "abort",
             "auth/login",
+            "auth/saveApiKey",
+            "auth/getApiKey",
+            "auth/deleteApiKey",
+            "auth/initialize",
             "auth/logout",
             "history/list",
             "history/delete",
