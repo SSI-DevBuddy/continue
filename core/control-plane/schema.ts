@@ -21,6 +21,7 @@ const modelDescriptionSchema = z.object({
     "siliconflow",
     "scaleway",
     "ssi-devbuddy",
+    "ssi-devbuddy-on-premises",
     "watsonx",
   ]),
   model: z.string(),
