@@ -94,7 +94,7 @@ class SSIDevBuddyOnPremises extends BaseLLM {
     });
     input.modelId = this.model || "qwen2.5:14b-instruct";
 
-    const response = await fetch( new URL("/chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL),
+    const response = await fetch( new URL("chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL),
       {
         method: "POST",
         headers: {
@@ -281,7 +281,7 @@ class SSIDevBuddyOnPremises extends BaseLLM {
         chunks.map(async (chunk) => {
           try {
             const response = await fetch(
-              new URL("/chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL),
+              new URL("chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL),
               {
                 method: "POST",
                 headers: {

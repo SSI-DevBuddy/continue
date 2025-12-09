@@ -3,8 +3,8 @@
 
 export const SSI_DEVBUDDY_CONFIG = {
   // Your Python server URL - this is used by the SSIDevBuddy provider
-  API_BASE: "http://172.16.15.30:55360",
-  CHAT_URL: "http://172.16.15.30:8000",
+  API_BASE: "https://apidevbuddy-on-premises.ssidecisions.com/api-service/",
+  CHAT_URL: "https://apidevbuddy-on-premises.ssidecisions.com/chat-service/",
 
   // Note: API_KEY is handled automatically through the login system
   // When you log in through the LoginForm, your token is automatically stored

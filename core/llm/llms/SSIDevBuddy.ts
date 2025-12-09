@@ -92,7 +92,7 @@ class SSIDevBuddy extends BaseLLM {
     });
     input.modelId = this.model || "claude";
 
-    const response = await fetch( new URL("/chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL), {
+    const response = await fetch( new URL("chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -604,7 +604,7 @@ class SSIDevBuddy extends BaseLLM {
           const input = this._generateInvokeModelCommandInput(chunk);
           input.modelId = this.model || "claude";
           try {
-            const response = await fetch(new URL("/chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL), {
+            const response = await fetch(new URL("chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL), {
                 method: "POST",
                 headers: { 
                   "Content-Type": "application/json",
@@ -708,7 +708,7 @@ class SSIDevBuddy extends BaseLLM {
         contentType: "application/json",
       };
       input.modelId = this.model || "claude";
-      const response = await fetch(new URL("/chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL), {
+      const response = await fetch(new URL("chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL), {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",

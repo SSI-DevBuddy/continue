@@ -1078,7 +1078,7 @@ export class Core {
     on("auth/login", async (msg: any) => {
       let data: any = {};
       try {
-        const ur = new URL("/api/auth/signin", SSI_DEVBUDDY_CONFIG.API_BASE);
+        const ur = new URL("api/auth/signin", SSI_DEVBUDDY_CONFIG.API_BASE);
         const resp = await fetch(ur, {
           method: "POST",
           body: JSON.stringify({
@@ -1118,7 +1118,7 @@ export class Core {
         let data: { Label: string; Value: number }[] = [];
         try {
           const ur = new URL(
-            `/api/projects/users/${4}`,
+            `api/projects/users/${4}`,
             SSI_DEVBUDDY_CONFIG.API_BASE,
           );
           const resp = await fetch(ur, {
