@@ -14,6 +14,7 @@ export const SSI_DEVBUDDY_CONFIG = {
   MODEL: "claude",
 
   APP_MODE: "on-premises", // or "cloud"
+  ON_PREMISES_LLM_PROVIDER: "vllm", // or "ollama"
 };
 
 // Instructions:

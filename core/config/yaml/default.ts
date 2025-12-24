@@ -26,10 +26,10 @@ const cloudConfigYaml: AssistantUnrolled = {
   schema: "v1",
 };
 
-const onPremisesConfigYaml: AssistantUnrolled = {
+const onPremisesConfigYamlOllama: AssistantUnrolled = {
   models: [
     {
-      name: "SSI DevBuddy On-Premises",
+      name: "SSI DevBuddy On-Premises (Ollama)",
       provider: "ssi-devbuddy-on-premises",
       model: "qwen2.5:14b-instruct",
       apiKey: "",
@@ -50,6 +50,36 @@ const onPremisesConfigYaml: AssistantUnrolled = {
   version: "1.0.0",
   schema: "v1",
 };
+
+const onPremisesConfigYamlVLLM: AssistantUnrolled = {
+  models: [
+    {
+      name: "SSI DevBuddy On-Premises (VLLM)",
+      provider: "ssi-devbuddy-on-premises-vllm",
+      model: "Qwen/Qwen2.5-7B-Instruct",
+      apiKey: "",
+    },
+  ],
+  context: [
+    {
+      provider: "ssi-devbuddy-context",
+    },
+    {
+      provider: "codebase",
+    },
+    {
+      provider: "folder",
+    },
+  ],
+  name: "Local Agent",
+  version: "1.0.0",
+  schema: "v1",
+};
+
+const onPremisesConfigYaml: AssistantUnrolled = 
+  SSI_DEVBUDDY_CONFIG.ON_PREMISES_LLM_PROVIDER === "vllm" 
+    ? onPremisesConfigYamlVLLM 
+    : onPremisesConfigYamlOllama;
 
 export const defaultConfigYaml: AssistantUnrolled = 
   SSI_DEVBUDDY_CONFIG.APP_MODE === "on-premises" 
@@ -81,10 +111,10 @@ const cloudConfigYamlJetBrains: AssistantUnrolled = {
   schema: "v1",
 };
 
-const onPremisesConfigYamlJetBrains: AssistantUnrolled = {
+const onPremisesConfigYamlJetBrainsOllama: AssistantUnrolled = {
   models: [
     {
-      name: "SSI DevBuddy On-Premises",
+      name: "SSI DevBuddy On-Premises (Ollama)",
       provider: "ssi-devbuddy-on-premises",
       model: "qwen2.5:14b-instruct",
       apiKey: "",
@@ -105,6 +135,36 @@ const onPremisesConfigYamlJetBrains: AssistantUnrolled = {
   version: "1.0.0",
   schema: "v1",
 };
+
+const onPremisesConfigYamlJetBrainsVLLM: AssistantUnrolled = {
+  models: [
+    {
+      name: "SSI DevBuddy On-Premises (VLLM)",
+      provider: "ssi-devbuddy-on-premises-vllm",
+      model: "Qwen/Qwen2.5-7B-Instruct",
+      apiKey: "",
+    },
+  ],
+  context: [
+    {
+      provider: "ssi-devbuddy-context",
+    },
+    {
+      provider: "codebase",
+    },
+    {
+      provider: "folder",
+    },
+  ],
+  name: "Local Agent",
+  version: "1.0.0",
+  schema: "v1",
+};
+
+const onPremisesConfigYamlJetBrains: AssistantUnrolled = 
+  SSI_DEVBUDDY_CONFIG.ON_PREMISES_LLM_PROVIDER === "vllm" 
+    ? onPremisesConfigYamlJetBrainsVLLM 
+    : onPremisesConfigYamlJetBrainsOllama;
 
 export const defaultConfigYamlJetBrains: AssistantUnrolled = 
   SSI_DEVBUDDY_CONFIG.APP_MODE === "on-premises" 

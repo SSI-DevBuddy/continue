@@ -226,9 +226,9 @@ export function addUserTokenForSSIDevBuddy(userToken: string) {
         ];
       }
       config.models = config.models
-        .filter((model) => ["ssi-devbuddy-on-premises", "ssi-devbuddy"].includes(model.provider))
+        .filter((model) => ["ssi-devbuddy-on-premises", "ssi-devbuddy-on-premises-vllm", "ssi-devbuddy"].includes(model.provider))
         .map((m: ModelDescription) => {
-          if (["ssi-devbuddy-on-premises", "ssi-devbuddy"].includes(m.provider)) {
+          if (["ssi-devbuddy-on-premises", "ssi-devbuddy-on-premises-vllm", "ssi-devbuddy"].includes(m.provider)) {
             m.apiKey = userToken;
           }
           return m;
@@ -239,7 +239,7 @@ export function addUserTokenForSSIDevBuddy(userToken: string) {
       // Update YAML configuration
       if (config.models) {
         config.models = config.models.map((model: any) => {
-          if (["ssi-devbuddy-on-premises", "ssi-devbuddy"].includes(model.provider)) {
+          if (["ssi-devbuddy-on-premises", "ssi-devbuddy-on-premises-vllm", "ssi-devbuddy"].includes(model.provider)) {
             return {
               ...model,
               apiKey: userToken,
