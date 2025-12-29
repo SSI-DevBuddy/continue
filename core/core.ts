@@ -1171,7 +1171,7 @@ export class Core {
   }
 
   public async exchangeApiKeyForToken(apiKey: string): Promise<any> {
-        const ur = new URL("/api/extension-keys/exchange-key", SSI_DEVBUDDY_CONFIG.API_BASE);
+        const ur = new URL("api/extension-keys/exchange-key", SSI_DEVBUDDY_CONFIG.API_BASE);
         const resp = await fetch(ur, {
             method: "POST",
             body: JSON.stringify({ apiKey: apiKey }),
