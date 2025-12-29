@@ -22,6 +22,7 @@ const modelDescriptionSchema = z.object({
     "scaleway",
     "ssi-devbuddy",
     "ssi-devbuddy-on-premises",
+    "ssi-devbuddy-on-premises-vllm",
     "watsonx",
   ]),
   model: z.string(),
