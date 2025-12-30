@@ -1,13 +1,13 @@
+import { ToolPolicy } from "@continuedev/terminal-security";
 import { createAsyncThunk, unwrapResult } from "@reduxjs/toolkit";
 import {
-  ContextItem,
   LLMFullCompletionOptions,
   Tool,
-  ToolCallState,
+  ToolCallState
 } from "core";
-import { ToolPolicy } from "@continuedev/terminal-security";
 import { getRuleId } from "core/llm/rules/getSystemMessageWithRules";
 import { ToCoreProtocol } from "core/protocol";
+import { IIdeMessenger } from "../../context/IdeMessenger";
 import { selectActiveTools } from "../selectors/selectActiveTools";
 import { selectSelectedChatModel } from "../slices/configSlice";
 import {
@@ -20,12 +20,12 @@ import {
   setInactive,
   setInlineErrorMessage,
   setIsPruned,
+  setStreamStartTime,
   setToolGenerated,
   streamUpdate,
   updateToolCallOutput,
 } from "../slices/sessionSlice";
 import { AppThunkDispatch, RootState, ThunkApiType } from "../store";
-import { IIdeMessenger } from "../../context/IdeMessenger";
 import { constructMessages } from "../util/constructMessages";
 
 import { modelSupportsNativeTools } from "core/llm/toolSupport";
@@ -297,6 +297,8 @@ export const streamNormalInput = createAsyncThunk<
 
     dispatch(setIsPruned(didPrune));
     dispatch(setContextPercentage(contextPercentage));
+
+    dispatch(setStreamStartTime(Date.now()));
 
     // Send request and stream response
     const streamAborter = state.session.streamAborter;
