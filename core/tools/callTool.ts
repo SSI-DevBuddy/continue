@@ -77,14 +77,17 @@ async function callToolFromUri(
     case "https:":
       return callHttpTool(uri, args, extras);
     case "mcp:":
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       const decoded = decodeMCPToolUri(uri);
       if (!decoded) {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
         throw new Error(`Invalid MCP tool URI: ${uri}`);
       }
       const [mcpId, toolName] = decoded;
       const client = MCPManagerSingleton.getInstance().getConnection(mcpId);
 
       if (!client) {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
         throw new Error("MCP connection not found");
       }
       const response = await client.client.callTool({
@@ -93,6 +96,7 @@ async function callToolFromUri(
       });
 
       if (response.isError === true) {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
         throw new Error(JSON.stringify(response.content));
       }
 
@@ -133,6 +137,7 @@ async function callToolFromUri(
           });
         }
       });
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
       return contextItems;
     default:
       throw new Error(`Unsupported protocol: ${parsedUri?.protocol}`);
