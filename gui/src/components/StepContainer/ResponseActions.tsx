@@ -1,6 +1,7 @@
 import {
   ArrowsPointingInIcon,
   BarsArrowDownIcon,
+  ClockIcon,
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
@@ -34,6 +35,12 @@ export default function ResponseActions({
   onDelete,
   isLast,
 }: ResponseActionsProps) {
+  const formatTTFT = (ms: number): string => {
+    if (ms < 1000) {
+      return `${ms}ms`;
+    }
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
   const dispatch = useAppDispatch();
   const selectedModel = useAppSelector(selectSelectedChatModel);
   const contextPercentage = useAppSelector(
@@ -61,6 +68,15 @@ export default function ResponseActions({
 
   return (
     <div className="text-description-muted mx-2 flex cursor-default items-center justify-end space-x-1 bg-transparent pb-0 text-xs">
+      {/* Show TTFT if available */}
+      {item.timeToFirstToken && (
+        <div className="text-description-muted flex items-center space-x-1 text-xs">
+          <ClockIcon className="h-3.5 w-3.5" />
+          <span title="Time to First Token">
+            TTFT: {formatTTFT(item.timeToFirstToken)}
+          </span>
+        </div>
+      )}
       <HeaderButtonWithToolTip
         testId={`compact-button-${index}`}
         text={
