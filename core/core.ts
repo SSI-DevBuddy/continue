@@ -1105,6 +1105,7 @@ export class Core {
         }
       } catch (err) {
         console.log(err);
+        return { accessToken: "", user: {} };
       }
     });
 
