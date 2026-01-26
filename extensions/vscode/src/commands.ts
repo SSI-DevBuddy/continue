@@ -18,16 +18,16 @@ import { convertJsonToYamlConfig } from "../../../packages/config-yaml/dist";
 
 import { NextEditLoggingService } from "core/nextEdit/NextEditLoggingService";
 import {
-  getAutocompleteStatusBarDescription,
-  getAutocompleteStatusBarTitle,
-  getNextEditMenuItems,
-  getStatusBarStatus,
-  getStatusBarStatusFromQuickPickItemLabel,
-  handleNextEditToggle,
-  isNextEditToggleLabel,
-  quickPickStatusText,
-  setupStatusBar,
-  StatusBarStatus,
+    getAutocompleteStatusBarDescription,
+    getAutocompleteStatusBarTitle,
+    getNextEditMenuItems,
+    getStatusBarStatus,
+    getStatusBarStatusFromQuickPickItemLabel,
+    handleNextEditToggle,
+    isNextEditToggleLabel,
+    quickPickStatusText,
+    setupStatusBar,
+    StatusBarStatus,
 } from "./autocomplete/statusBar";
 import { ContinueConsoleWebviewViewProvider } from "./ContinueConsoleWebviewViewProvider";
 import { ContinueGUIWebviewViewProvider } from "./ContinueGUIWebviewViewProvider";
@@ -36,9 +36,9 @@ import { VerticalDiffManager } from "./diff/vertical/manager";
 import EditDecorationManager from "./quickEdit/EditDecorationManager";
 import { QuickEdit, QuickEditShowParams } from "./quickEdit/QuickEditQuickPick";
 import {
-  addCodeToContextFromRange,
-  addEntireFileToContext,
-  addHighlightedCodeToContext,
+    addCodeToContextFromRange,
+    addEntireFileToContext,
+    addHighlightedCodeToContext,
 } from "./util/addCode";
 import { Battery } from "./util/battery";
 import { getMetaKeyLabel } from "./util/util";
@@ -59,7 +59,7 @@ function captureCommandTelemetry(
 
 function focusGUI() {
   // focus sidebar
-  vscode.commands.executeCommand("devbuddy.devbuddyGUIView.focus");
+  vscode.commands.executeCommand("devbuddy-onprem.devbuddyGUIView.focus");
   // vscode.commands.executeCommand("workbench.action.focusAuxiliaryBar");
 }
 
@@ -156,7 +156,7 @@ const getCommandsMap: (
   }
 
   return {
-    "devbuddy.acceptDiff": async (newFileUri?: string, streamId?: string) => {
+    "devbuddy-onprem.acceptDiff": async (newFileUri?: string, streamId?: string) => {
       captureCommandTelemetry("acceptDiff");
       void processDiff(
         "accept",
@@ -169,7 +169,7 @@ const getCommandsMap: (
       );
     },
 
-    "devbuddy.rejectDiff": async (newFileUri?: string, streamId?: string) => {
+    "devbuddy-onprem.rejectDiff": async (newFileUri?: string, streamId?: string) => {
       captureCommandTelemetry("rejectDiff");
       void processDiff(
         "reject",
@@ -181,15 +181,15 @@ const getCommandsMap: (
         streamId,
       );
     },
-    "devbuddy.acceptVerticalDiffBlock": (fileUri?: string, index?: number) => {
+    "devbuddy-onprem.acceptVerticalDiffBlock": (fileUri?: string, index?: number) => {
       captureCommandTelemetry("acceptVerticalDiffBlock");
       verticalDiffManager.acceptRejectVerticalDiffBlock(true, fileUri, index);
     },
-    "devbuddy.rejectVerticalDiffBlock": (fileUri?: string, index?: number) => {
+    "devbuddy-onprem.rejectVerticalDiffBlock": (fileUri?: string, index?: number) => {
       captureCommandTelemetry("rejectVerticalDiffBlock");
       verticalDiffManager.acceptRejectVerticalDiffBlock(false, fileUri, index);
     },
-    "devbuddy.quickFix": async (
+    "devbuddy-onprem.quickFix": async (
       range: vscode.Range,
       diagnosticMessage: string,
     ) => {
@@ -199,14 +199,14 @@ const getCommandsMap: (
 
       addCodeToContextFromRange(range, sidebar.webviewProtocol, prompt);
 
-      vscode.commands.executeCommand("devbuddy.devbuddyGUIView.focus");
+      vscode.commands.executeCommand("devbuddy-onprem.devbuddyGUIView.focus");
     },
     // Passthrough for telemetry purposes
-    "devbuddy.defaultQuickAction": async (args: QuickEditShowParams) => {
+    "devbuddy-onprem.defaultQuickAction": async (args: QuickEditShowParams) => {
       captureCommandTelemetry("defaultQuickAction");
-      vscode.commands.executeCommand("devbuddy.focusEdit", args);
+      vscode.commands.executeCommand("devbuddy-onprem.focusEdit", args);
     },
-    "devbuddy.customQuickActionSendToChat": async (
+    "devbuddy-onprem.customQuickActionSendToChat": async (
       prompt: string,
       range: vscode.Range,
     ) => {
@@ -214,9 +214,9 @@ const getCommandsMap: (
 
       addCodeToContextFromRange(range, sidebar.webviewProtocol, prompt);
 
-      vscode.commands.executeCommand("devbuddy.devbuddyGUIView.focus");
+      vscode.commands.executeCommand("devbuddy-onprem.devbuddyGUIView.focus");
     },
-    "devbuddy.customQuickActionStreamInlineEdit": async (
+    "devbuddy-onprem.customQuickActionStreamInlineEdit": async (
       prompt: string,
       range: vscode.Range,
     ) => {
@@ -224,19 +224,19 @@ const getCommandsMap: (
 
       streamInlineEdit("docstring", prompt, range);
     },
-    "devbuddy.codebaseForceReIndex": async () => {
+    "devbuddy-onprem.codebaseForceReIndex": async () => {
       core.invoke("index/forceReIndex", undefined);
     },
-    "devbuddy.rebuildCodebaseIndex": async () => {
+    "devbuddy-onprem.rebuildCodebaseIndex": async () => {
       core.invoke("index/forceReIndex", { shouldClearIndexes: true });
     },
-    "devbuddy.docsIndex": async () => {
+    "devbuddy-onprem.docsIndex": async () => {
       core.invoke("context/indexDocs", { reIndex: false });
     },
-    "devbuddy.docsReIndex": async () => {
+    "devbuddy-onprem.docsReIndex": async () => {
       core.invoke("context/indexDocs", { reIndex: true });
     },
-    "devbuddy.focusContinueInput": async () => {
+    "devbuddy-onprem.focusContinueInput": async () => {
       const isContinueInputFocused = await sidebar.webviewProtocol.request(
         "isContinueInputFocused",
         undefined,
@@ -280,7 +280,7 @@ const getCommandsMap: (
         void addHighlightedCodeToContext(sidebar.webviewProtocol);
       }
     },
-    "devbuddy.focusContinueInputWithoutClear": async () => {
+    "devbuddy-onprem.focusContinueInputWithoutClear": async () => {
       const isContinueInputFocused = await sidebar.webviewProtocol.request(
         "isContinueInputFocused",
         undefined,
@@ -313,22 +313,22 @@ const getCommandsMap: (
     },
     // QuickEditShowParams are passed from CodeLens, temp fix
     // until we update to new params specific to Edit
-    "devbuddy.focusEdit": async (args?: QuickEditShowParams) => {
+    "devbuddy-onprem.focusEdit": async (args?: QuickEditShowParams) => {
       captureCommandTelemetry("focusEdit");
       focusGUI();
       sidebar.webviewProtocol?.request("focusEdit", undefined);
     },
-    "devbuddy.exitEditMode": async () => {
+    "devbuddy-onprem.exitEditMode": async () => {
       captureCommandTelemetry("exitEditMode");
       editDecorationManager.clear();
       void sidebar.webviewProtocol?.request("exitEditMode", undefined);
     },
-    "devbuddy.generateRule": async () => {
+    "devbuddy-onprem.generateRule": async () => {
       captureCommandTelemetry("generateRule");
       focusGUI();
       void sidebar.webviewProtocol?.request("generateRule", undefined);
     },
-    "devbuddy.writeCommentsForCode": async () => {
+    "devbuddy-onprem.writeCommentsForCode": async () => {
       captureCommandTelemetry("writeCommentsForCode");
 
       streamInlineEdit(
@@ -336,7 +336,7 @@ const getCommandsMap: (
         "Write comments for this code. Do not change anything about the code itself.",
       );
     },
-    "devbuddy.writeDocstringForCode": async () => {
+    "devbuddy-onprem.writeDocstringForCode": async () => {
       captureCommandTelemetry("writeDocstringForCode");
 
       void streamInlineEdit(
@@ -344,7 +344,7 @@ const getCommandsMap: (
         "Write a docstring for this code. Do not change anything about the code itself.",
       );
     },
-    "devbuddy.fixCode": async () => {
+    "devbuddy-onprem.fixCode": async () => {
       captureCommandTelemetry("fixCode");
 
       streamInlineEdit(
@@ -352,55 +352,55 @@ const getCommandsMap: (
         "Fix this code. If it is already 100% correct, simply rewrite the code.",
       );
     },
-    "devbuddy.optimizeCode": async () => {
+    "devbuddy-onprem.optimizeCode": async () => {
       captureCommandTelemetry("optimizeCode");
       streamInlineEdit("optimize", "Optimize this code");
     },
-    "devbuddy.fixGrammar": async () => {
+    "devbuddy-onprem.fixGrammar": async () => {
       captureCommandTelemetry("fixGrammar");
       streamInlineEdit(
         "fixGrammar",
         "If there are any grammar or spelling mistakes in this writing, fix them. Do not make other large changes to the writing.",
       );
     },
-    "devbuddy.clearConsole": async () => {
+    "devbuddy-onprem.clearConsole": async () => {
       consoleView.clearLog();
     },
-    "devbuddy.viewLogs": async () => {
+    "devbuddy-onprem.viewLogs": async () => {
       captureCommandTelemetry("viewLogs");
       vscode.commands.executeCommand("workbench.action.toggleDevTools");
     },
-    "devbuddy.debugTerminal": async () => {
+    "devbuddy-onprem.debugTerminal": async () => {
       captureCommandTelemetry("debugTerminal");
 
       const terminalContents = await ide.getTerminalContents();
 
-      vscode.commands.executeCommand("devbuddy.devbuddyGUIView.focus");
+      vscode.commands.executeCommand("devbuddy-onprem.devbuddyGUIView.focus");
 
       sidebar.webviewProtocol?.request("userInput", {
         input: `I got the following error, can you please help explain how to fix it?\n\n${terminalContents.trim()}`,
       });
     },
-    "devbuddy.hideInlineTip": () => {
+    "devbuddy-onprem.hideInlineTip": () => {
       vscode.workspace
         .getConfiguration(EXTENSION_NAME)
         .update("showInlineTip", false, vscode.ConfigurationTarget.Global);
     },
 
     // Commands without keyboard shortcuts
-    "devbuddy.addModel": () => {
+    "devbuddy-onprem.addModel": () => {
       captureCommandTelemetry("addModel");
 
-      vscode.commands.executeCommand("devbuddy.devbuddyGUIView.focus");
+      vscode.commands.executeCommand("devbuddy-onprem.devbuddyGUIView.focus");
       sidebar.webviewProtocol?.request("addModel", undefined);
     },
-    "devbuddy.newSession": () => {
+    "devbuddy-onprem.newSession": () => {
       sidebar.webviewProtocol?.request("newSession", undefined);
     },
-    "devbuddy.viewHistory": () => {
-      vscode.commands.executeCommand("devbuddy.navigateTo", "/history", true);
+    "devbuddy-onprem.viewHistory": () => {
+      vscode.commands.executeCommand("devbuddy-onprem.navigateTo", "/history", true);
     },
-    "devbuddy.focusContinueSessionId": async (
+    "devbuddy-onprem.focusContinueSessionId": async (
       sessionId: string | undefined,
     ) => {
       if (!sessionId) {
@@ -412,13 +412,13 @@ const getCommandsMap: (
         sessionId,
       });
     },
-    "devbuddy.applyCodeFromChat": () => {
+    "devbuddy-onprem.applyCodeFromChat": () => {
       void sidebar.webviewProtocol.request("applyCodeFromChat", undefined);
     },
-    "devbuddy.openConfigPage": () => {
-      vscode.commands.executeCommand("devbuddy.navigateTo", "/config", false);
+    "devbuddy-onprem.openConfigPage": () => {
+      vscode.commands.executeCommand("devbuddy-onprem.navigateTo", "/config", false);
     },
-    "devbuddy.selectFilesAsContext": async (
+    "devbuddy-onprem.selectFilesAsContext": async (
       firstUri: vscode.Uri,
       uris: vscode.Uri[],
     ) => {
@@ -426,7 +426,7 @@ const getCommandsMap: (
         throw new Error("No files were selected");
       }
 
-      vscode.commands.executeCommand("devbuddy.devbuddyGUIView.focus");
+      vscode.commands.executeCommand("devbuddy-onprem.devbuddyGUIView.focus");
 
       for (const uri of uris) {
         // If it's a folder, add the entire folder contents recursively by using walkDir (to ignore ignored files)
@@ -435,7 +435,7 @@ const getCommandsMap: (
           ?.then((stat) => stat.type === vscode.FileType.Directory);
         if (isDirectory) {
           for await (const fileUri of walkDirAsync(uri.toString(), ide, {
-            source: "vscode devbuddy.selectFilesAsContext command",
+            source: "vscode devbuddy-onprem.selectFilesAsContext command",
           })) {
             await addEntireFileToContext(
               vscode.Uri.parse(fileUri),
@@ -452,25 +452,25 @@ const getCommandsMap: (
         }
       }
     },
-    "devbuddy.logAutocompleteOutcome": (
+    "devbuddy-onprem.logAutocompleteOutcome": (
       completionId: string,
       completionProvider: CompletionProvider,
     ) => {
       completionProvider.accept(completionId);
     },
-    "devbuddy.logNextEditOutcomeAccept": (
+    "devbuddy-onprem.logNextEditOutcomeAccept": (
       completionId: string,
       nextEditLoggingService: NextEditLoggingService,
     ) => {
       nextEditLoggingService.accept(completionId);
     },
-    "devbuddy.logNextEditOutcomeReject": (
+    "devbuddy-onprem.logNextEditOutcomeReject": (
       completionId: string,
       nextEditLoggingService: NextEditLoggingService,
     ) => {
       nextEditLoggingService.reject(completionId);
     },
-    "devbuddy.toggleTabAutocompleteEnabled": () => {
+    "devbuddy-onprem.toggleTabAutocompleteEnabled": () => {
       captureCommandTelemetry("toggleTabAutocompleteEnabled");
 
       const config = vscode.workspace.getConfiguration(EXTENSION_NAME);
@@ -506,7 +506,7 @@ const getCommandsMap: (
         }
       }
     },
-    "devbuddy.forceAutocomplete": async () => {
+    "devbuddy-onprem.forceAutocomplete": async () => {
       captureCommandTelemetry("forceAutocomplete");
 
       // 1. Explicitly hide any existing suggestion. This clears VS Code's cache for the current position.
@@ -518,7 +518,7 @@ const getCommandsMap: (
       );
     },
 
-    "devbuddy.openTabAutocompleteConfigMenu": async () => {
+    "devbuddy-onprem.openTabAutocompleteConfigMenu": async () => {
       captureCommandTelemetry("openTabAutocompleteConfigMenu");
 
       const config = vscode.workspace.getConfiguration(EXTENSION_NAME);
@@ -604,23 +604,23 @@ const getCommandsMap: (
             });
           }
         } else if (selectedOption === "$(comment) Open chat") {
-          vscode.commands.executeCommand("devbuddy.focusContinueInput");
+          vscode.commands.executeCommand("devbuddy-onprem.focusContinueInput");
         } else if (selectedOption === "$(gear) Open settings") {
-          vscode.commands.executeCommand("devbuddy.navigateTo", "/config");
+          vscode.commands.executeCommand("devbuddy-onprem.navigateTo", "/config");
         }
 
         quickPick.dispose();
       });
       quickPick.show();
     },
-    "devbuddy.navigateTo": (path: string, toggle: boolean) => {
+    "devbuddy-onprem.navigateTo": (path: string, toggle: boolean) => {
       sidebar.webviewProtocol?.request("navigateTo", { path, toggle });
       focusGUI();
     },
-    "devbuddy.startLocalOllama": () => {
+    "devbuddy-onprem.startLocalOllama": () => {
       startLocalOllama(ide);
     },
-    "devbuddy.installModel": async (
+    "devbuddy-onprem.installModel": async (
       modelName: string,
       llmProvider: ILLM | undefined,
     ) => {
@@ -639,7 +639,7 @@ const getCommandsMap: (
         );
       }
     },
-    "devbuddy.convertConfigJsonToConfigYaml": async () => {
+    "devbuddy-onprem.convertConfigJsonToConfigYaml": async () => {
       const configJson = fs.readFileSync(getConfigJsonPath(), "utf-8");
       const parsed = JSON.parse(configJson);
       const configYaml = convertJsonToYamlConfig(parsed);
@@ -668,7 +668,7 @@ const getCommandsMap: (
           }
         });
     },
-    "devbuddy.enterEnterpriseLicenseKey": async () => {
+    "devbuddy-onprem.enterEnterpriseLicenseKey": async () => {
       captureCommandTelemetry("enterEnterpriseLicenseKey");
 
       const licenseKey = await vscode.window.showInputBox({
@@ -704,7 +704,7 @@ const getCommandsMap: (
         );
       }
     },
-    "devbuddy.toggleNextEditEnabled": async () => {
+    "devbuddy-onprem.toggleNextEditEnabled": async () => {
       captureCommandTelemetry("toggleNextEditEnabled");
 
       const config = vscode.workspace.getConfiguration(EXTENSION_NAME);
@@ -728,7 +728,7 @@ const getCommandsMap: (
         vscode.ConfigurationTarget.Global,
       );
     },
-    "devbuddy.forceNextEdit": async () => {
+    "devbuddy-onprem.forceNextEdit": async () => {
       captureCommandTelemetry("forceNextEdit");
 
       // This is basically the same logic as forceAutocomplete.

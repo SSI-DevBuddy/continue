@@ -1,8 +1,8 @@
 import { CompletionProvider } from "core/autocomplete/CompletionProvider";
 import { processSingleLineCompletion } from "core/autocomplete/util/processSingleLineCompletion";
 import {
-  type AutocompleteInput,
-  type AutocompleteOutcome,
+    type AutocompleteInput,
+    type AutocompleteOutcome,
 } from "core/autocomplete/util/types";
 import { ConfigHandler } from "core/config/ConfigHandler";
 import * as URI from "uri-js";
@@ -25,10 +25,10 @@ import { getDefinitionsFromLsp } from "./lsp";
 import { RecentlyEditedTracker } from "./recentlyEdited";
 import { RecentlyVisitedRangesService } from "./RecentlyVisitedRangesService";
 import {
-  StatusBarStatus,
-  getStatusBarStatus,
-  setupStatusBar,
-  stopStatusBarLoading,
+    StatusBarStatus,
+    getStatusBarStatus,
+    setupStatusBar,
+    stopStatusBarLoading,
 } from "./statusBar";
 
 interface VsCodeCompletionInput {
@@ -570,7 +570,7 @@ export class ContinueCompletionProvider
         range,
         {
           title: "Log Autocomplete Outcome",
-          command: "devbuddy.logAutocompleteOutcome",
+          command: "devbuddy-onprem.logAutocompleteOutcome",
           arguments: [completionId, this.completionProvider],
         },
       );
@@ -640,7 +640,7 @@ export class ContinueCompletionProvider
           ),
           {
             title: "Log Next Edit Outcome",
-            command: "devbuddy.logNextEditOutcomeAccept",
+            command: "devbuddy-onprem.logNextEditOutcomeAccept",
             arguments: [completionId, this.nextEditLoggingService],
           },
         );
