@@ -22,12 +22,12 @@ export class SuggestionsCodeLensProvider implements vscode.CodeLensProvider {
       codeLenses.push(
         new vscode.CodeLens(range, {
           title: "Accept",
-          command: "devbuddy.acceptSuggestion",
+          command: "devbuddy-onprem.acceptSuggestion",
           arguments: [suggestion],
         }),
         new vscode.CodeLens(range, {
           title: "Reject",
-          command: "devbuddy.rejectSuggestion",
+          command: "devbuddy-onprem.rejectSuggestion",
           arguments: [suggestion],
         }),
       );

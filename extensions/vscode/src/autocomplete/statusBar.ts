@@ -5,8 +5,8 @@ import * as vscode from "vscode";
 import { Battery } from "../util/battery";
 import { getMetaKeyLabel } from "../util/util";
 import {
-  CONTINUE_WORKSPACE_KEY,
-  getContinueWorkspaceConfig,
+    CONTINUE_WORKSPACE_KEY,
+    getContinueWorkspaceConfig,
 } from "../util/workspaceConfig";
 
 export enum StatusBarStatus {
@@ -146,7 +146,7 @@ export function setupStatusBar(
 
   statusBarItem.text = statusBarItemText(status, loading, statusBarError);
   statusBarItem.tooltip = statusBarItemTooltip(status ?? statusBarStatus);
-  statusBarItem.command = "devbuddy.openTabAutocompleteConfigMenu";
+  statusBarItem.command = "devbuddy-onprem.openTabAutocompleteConfigMenu";
 
   statusBarItem.show();
   if (status !== undefined) {

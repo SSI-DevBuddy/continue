@@ -2,17 +2,17 @@ import { ConfigHandler } from "core/config/ConfigHandler";
 import { DataLogger } from "core/data/log";
 import { EDIT_MODE_STREAM_ID } from "core/edit/constants";
 import {
-  FromCoreProtocol,
-  FromWebviewProtocol,
-  ToCoreProtocol,
+    FromCoreProtocol,
+    FromWebviewProtocol,
+    ToCoreProtocol,
 } from "core/protocol";
 import { ToWebviewFromCoreProtocol } from "core/protocol/coreWebview";
 import { ToIdeFromWebviewOrCoreProtocol } from "core/protocol/ide";
 import { ToIdeFromCoreProtocol } from "core/protocol/ideCore";
 import { InProcessMessenger, Message } from "core/protocol/messenger";
 import {
-  CORE_TO_WEBVIEW_PASS_THROUGH,
-  WEBVIEW_TO_CORE_PASS_THROUGH,
+    CORE_TO_WEBVIEW_PASS_THROUGH,
+    WEBVIEW_TO_CORE_PASS_THROUGH,
 } from "core/protocol/passThrough";
 import { stripImages } from "core/util/messageContent";
 import * as vscode from "vscode";
@@ -22,8 +22,8 @@ import { VerticalDiffManager } from "../diff/vertical/manager";
 import { addCurrentSelectionToEdit } from "../quickEdit/AddCurrentSelection";
 import EditDecorationManager from "../quickEdit/EditDecorationManager";
 import {
-  getControlPlaneSessionInfo,
-  WorkOsAuthProvider,
+    getControlPlaneSessionInfo,
+    WorkOsAuthProvider,
 } from "../stubs/WorkOsAuthProvider";
 import { handleLLMError } from "../util/errorHandling";
 import { showTutorial } from "../util/tutorial";
@@ -104,7 +104,7 @@ export class VsCodeMessenger {
     });
 
     this.onWebview("toggleDevTools", (msg) => {
-      vscode.commands.executeCommand("devbuddy.viewLogs");
+      vscode.commands.executeCommand("devbuddy-onprem.viewLogs");
     });
     this.onWebview("reloadWindow", (msg) => {
       vscode.commands.executeCommand("workbench.action.reloadWindow");
@@ -115,7 +115,7 @@ export class VsCodeMessenger {
 
     this.onWebview("acceptDiff", async ({ data: { filepath, streamId } }) => {
       await vscode.commands.executeCommand(
-        "devbuddy.acceptDiff",
+        "devbuddy-onprem.acceptDiff",
         filepath,
         streamId,
       );
@@ -123,7 +123,7 @@ export class VsCodeMessenger {
 
     this.onWebview("rejectDiff", async ({ data: { filepath, streamId } }) => {
       await vscode.commands.executeCommand(
-        "devbuddy.rejectDiff",
+        "devbuddy-onprem.rejectDiff",
         filepath,
         streamId,
       );
@@ -367,7 +367,7 @@ export class VsCodeMessenger {
       );
       vscode.commands.executeCommand(
         "setContext",
-        "devbuddy.isSignedInToControlPlane",
+        "devbuddy-onprem.isSignedInToControlPlane",
         false,
       );
     });
