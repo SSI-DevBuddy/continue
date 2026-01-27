@@ -21,16 +21,17 @@
                 id="DiffStreamService.OnPrem"
                 serviceImplementation="com.github.continuedev.continueintellijextension.editor.DiffStreamService"/>
 
-        <projectService serviceInterface="com.github.continuedev.continueintellijextension.autocomplete.CompletionService"
+        <projectService id="CompletionService.OnPrem"
+                        serviceInterface="com.github.continuedev.continueintellijextension.autocomplete.CompletionService"
                         serviceImplementation="com.github.continuedev.continueintellijextension.autocomplete.ContinueCompletionService"/>
-        <projectService
+        <projectService id="NextEditService.OnPrem"
                 serviceInterface="com.github.continuedev.continueintellijextension.nextEdit.NextEditService"
                 serviceImplementation="com.github.continuedev.continueintellijextension.nextEdit.ContinueNextEditService"/>
 
-        <projectService
+        <projectService id="NextEditWindowManager.OnPrem"
                 serviceImplementation="com.github.continuedev.continueintellijextension.nextEdit.NextEditWindowManager"/>
 
-        <projectService
+        <projectService id="NextEditJumpManager.OnPrem"
                 serviceImplementation="com.github.continuedev.continueintellijextension.nextEdit.NextEditJumpManager"/>
 
         <inline.completion.provider id="Continue.OnPrem" implementation="com.github.continuedev.continueintellijextension.autocomplete.ContinueInlineCompletionProvider"/>
@@ -48,7 +49,7 @@
                 instance="com.github.continuedev.continueintellijextension.services.ContinueExtensionConfigurable"
                 id="com.github.continuedev.continueintellijextension.services.ContinueExtensionConfigurable.OnPrem"
                 displayName="Devbuddy (On-Prem)"/>
-        <applicationService
+        <applicationService id="ContinueExtensionSettings.OnPrem"
                 serviceImplementation="com.github.continuedev.continueintellijextension.services.ContinueExtensionSettings"/>
     </extensions>
 
