@@ -2,7 +2,7 @@
 <idea-plugin>
     <id>com.github.continuedev.continueintellijextension.onprem</id>
     <name>SSI Devbuddy (On-Prem)</name>
-    <vendor>StrategicSystemsInternational</vendor>
+    <vendor>StrategicSystemsInternational-OnPrem</vendor>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>org.jetbrains.plugins.terminal</depends>

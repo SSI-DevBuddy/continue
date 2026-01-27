@@ -105,7 +105,7 @@ class OpenConfigAction : ContinueToolbarAction() {
 class OpenLogsAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val logFile = File(System.getProperty("user.home") + "/.continue/logs/core.log")
+        val logFile = File(System.getProperty("user.home") + "/.devbuddy-onprem/logs/core.log")
         if (logFile.exists()) {
             val virtualFile = com.intellij.openapi.vfs.LocalFileSystem.getInstance().findFileByIoFile(logFile)
             if (virtualFile != null) {
