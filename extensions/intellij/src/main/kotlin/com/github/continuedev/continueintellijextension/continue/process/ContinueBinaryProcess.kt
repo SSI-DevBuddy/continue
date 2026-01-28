@@ -35,6 +35,7 @@ class ContinueBinaryProcess(
 
         val builder = ProcessBuilder(path)
         builder.environment() += ProxySettings.getSettings().toContinueEnvVars()
+        builder.environment()["CONTINUE_GLOBAL_DIR"] = System.getProperty("user.home") + "/.continue-onprem"
         return builder
             .directory(File(path).parentFile)
             .start()

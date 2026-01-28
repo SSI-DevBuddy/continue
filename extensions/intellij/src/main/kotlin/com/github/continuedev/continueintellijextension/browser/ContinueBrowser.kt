@@ -22,7 +22,7 @@ class ContinueBrowser(private val project: Project): Disposable {
     private val myJSQueryOpenInBrowser = JBCefJSQuery.create(browser as JBCefBrowserBase)
 
     init {
-        CefApp.getInstance().registerSchemeHandlerFactory("http", "continue", CustomSchemeHandlerFactory())
+        CefApp.getInstance().registerSchemeHandlerFactory("http", "continue-onprem", CustomSchemeHandlerFactory())
         browser.jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 200)
         myJSQueryOpenInBrowser.addHandler { msg: String? ->
             val json = Gson().fromJson(msg, BrowserMessage::class.java)
@@ -130,7 +130,7 @@ class ContinueBrowser(private val project: Project): Disposable {
     private companion object {
 
         private fun getGuiUrl() =
-            System.getenv("GUI_URL") ?: "http://continue/index.html"
+            System.getenv("GUI_URL") ?: "http://continue-onprem/index.html"
 
     }
 

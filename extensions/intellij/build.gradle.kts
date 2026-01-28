@@ -1,6 +1,7 @@
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 fun environment(key: String) = providers.environmentVariable(key)
 
@@ -16,6 +17,7 @@ plugins {
     id("org.jetbrains.changelog") version "2.1.2"
     id("org.jetbrains.qodana") version "0.1.13"
     id("io.sentry.jvm.gradle") version "5.8.0"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = pluginGroup
@@ -132,6 +134,17 @@ tasks {
             .substringBefore("<!-- Plugin description end -->")
             .let(::markdownToHTML)
         check(pluginDescription.get().isNotEmpty()) { "Plugin description section not found in README.md" }
+
+        doLast {
+            // Force replace package names in the generated plugin.xml using generic outputs to ensure compatibility
+            outputs.files.forEach { file ->
+                if (file.name == "plugin.xml" && file.exists()) {
+                    val content = file.readText()
+                    val newContent = content.replace("com.github.continuedev.continueintellijextension", "com.github.continuedev.continueintellijextension.onprem")
+                    file.writeText(newContent)
+                }
+            }
+        }
     }
 
     runIde {
@@ -144,5 +157,27 @@ tasks {
     test {
         useJUnitPlatform()
         jvmArgumentProviders += CommandLineArgumentProvider { listOf("-Dide.browser.jcef.sandbox.enable=false") }
+    }
+
+    withType<PrepareSandboxTask> {
+        pluginJar.set(shadowJar.flatMap { it.archiveFile })
+        dependsOn("shadowJar")
+    }
+
+    shadowJar {
+        archiveClassifier.set("shaded")
+        relocate("com.github.continuedev.continueintellijextension", "com.github.continuedev.continueintellijextension.onprem")
+        mergeServiceFiles()
+    }
+
+    // standard jar task is needed by shadow plugin (renamed to base), so do not disable it.
+}
+
+// Resource filtering to update plugin.xml strings to match relocated package
+tasks.processResources {
+    filesMatching("META-INF/plugin.xml") {
+        filter { line ->
+            line.replace("com.github.continuedev.continueintellijextension", "com.github.continuedev.continueintellijextension.onprem")
+        }
     }
 }
