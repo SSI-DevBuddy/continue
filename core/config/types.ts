@@ -78,8 +78,9 @@ declare global {
   
   export interface ILLM extends LLMOptions {
     get providerName(): string;
-  
+
     uniqueId: string;
+    lastRequestId?: string;
     model: string;
   
     title?: string;
@@ -278,11 +279,6 @@ declare global {
     filepath: string;
     range: Range;
     replacement: string;
-  }
-  
-  export interface ContinueError {
-    title: string;
-    message: string;
   }
   
   export interface CompletionOptions extends BaseCompletionOptions {
@@ -695,6 +691,8 @@ declare global {
   
     openUrl(url: string): Promise<void>;
   
+    getExternalUri?(uri: string): Promise<string>;
+  
     runCommand(command: string): Promise<void>;
   
     saveFile(filepath: string): Promise<void>;
@@ -1064,6 +1062,7 @@ declare global {
     filepath?: string;
     fileContent?: string;
     originalFileContent?: string;
+    autoFormattingDiff?: string;
   }
   
   export interface RangeInFileWithContents {

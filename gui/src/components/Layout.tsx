@@ -14,7 +14,6 @@ import { setDialogMessage, setShowDialog } from "../redux/slices/uiSlice";
 import { enterEdit, exitEdit } from "../redux/thunks/edit";
 import { saveCurrentSession } from "../redux/thunks/session";
 import { fontSize, isMetaEquivalentKeyPressed } from "../util";
-import { incrementFreeTrialCount } from "../util/freeTrial";
 import { ROUTES } from "../util/navigation";
 import { FatalErrorIndicator } from "./config/FatalErrorNotice";
 import TextDialog from "./dialogs";
@@ -49,6 +48,9 @@ const Layout = () => {
 
   const showDialog = useAppSelector((state) => state.ui.showDialog);
   const isInEdit = useAppSelector((store) => store.session.isInEdit);
+  const isHome =
+    location.pathname === ROUTES.HOME ||
+    location.pathname === ROUTES.HOME_INDEX;
 
   useEffect(() => {
     (async () => {
@@ -84,8 +86,8 @@ const Layout = () => {
     async () => {
       return false;
     },
-    [location.pathname],
-    location.pathname === ROUTES.HOME,
+    [isHome],
+    isHome,
   );
 
   useWebviewListener(
@@ -107,8 +109,8 @@ const Layout = () => {
         );
       }
     },
-    [location.pathname, isInEdit],
-    location.pathname === ROUTES.HOME,
+    [isHome, isInEdit],
+    isHome,
   );
 
   useWebviewListener(
@@ -129,14 +131,6 @@ const Layout = () => {
       }
     },
     [location, navigate],
-  );
-
-  useWebviewListener(
-    "incrementFtc",
-    async () => {
-      incrementFreeTrialCount();
-    },
-    [],
   );
 
   useWebviewListener(
@@ -277,7 +271,8 @@ const Layout = () => {
               <GridDiv>
                 <PostHogPageView />
                 <Outlet />
-                <FatalErrorIndicator />
+                {/* The fatal error for chat is shown below input */}
+                {!isHome && <FatalErrorIndicator />}
               </GridDiv>
             </div>
             <div style={{ fontSize: fontSize(-4) }} id="tooltip-portal-div" />

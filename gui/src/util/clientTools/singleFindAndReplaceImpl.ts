@@ -1,83 +1,47 @@
-import { resolveRelativePathInDir } from "core/util/ideUtils";
+import { validateSingleEdit } from "core/edit/searchAndReplace/findAndReplaceUtils";
+import { executeFindAndReplace } from "core/edit/searchAndReplace/performReplace";
+import { validateSearchAndReplaceFilepath } from "core/edit/searchAndReplace/validateArgs";
 import { v4 as uuid } from "uuid";
 import { applyForEditTool } from "../../redux/thunks/handleApplyStateUpdate";
 import { ClientToolImpl } from "./callClientTool";
-import {
-  performFindAndReplace,
-  validateSingleEdit,
-} from "./findAndReplaceUtils";
 
 export const singleFindAndReplaceImpl: ClientToolImpl = async (
   args,
   toolCallId,
   extras,
 ) => {
-  const {
-    filepath,
-    old_string,
-    new_string,
-    replace_all = false,
-    editingFileContents,
-  } = args;
-  const detectLineEndings = (content: string): 'crlf' | 'lf' => {
-    return content.includes('\r\n') ? 'crlf' : 'lf';
-  };
-
-  const normalizeForMatching = (text: string): string => {
-    return text.replace(/\r\n/g, '\n');
-  };
-
-  const restoreLineEndings = (text: string, format: 'crlf' | 'lf'): string => {
-    if (format === 'crlf') {
-      return text.replace(/\r/g, '').replace(/\n/g, '\r\n');
-    }
-    return text.replace(/\r\n/g, '\n');
-  };
-
-  const streamId = uuid();
-
-  // Validate arguments
-  if (!filepath) {
-    throw new Error("filepath is required");
-  }
-  validateSingleEdit(old_string, new_string);
-
-  // Resolve the file path
-  const resolvedFilepath = await resolveRelativePathInDir(
-    filepath,
+  // Note that this is fully duplicate of what occurs in args preprocessing
+  // This is to handle cases where file changes while tool call is pending
+  const { oldString, newString, replaceAll } = validateSingleEdit(
+    args.old_string,
+    args.new_string,
+    args.replace_all,
+  );
+  const fileUri = await validateSearchAndReplaceFilepath(
+    args.filepath,
     extras.ideMessenger.ide,
   );
-  if (!resolvedFilepath) {
-    throw new Error(`File ${filepath} does not exist`);
-  }
 
-  // Read the current file content
-  const originalContent =
-    editingFileContents ??
-    (await extras.ideMessenger.ide.readFile(resolvedFilepath));
-  
-  const originalLineEndings = detectLineEndings(originalContent);
-  const normalizedContent = normalizeForMatching(originalContent);
-  const normalizedOldString = normalizeForMatching(old_string);
-  const normalizedNewString = normalizeForMatching(new_string);
-  // Perform the find and replace operation
-  const tempResult = performFindAndReplace(
-    normalizedContent,
-    normalizedOldString,
-    normalizedNewString,
-    replace_all,
+  const editingFileContents = await extras.ideMessenger.ide.readFile(fileUri);
+  const newFileContents = executeFindAndReplace(
+    editingFileContents,
+    oldString,
+    newString,
+    replaceAll ?? false,
+    0,
   );
 
   // 🔧 ADD: Restore line endings
   const newContent = restoreLineEndings(tempResult, originalLineEndings);
 
   // Apply the changes to the file
+  const streamId = uuid();
   void extras.dispatch(
     applyForEditTool({
       streamId,
       toolCallId,
-      text: newContent,
-      filepath: resolvedFilepath,
+      text: newFileContents,
+      filepath: fileUri,
       isSearchAndReplace: true,
     }),
   );

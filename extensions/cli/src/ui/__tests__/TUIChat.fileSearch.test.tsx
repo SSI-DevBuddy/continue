@@ -1,4 +1,5 @@
 import { renderInMode, testSingleMode } from "./TUIChat.dualModeHelper.js";
+import { waitForCondition } from "./TUIChat.testHelper.js";
 
 describe("TUIChat - @ File Search Tests", () => {
   testSingleMode("shows @ character when user types @", "local", async () => {
@@ -33,17 +34,20 @@ describe("TUIChat - @ File Search Tests", () => {
       // Type @ followed by text to filter files
       stdin.write("@READ");
 
-      // Wait for file search to filter and display results
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      let frame = lastFrame();
 
-      const frame = lastFrame()!;
+      await waitForCondition(() => {
+        frame = lastFrame();
+        return frame?.includes("@READ") ?? false;
+      });
 
+      expect(frame).toBeDefined();
       // Should show the typed text
       expect(frame).toContain("@READ");
 
       // Should show either navigation hints or at least indicate file search is working
-      const hasNavigationHints = frame.includes("↑/↓ to navigate");
-      const hasFileSearch = frame.includes("@READ");
+      const hasNavigationHints = frame!.includes("↑/↓ to navigate");
+      const hasFileSearch = frame!.includes("@READ");
       expect(hasNavigationHints || hasFileSearch).toBe(true);
 
       // Local mode specific UI expectations
@@ -57,10 +61,12 @@ describe("TUIChat - @ File Search Tests", () => {
     // Type multiple @ characters
     stdin.write("@@test");
 
-    // Wait for UI update
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    let frame = lastFrame();
 
-    const frame = lastFrame();
+    await waitForCondition(() => {
+      frame = lastFrame();
+      return frame?.includes("@@test") ?? false;
+    });
 
     // Should handle multiple @ without crashing
     expect(frame).toBeDefined();

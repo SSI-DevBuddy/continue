@@ -1,5 +1,7 @@
+import { CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { ContextItem, Tool, ToolCall, ToolExtras } from "..";
 import { MCPManagerSingleton } from "../context/mcp/MCPManagerSingleton";
+import { ContinueError, ContinueErrorReason } from "../util/errors";
 import { canParseUrl } from "../util/url";
 import { BuiltInToolNames } from "./builtIn";
 
@@ -14,6 +16,7 @@ import { readCurrentlyOpenFileImpl } from "./implementations/readCurrentlyOpenFi
 import { readFileImpl } from "./implementations/readFile";
 
 import { readFileRangeImpl } from "./implementations/readFileRange";
+import { readSkillImpl } from "./implementations/readSkill";
 import { requestRuleImpl } from "./implementations/requestRule";
 import { runTerminalCommandImpl } from "./implementations/runTerminalCommand";
 import { searchWebImpl } from "./implementations/searchWeb";
@@ -87,10 +90,14 @@ async function callToolFromUri(
       if (!client) {
         throw new Error("MCP connection not found");
       }
-      const response = await client.client.callTool({
-        name: toolName,
-        arguments: args,
-      });
+      const response = await client.client.callTool(
+        {
+          name: toolName,
+          arguments: args,
+        },
+        CallToolResultSchema,
+        { timeout: client.options.timeout },
+      );
 
       if (response.isError === true) {
         throw new Error(JSON.stringify(response.content));
@@ -173,6 +180,8 @@ export async function callBuiltInTool(
       return await requestRuleImpl(args, extras);
     case BuiltInToolNames.CodebaseTool:
       return await codebaseToolImpl(args, extras);
+    case BuiltInToolNames.ReadSkill:
+      return await readSkillImpl(args, extras);
     case BuiltInToolNames.ViewRepoMap:
       return await viewRepoMapImpl(args, extras);
     case BuiltInToolNames.ViewSubdirectory:
@@ -192,6 +201,7 @@ export async function callTool(
 ): Promise<{
   contextItems: ContextItem[];
   errorMessage: string | undefined;
+  errorReason?: ContinueErrorReason;
 }> {
   try {
     const args = safeParseToolCallArgs(toolCall);
@@ -209,12 +219,19 @@ export async function callTool(
     };
   } catch (e) {
     let errorMessage = `${e}`;
-    if (e instanceof Error) {
+    let errorReason: ContinueErrorReason | undefined;
+
+    if (e instanceof ContinueError) {
+      errorMessage = e.message;
+      errorReason = e.reason;
+    } else if (e instanceof Error) {
       errorMessage = e.message;
     }
+
     return {
       contextItems: [],
       errorMessage,
+      errorReason,
     };
   }
 }

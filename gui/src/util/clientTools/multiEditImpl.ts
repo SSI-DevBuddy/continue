@@ -1,112 +1,35 @@
-import {
-  inferResolvedUriFromRelativePath,
-  resolveRelativePathInDir,
-} from "core/util/ideUtils";
+import { validateMultiEdit } from "core/edit/searchAndReplace/multiEditValidation";
+import { executeMultiFindAndReplace } from "core/edit/searchAndReplace/performReplace";
+import { validateSearchAndReplaceFilepath } from "core/edit/searchAndReplace/validateArgs";
 import { v4 as uuid } from "uuid";
 import { applyForEditTool } from "../../redux/thunks/handleApplyStateUpdate";
 import { ClientToolImpl } from "./callClientTool";
-import {
-  performFindAndReplace,
-  validateCreatingForMultiEdit,
-  validateSingleEdit,
-} from "./findAndReplaceUtils";
 
 export const multiEditImpl: ClientToolImpl = async (
   args,
   toolCallId,
   extras,
 ) => {
-  const { filepath, edits, editingFileContents } = args;
-
-  const streamId = uuid();
-
-  const detectLineEndings = (content: string): 'crlf' | 'lf' => {
-    return content.includes('\r\n') ? 'crlf' : 'lf';
-  };
-
-  const normalizeForMatching = (text: string): string => {
-    return text.replace(/\r\n/g, '\n');
-  };
-
-  const restoreLineEndings = (text: string, format: 'crlf' | 'lf'): string => {
-    if (format === 'crlf') {
-      return text.replace(/\r/g, '').replace(/\n/g, '\r\n');
-    }
-    return text.replace(/\r\n/g, '\n');
-  };
-
-
-  // Validate arguments
-  if (!filepath) {
-    throw new Error("filepath is required");
-  }
-  if (!edits || !Array.isArray(edits) || edits.length === 0) {
-    throw new Error(
-      "edits array is required and must contain at least one edit",
-    );
-  }
-
-  // Validate each edit operation
-  for (let i = 0; i < edits.length; i++) {
-    const edit = edits[i];
-    validateSingleEdit(edit.old_string, edit.new_string, i);
-  }
-
-  // Check if this is creating a new file (first edit has empty old_string)
-  const isCreatingNewFile = validateCreatingForMultiEdit(edits);
-  const resolvedUri = await resolveRelativePathInDir(
-    filepath,
+  // Note that this is fully duplicate of what occurs in args preprocessing
+  // This is to handle cases where file changes while tool call is pending
+  const { edits } = validateMultiEdit(args);
+  const fileUri = await validateSearchAndReplaceFilepath(
+    args.filepath,
     extras.ideMessenger.ide,
   );
 
-  let newContent: string;
-  let fileUri: string;
-  if (isCreatingNewFile) {
-    if (resolvedUri) {
-      throw new Error(
-        `file ${filepath} already exists, cannot create new file`,
-      );
-    }
-    newContent = edits[0].new_string;
-    const dirs = await extras.ideMessenger.ide.getWorkspaceDirs();
-    fileUri = await inferResolvedUriFromRelativePath(
-      filepath,
-      extras.ideMessenger.ide,
-      dirs,
-    );
-  } else {
-    if (!resolvedUri) {
-      throw new Error(
-        `file ${filepath} does not exist. If you are trying to edit it, correct the filepath. If you are trying to create it, you must pass old_string=""`,
-      );
-    }
-    newContent =
-      editingFileContents ??
-      (await extras.ideMessenger.ide.readFile(resolvedUri));
-    const originalLineEndings = detectLineEndings(newContent);
-    fileUri = resolvedUri;
-    for (let i = 0; i < edits.length; i++) {
-      const { old_string, new_string, replace_all } = edits[i];
-      const normalizedContent = normalizeForMatching(newContent);
-      const normalizedOldString = normalizeForMatching(old_string);
-      const normalizedNewString = normalizeForMatching(new_string);
-      const tempResult = performFindAndReplace(
-        normalizedContent,
-        normalizedOldString,
-        normalizedNewString,
-        replace_all,
-        i,
-      );
-      newContent = restoreLineEndings(tempResult, originalLineEndings);
-    }
-  }
+  const editingFileContents = await extras.ideMessenger.ide.readFile(fileUri);
+  const newFileContents = executeMultiFindAndReplace(
+    editingFileContents,
+    edits,
+  );
 
-  // Apply the changes to the file
+  const streamId = uuid();
   void extras.dispatch(
     applyForEditTool({
       streamId,
       toolCallId,
-      text: newContent,
+      text: newFileContents,
       filepath: fileUri,
       isSearchAndReplace: true,
     }),
