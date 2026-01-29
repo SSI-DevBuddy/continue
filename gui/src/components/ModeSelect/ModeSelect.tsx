@@ -1,6 +1,7 @@
 import {
   CheckIcon,
   ChevronDownIcon,
+  ExclamationTriangleIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { MessageModes } from "core";

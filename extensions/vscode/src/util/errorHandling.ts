@@ -31,7 +31,7 @@ export async function handleLLMError(error: unknown): Promise<boolean> {
       if (val === "Setup Instructions") {
         vscode.env.openExternal(vscode.Uri.parse("https://lemonade-server.ai"));
       } else if (val === "Start Lemonade") {
-        vscode.commands.executeCommand("continue.startLocalLemonade");
+        vscode.commands.executeCommand("devbuddy.startLocalLemonade");
       }
     });
     return true;

@@ -31,9 +31,6 @@ export const singleFindAndReplaceImpl: ClientToolImpl = async (
     0,
   );
 
-  // 🔧 ADD: Restore line endings
-  const newContent = restoreLineEndings(tempResult, originalLineEndings);
-
   // Apply the changes to the file
   const streamId = uuid();
   void extras.dispatch(

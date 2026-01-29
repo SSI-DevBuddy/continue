@@ -227,8 +227,8 @@
       },
       {
         "command": "devbuddy.forceAutocomplete",
-        "title": "Continue: Force Autocomplete",
-        "category": "Continue"
+        "title": "Devbuddy: Force Autocomplete",
+        "category": "SSI Devbuddy"
       },
       {
         "command": "devbuddy.selectFilesAsContext",
@@ -241,13 +241,13 @@
         "category": "SSI Devbuddy",
         "title": "New Session",
         "icon": "$(add)",
-        "group": "Continue"
+        "group": "SSI Devbuddy"
       },
       {
-        "command": "continue.shareSession",
-        "category": "Continue",
+        "command": "devbuddy.shareSession",
+        "category": "SSI Devbuddy",
         "title": "Share Current Chat Session as Markdown",
-        "group": "Continue"
+        "group": "SSI Devbuddy"
       },
       {
         "command": "devbuddy.viewHistory",
@@ -377,10 +377,10 @@
         "group": "SSI Devbuddy"
       },
       {
-        "command": "continue.openInNewWindow",
-        "category": "Continue",
+        "command": "devbuddy.openInNewWindow",
+        "category": "SSI Devbuddy",
         "title": "Open in new window",
-        "group": "Continue"
+        "group": "SSI Devbuddy"
       }
     ],
     "keybindings": [
@@ -452,13 +452,13 @@
         "key": "ctrl+shift+r"
       },
       {
-        "command": "continue.openInNewWindow",
+        "command": "devbuddy.openInNewWindow",
         "mac": "cmd+k cmd+m",
         "key": "ctrl+k ctrl+m",
         "when": "!terminalFocus"
       },
       {
-        "command": "continue.toggleTabAutocompleteEnabled",
+        "command": "devbuddy.toggleTabAutocompleteEnabled",
         "mac": "cmd+k cmd+a",
         "key": "ctrl+k ctrl+a",
         "when": "!terminalFocus"
@@ -528,7 +528,7 @@
           "command": "devbuddy.generateRule"
         },
         {
-          "command": "continue.openInNewWindow"
+          "command": "devbuddy.openInNewWindow"
         }
       ],
       "editor/context": [

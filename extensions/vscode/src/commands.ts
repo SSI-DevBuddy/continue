@@ -55,7 +55,7 @@ let fullScreenPanel: vscode.WebviewPanel | undefined;
 function getFullScreenTab() {
   const tabs = vscode.window.tabGroups.all.flatMap((tabGroup) => tabGroup.tabs);
   return tabs.find((tab) =>
-    (tab.input as any)?.viewType?.endsWith("continue.continueGUIView"),
+    (tab.input as any)?.viewType?.endsWith("devbuddy.devbuddyGUIView"),
   );
 }
 
@@ -425,7 +425,7 @@ const getCommandsMap: (
       sidebar.webviewProtocol?.request("newSession", undefined);
     },
 
-    "continue.shareSession": async (sessionId: string | undefined) => {
+    "devbuddy.shareSession": async (sessionId: string | undefined) => {
       if (!sessionId) {
         sessionId = await sidebar.webviewProtocol?.request(
           "getCurrentSessionId",
@@ -675,7 +675,7 @@ const getCommandsMap: (
         } else if (selectedOption === "$(comment) Open chat") {
           vscode.commands.executeCommand("devbuddy.focusContinueInput");
         } else if (selectedOption === "$(screen-full) Open full screen chat") {
-          vscode.commands.executeCommand("continue.openInNewWindow");
+          vscode.commands.executeCommand("devbuddy.openInNewWindow");
         } else if (selectedOption === "$(gear) Open settings") {
           vscode.commands.executeCommand("devbuddy.navigateTo", "/config");
         }
@@ -691,7 +691,7 @@ const getCommandsMap: (
     "devbuddy.startLocalOllama": () => {
       startLocalOllama(ide);
     },
-    "continue.startLocalLemonade": () => {
+    "devbuddy.startLocalLemonade": () => {
       startLocalLemonade(ide);
     },
     "devbuddy.installModel": async (
@@ -803,7 +803,7 @@ const getCommandsMap: (
         vscode.ConfigurationTarget.Global,
       );
     },
-    "continue.openInNewWindow": async () => {
+    "devbuddy.openInNewWindow": async () => {
       focusGUI();
 
       const sessionId = await sidebar.webviewProtocol.request(
@@ -827,8 +827,8 @@ const getCommandsMap: (
 
       // Create the full screen panel
       let panel = vscode.window.createWebviewPanel(
-        "continue.continueGUIView",
-        "Continue",
+        "devbuddy.devbuddyGUIView",
+        "SSI Devbuddy",
         vscode.ViewColumn.One,
         {
           retainContextWhenHidden: true,
