@@ -176,7 +176,7 @@ class IdeProtocolClient(
                     }
 
                     "storeSecret" -> {
-                        val params = Gson().fromJson(
+                        val params = gsonService.gson.fromJson(
                             dataElement.toString(),
                             StoreSecretParams::class.java
                         )
@@ -185,14 +185,14 @@ class IdeProtocolClient(
                     }
 
                     "getSecret" -> {
-                        val params = Gson().fromJson(dataElement.toString(), GetSecretParams::class.java)
+                        val params = gsonService.gson.fromJson(dataElement.toString(), GetSecretParams::class.java)
                         // Just call the method on the 'ide' object
                         val secret = ide.getSecret(params.key)
                         respond(secret)
                     }
 
                     "deleteSecret" -> {
-                        val params = Gson().fromJson(
+                        val params = gsonService.gson.fromJson(
                             dataElement.toString(),
                             GetSecretParams::class.java // Can reuse the same param class as it just needs the key
                         )

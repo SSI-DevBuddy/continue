@@ -175,7 +175,9 @@ function ProjecSelect() {
             title: con.Label,
             value: con.Value,
           }));
-          setDefaultProjectId({ value: projectOptions[0].value });
+          if (!defaultProjectId) {
+            dispatch(setDefaultProjectId({ value: projectOptions[0].value }));
+          }
           setOptions(projectOptions);
         }
       } catch (err) {

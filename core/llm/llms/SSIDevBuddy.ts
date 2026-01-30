@@ -40,6 +40,7 @@ interface PromptCachingMetrics {
 }
 
 class SSIDevBuddy extends BaseLLM {
+
   private _currentToolResponse: Partial<ToolUseState> | null = null;
   private _promptCachingMetrics: PromptCachingMetrics = {
     cacheReadInputTokens: 0,
@@ -56,6 +57,7 @@ class SSIDevBuddy extends BaseLLM {
       this.apiBase = SSI_DEVBUDDY_CONFIG.API_BASE;
     }
   }
+
 
   protected async *_streamComplete(
     prompt: string,
@@ -74,6 +76,7 @@ class SSIDevBuddy extends BaseLLM {
     signal: AbortSignal,
     options: CompletionOptions,
   ): AsyncGenerator<ChatMessage> {
+
     const apiKey = this.apiKey;
 
     if (!apiKey) {
@@ -82,11 +85,19 @@ class SSIDevBuddy extends BaseLLM {
       );
     }
 
+    // Capture projectId from options if passed dynamically (e.g. from GUI selector)
+    if ((options as any).projectId) {
+      this.projectId = (options as any).projectId;
+    }
+
     const input = this._generateConverseInput(messages, {
       ...options,
       stream: true,
     });
     input.modelId = this.model || "claude";
+    if (this.projectId) {
+      input.projectId = this.projectId;
+    }
 
     const response = await fetch( new URL("chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL), {
       method: "POST",
@@ -600,6 +611,12 @@ class SSIDevBuddy extends BaseLLM {
         chunks.map(async (chunk) => {
           const input = this._generateInvokeModelCommandInput(chunk);
           input.modelId = this.model || "claude";
+
+          // Add projectId if available
+          if (this.projectId) {
+            (input as any).projectId = this.projectId;
+          }
+
           try {
             const response = await fetch(new URL("chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL), {
                 method: "POST",
@@ -613,9 +630,7 @@ class SSIDevBuddy extends BaseLLM {
             );
             process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
             if (!response.ok) {
-              throw new Error(
-                `API request failed with status ${response.status}`,
-              );
+                throw new Error(`API request failed with status ${response.status}`);
             }
 
             const responseBody = await response.json();
@@ -708,7 +723,15 @@ class SSIDevBuddy extends BaseLLM {
         contentType: "application/json",
       };
       input.modelId = this.model || "claude";
-      const response = await fetch(new URL("chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL), {
+
+      // Add projectId if available
+      if (this.projectId) {
+        (input as any).projectId = this.projectId;
+      }
+
+      const response = await fetch(
+        new URL("/chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL),
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -718,12 +741,10 @@ class SSIDevBuddy extends BaseLLM {
           body: JSON.stringify(input),
         },
       );
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
+
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `API request failed with status ${response.status}: ${errorText}`,
-        );
+          const errorText = await response.text();
+          throw new Error(`API request failed with status ${response.status}: ${errorText}`);
       }
 
       if (!response.body) {
