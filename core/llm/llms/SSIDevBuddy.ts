@@ -81,13 +81,20 @@ class SSIDevBuddy extends BaseLLM {
         "SSI DevBuddy API key not set. Please log in first to authenticate.",
       );
     }
+    // Capture projectId from options if passed dynamically (e.g. from GUI selector)
+    if ((options as any).projectId) {
+      this.projectId = (options as any).projectId;
+    }
 
     const input = this._generateConverseInput(messages, {
       ...options,
       stream: true,
     });
     input.modelId = this.model || "claude";
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    if (this.projectId) {
+      input.projectId = this.projectId;
+    }
+
     const response = await fetch(
       new URL("/chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL),
       {
@@ -605,10 +612,18 @@ class SSIDevBuddy extends BaseLLM {
         chunks.map(async (chunk) => {
           const input = this._generateInvokeModelCommandInput(chunk);
           input.modelId = this.model || "claude";
+
+          // Add projectId if available
+          if (this.projectId) {
+            (input as any).projectId = this.projectId;
+          }
+
           try {
             process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
             const response = await fetch(
+              
               new URL("/chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL),
+             
               {
                 method: "POST",
                 headers: {
@@ -717,8 +732,16 @@ class SSIDevBuddy extends BaseLLM {
       };
       input.modelId = this.model || "claude";
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+      // Add projectId if available
+      if (this.projectId) {
+        (input as any).projectId = this.projectId;
+      }
+
       const response = await fetch(
+        
         new URL("/chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL),
+       
         {
           method: "POST",
           headers: {
