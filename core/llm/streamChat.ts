@@ -30,7 +30,12 @@ export async function* llmStreamChat(
     completionOptions,
     messages,
     messageOptions,
+    selectedProjectId,
   } = msg.data;
+
+  if (selectedProjectId) {
+    (completionOptions as any).projectId = selectedProjectId.toString();
+  }
 
   const model = config.selectedModelByRole.chat;
 

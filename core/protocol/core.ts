@@ -242,6 +242,7 @@ export type ToCoreFromIdeOrWebviewProtocol = {
         historyIndex: number;
         selectedCode: RangeInFile[];
       };
+      selectedProjectId?: number;
     },
     AsyncGenerator<ChatMessage, PromptLog>,
   ];
@@ -350,25 +351,13 @@ export type ToCoreFromIdeOrWebviewProtocol = {
   "process/killTerminalProcess": [{ toolCallId: string }, void];
   "mdm/setLicenseKey": [{ licenseKey: string }, boolean];
 
-  "auth/login": [
-    { apiKey: string },
-    { accessToken: string; user: any },
-  ];
-  "auth/saveApiKey": [
-    { apiKey: string },
-    { success: boolean },
-  ];
-  "auth/getApiKey": [
-    undefined,
-    { apiKey: string | undefined },
-  ];
-  "auth/deleteApiKey": [
-    undefined,
-    { success: boolean },
-  ];
+  "auth/login": [{ apiKey: string }, { accessToken: string; user: any }];
+  "auth/saveApiKey": [{ apiKey: string }, { success: boolean }];
+  "auth/getApiKey": [undefined, { apiKey: string | undefined }];
+  "auth/deleteApiKey": [undefined, { success: boolean }];
   "auth/initialize": [
     undefined,
-    { success: boolean; accessToken?: string; user?: any }
+    { success: boolean; accessToken?: string; user?: any },
   ];
   "auth/logout": [undefined, void];
   "projects/users": [undefined, { data: { Label: string; Value: number }[] }];
