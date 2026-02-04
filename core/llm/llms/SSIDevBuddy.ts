@@ -99,14 +99,19 @@ class SSIDevBuddy extends BaseLLM {
       input.projectId = this.projectId;
     }
 
-    const response = await fetch( new URL("chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "text/event-stream",
-        Authorization: `Bearer ${apiKey}`,
+    const response = await fetch(
+      new URL("/chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(input),
+        signal: signal,
       },
-    });
+    );
 
     if (response.status === 499) {
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";

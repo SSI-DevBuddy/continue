@@ -2,8 +2,8 @@ import { SSI_DEVBUDDY_CONFIG } from "../../../SSI_DEVBUDDY_CONFIG.js";
 import type {
   LLMOptions,
 } from "../../index.js";
-import OpenAI from "./OpenAI.js";
 import type { LlmApiRequestType } from "../openaiTypeConverters.js";
+import OpenAI from "./OpenAI.js";
 
 /**
  * SSIDevBuddyOnPremisesVLLM LLM Provider
@@ -94,6 +94,7 @@ class SSIDevBuddyOnPremisesVLLM extends OpenAI {
                 body: JSON.stringify({
                   modelId: this.model,
                   input: [chunk],
+                  projectId: this.projectId ?? null
                 }),
               }
             );
