@@ -340,6 +340,9 @@ class OpenAI extends BaseLLM {
 
     const body = this._convertArgs(options, messages);
     let response = null
+    if ((options as any).projectId) {
+      this.projectId = (options as any).projectId;
+    }
     if (this.projectId){
       response = await this.fetch(this._getEndpoint("chat/completions"), {
         method: "POST",
