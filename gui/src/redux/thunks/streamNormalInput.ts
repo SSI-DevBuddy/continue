@@ -9,7 +9,10 @@ import { getRuleId } from "core/llm/rules/getSystemMessageWithRules";
 import { ToCoreProtocol } from "core/protocol";
 import { IIdeMessenger } from "../../context/IdeMessenger";
 import { selectActiveTools } from "../selectors/selectActiveTools";
-import { selectSelectedChatModel } from "../slices/configSlice";
+import {
+  selectDefaultProjectId,
+  selectSelectedChatModel,
+} from "../slices/configSlice";
 import {
   abortStream,
   addPromptCompletionPair,
@@ -203,6 +206,7 @@ export const streamNormalInput = createAsyncThunk<
   async ({ legacySlashCommandData }, { dispatch, extra, getState }) => {
     const state = getState();
     const selectedChatModel = selectSelectedChatModel(state);
+    const defaultProjectId = selectDefaultProjectId(state);
 
     if (!selectedChatModel) {
       throw new Error("No chat model selected");
@@ -309,6 +313,7 @@ export const streamNormalInput = createAsyncThunk<
         messages: compiledChatMessages,
         legacySlashCommandData,
         messageOptions: { precompiled: true },
+        selectedProjectId: defaultProjectId,
       },
       streamAborter.signal,
     );
