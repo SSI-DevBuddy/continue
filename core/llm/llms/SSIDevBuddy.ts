@@ -91,6 +91,7 @@ class SSIDevBuddy extends BaseLLM {
       stream: true,
     });
     input.modelId = this.model || "claude";
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
     if (this.projectId) {
       input.projectId = this.projectId;
     }
