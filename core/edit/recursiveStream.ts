@@ -22,7 +22,7 @@ export async function* recursiveStream(
   currentBuffer = "",
   isContinuation = false,
 ): AsyncGenerator<string | ChatMessage> {
-  const maxTokens = llm.completionOptions?.maxTokens ?? DEFAULT_MAX_TOKENS;
+  const maxTokens = 25000;
   const safeTokens = maxTokens * INFINITE_STREAM_SAFETY;
   let totalTokens = 0;
   let buffer = currentBuffer;
