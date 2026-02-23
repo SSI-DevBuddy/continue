@@ -1,10 +1,10 @@
 import { ConfigDependentToolParams, Tool } from "..";
+import { isRecommendedAgentModel } from "../llm/toolSupport";
 import * as toolDefinitions from "./definitions";
 
 // I'm writing these as functions because we've messed up 3 TIMES by pushing to const, causing duplicate tool definitions on subsequent config loads.
 export const getBaseToolDefinitions = () => [
   toolDefinitions.readFileTool,
-
   toolDefinitions.createNewFileTool,
   toolDefinitions.runTerminalCommandTool,
   toolDefinitions.globSearchTool,
@@ -13,16 +13,16 @@ export const getBaseToolDefinitions = () => [
   toolDefinitions.lsTool,
   toolDefinitions.createRuleBlock,
   toolDefinitions.fetchUrlContentTool,
-  toolDefinitions.singleFindAndReplaceTool,
 ];
 
-export const getConfigDependentToolDefinitions = (
+export const getConfigDependentToolDefinitions = async (
   params: ConfigDependentToolParams,
-): Tool[] => {
+): Promise<Tool[]> => {
   const { modelName, isSignedIn, enableExperimentalTools, isRemote } = params;
   const tools: Tool[] = [];
 
-  tools.push(toolDefinitions.requestRuleTool(params));
+  tools.push(await toolDefinitions.requestRuleTool(params));
+  tools.push(await toolDefinitions.readSkillTool(params));
 
   if (isSignedIn) {
     // Web search is only available for signed-in users
@@ -38,10 +38,11 @@ export const getConfigDependentToolDefinitions = (
     );
   }
 
-  if (modelName?.includes("claude") || modelName?.includes("gpt-5")) {
+  if (modelName && isRecommendedAgentModel(modelName)) {
     tools.push(toolDefinitions.multiEditTool);
   } else {
     tools.push(toolDefinitions.editFileTool);
+    tools.push(toolDefinitions.singleFindAndReplaceTool);
   }
 
   // missing support for remote os calls: https://github.com/microsoft/vscode/issues/252269
@@ -51,3 +52,8 @@ export const getConfigDependentToolDefinitions = (
 
   return tools;
 };
+
+export function serializeTool(tool: Tool) {
+  const { preprocessArgs, evaluateToolCallPolicy, ...rest } = tool;
+  return rest;
+}

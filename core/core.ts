@@ -9,7 +9,6 @@ import {
   prevFilepaths,
 } from "./autocomplete/util/openedFilesLruCache";
 import { ConfigHandler } from "./config/ConfigHandler";
-import { SYSTEM_PROMPT_DOT_FILE } from "./config/getWorkspaceContinueRuleDotFiles";
 import {
   addModel,
   addUserTokenForSSIDevBuddy,
@@ -23,6 +22,7 @@ import { DataLogger } from "./data/log";
 import { CodebaseIndexer } from "./indexing/CodebaseIndexer";
 import DocsService from "./indexing/docs/DocsService";
 import { countTokens } from "./llm/countTokens";
+import Lemonade from "./llm/llms/Lemonade";
 import Ollama from "./llm/llms/Ollama";
 import { EditAggregator } from "./nextEdit/context/aggregateEdits";
 import { createNewPromptFileV2 } from "./promptFiles/createNewPromptFile";
@@ -35,8 +35,9 @@ import { editConfigFile, migrateV1DevDataFiles } from "./util/paths";
 import { Telemetry } from "./util/posthog";
 import {
   isProcessBackgrounded,
+  killTerminalProcess,
   markProcessAsBackgrounded,
-} from "./util/processTerminalBackgroundStates";
+} from "./util/processTerminalStates";
 import { getSymbolsForManyFiles } from "./util/treeSitter";
 import { TTS } from "./util/tts";
 
@@ -53,29 +54,36 @@ import {
   type IDE,
 } from ".";
 
-import { BLOCK_TYPES, ConfigYaml } from "@continuedev/config-yaml";
+import { ConfigYaml } from "@continuedev/config-yaml";
 import { SSI_DEVBUDDY_CONFIG } from "../SSI_DEVBUDDY_CONFIG";
 import { getDiffFn, GitDiffCache } from "./autocomplete/snippets/gitDiffCache";
 import { stringifyMcpPrompt } from "./commands/slash/mcpSlashCommand";
 import { createNewAssistantFile } from "./config/createNewAssistantFile";
-import { isLocalDefinitionFile } from "./config/loadLocalAssistants";
+import {
+  isColocatedRulesFile,
+  isContinueAgentConfigFile,
+  isContinueConfigRelatedUri,
+} from "./config/loadLocalAssistants";
 import { CodebaseRulesCache } from "./config/markdown/loadCodebaseRules";
 import {
   setupLocalConfig,
   setupProviderConfig,
   setupQuickstartConfig,
 } from "./config/onboarding";
-import { createNewWorkspaceBlockFile } from "./config/workspace/workspaceBlocks";
+import {
+  createNewGlobalRuleFile,
+  createNewWorkspaceBlockFile,
+} from "./config/workspace/workspaceBlocks";
 import { MCPManagerSingleton } from "./context/mcp/MCPManagerSingleton";
 import { performAuth, removeMCPAuth } from "./context/mcp/MCPOauth";
 import { getHeaders } from "./continueServer/stubs/headers";
 import { setMdmLicenseKey } from "./control-plane/mdm/mdm";
+import { myersDiff } from "./diff/myers";
 import { ApplyAbortManager } from "./edit/applyAbortManager";
 import { streamDiffLines } from "./edit/streamDiffLines";
 import { shouldIgnore } from "./indexing/shouldIgnore";
 import { walkDirCache } from "./indexing/walkDir";
 import { LLMLogger } from "./llm/logger";
-import { RULES_MARKDOWN_FILENAME } from "./llm/rules/constants";
 import { llmStreamChat } from "./llm/streamChat";
 import { BeforeAfterDiff } from "./nextEdit/context/diffFormatting";
 import { processSmallEdit } from "./nextEdit/context/processSmallEdit";
@@ -84,18 +92,9 @@ import { NextEditProvider } from "./nextEdit/NextEditProvider";
 import type { FromCoreProtocol, ToCoreProtocol } from "./protocol";
 import { OnboardingModes } from "./protocol/core";
 import type { IMessenger, Message } from "./protocol/messenger";
+import { ContinueError, ContinueErrorReason } from "./util/errors";
+import { shareSession } from "./util/historyUtils";
 import { Logger } from "./util/Logger.js";
-import { getUriPathBasename } from "./util/uri";
-
-const hasRulesFiles = (uris: string[]): boolean => {
-  for (const uri of uris) {
-    const filename = getUriPathBasename(uri);
-    if (filename === RULES_MARKDOWN_FILENAME) {
-      return true;
-    }
-  }
-  return false;
-};
 
 export class Core {
   configHandler: ConfigHandler;
@@ -238,6 +237,17 @@ export class Core {
             return;
           }
 
+          // Check for disableIndexing to prevent race condition
+          const { config } = await this.configHandler.loadConfig();
+          if (!config || config.disableIndexing) {
+            void this.messenger.request("indexProgress", {
+              progress: 0,
+              desc: "Indexing is disabled",
+              status: "disabled",
+            });
+            return;
+          }
+
           void this.codeBaseIndexer.refreshCodebaseIndex(dirs);
         });
       });
@@ -288,7 +298,6 @@ export class Core {
   private registerMessageHandlers(ideSettingsPromise: Promise<IdeSettings>) {
     const on = this.messenger.on.bind(this.messenger);
     const API_KEY_STORAGE_KEY = "ssi-devbuddy-onprem-api-key";
- 
 
     // Note, VsCode's in-process messenger doesn't do anything with this
     // It will only show for jetbrains
@@ -322,8 +331,27 @@ export class Core {
     });
 
     // History
-    on("history/list", (msg) => {
-      return historyManager.list(msg.data);
+    on("history/list", async (msg) => {
+      const localSessions = historyManager.list(msg.data);
+
+      // Check if remote sessions should be enabled based on feature flags
+      const shouldFetchRemote =
+        await this.configHandler.controlPlaneClient.shouldEnableRemoteSessions();
+
+      // Get remote sessions from control plane if feature is enabled
+      const remoteSessions = shouldFetchRemote
+        ? await this.configHandler.controlPlaneClient.listRemoteSessions()
+        : [];
+
+      // Combine and sort by date (most recent first)
+      const allSessions = [...localSessions, ...remoteSessions].sort(
+        (a, b) =>
+          new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime(),
+      );
+
+      // Apply limit if specified
+      const limit = msg.data?.limit ?? 100;
+      return allSessions.slice(0, limit);
     });
 
     on("history/delete", (msg) => {
@@ -334,8 +362,21 @@ export class Core {
       return historyManager.load(msg.data.id);
     });
 
+    on("history/loadRemote", async (msg) => {
+      return this.configHandler.controlPlaneClient.loadRemoteSession(
+        msg.data.remoteId,
+      );
+    });
+
     on("history/save", (msg) => {
       historyManager.save(msg.data);
+    });
+
+    on("history/share", async (msg) => {
+      const session = historyManager.load(msg.data.id);
+      const outputDir = msg.data.outputDir;
+      const history = session.history.map((msg) => msg.message);
+      await shareSession(this.ide, history, outputDir);
     });
 
     on("history/clear", (msg) => {
@@ -377,17 +418,54 @@ export class Core {
     });
 
     on("config/addLocalWorkspaceBlock", async (msg) => {
-      await createNewWorkspaceBlockFile(this.ide, msg.data.blockType);
+      await createNewWorkspaceBlockFile(
+        this.ide,
+        msg.data.blockType,
+        msg.data.baseFilename,
+      );
+      walkDirCache.invalidate();
       await this.configHandler.reloadConfig(
         "Local block created (config/addLocalWorkspaceBlock message)",
       );
     });
 
+    on("config/addGlobalRule", async (msg) => {
+      try {
+        await createNewGlobalRuleFile(this.ide, msg.data?.baseFilename);
+        walkDirCache.invalidate();
+        await this.configHandler.reloadConfig(
+          "Global rule created (config/addGlobalRule message)",
+        );
+      } catch (error) {
+        throw error;
+      }
+    });
+
+    on("config/deleteRule", async (msg) => {
+      try {
+        const filepath = msg.data.filepath;
+        if (
+          !isColocatedRulesFile(filepath) &&
+          !isContinueConfigRelatedUri(filepath)
+        ) {
+          throw new Error("Only rule files can be deleted");
+        }
+        const fileExists = await this.ide.fileExists(filepath);
+        if (fileExists) {
+          await this.ide.removeFile(filepath);
+          walkDirCache.invalidate();
+          await this.configHandler.reloadConfig(
+            "Rule file deleted (config/deleteRule message)",
+          );
+        }
+      } catch (error) {
+        console.error("Failed to delete rule file:", error);
+        throw error;
+      }
+    });
+
     on("config/openProfile", async (msg) => {
-      await this.configHandler.openConfigProfile(
-        msg.data.profileId,
-        msg.data?.element,
-      );
+      await this.configHandler.openConfigProfile(msg.data.profileId);
     });
 
     on("config/ideSettingsUpdate", async (msg) => {
@@ -433,9 +511,11 @@ export class Core {
       const urlPath = msg.data.path.startsWith("/")
         ? msg.data.path.slice(1)
         : msg.data.path;
-      let url = `${env.APP_URL}${urlPath}`;
+      let url;
       if (msg.data.orgSlug) {
-        url += `?org=${msg.data.orgSlug}`;
+        url = `${env.APP_URL}organizations/${msg.data.orgSlug}/${urlPath}`;
+      } else {
+        url = `${env.APP_URL}${urlPath}`;
       }
       await this.messenger.request("openUrl", url);
     });
@@ -444,18 +524,16 @@ export class Core {
       return await getControlPlaneEnv(this.ide.getIdeSettings());
     });
 
-    on("controlPlane/getFreeTrialStatus", async (msg) => {
-      return this.configHandler.controlPlaneClient.getFreeTrialStatus();
-    });
-
-    on("controlPlane/getModelsAddOnUpgradeUrl", async (msg) => {
-      return this.configHandler.controlPlaneClient.getModelsAddOnCheckoutUrl(
-        msg.data.vsCodeUriScheme,
-      );
+    on("controlPlane/getCreditStatus", async (msg) => {
+      return this.configHandler.controlPlaneClient.getCreditStatus();
     });
 
     on("mcp/reloadServer", async (msg) => {
       await MCPManagerSingleton.getInstance().refreshConnection(msg.data.id);
+    });
+    on("mcp/setServerEnabled", async (msg) => {
+      const { id, enabled } = msg.data;
+      await MCPManagerSingleton.getInstance().setEnabled(id, enabled);
     });
     on("mcp/getPrompt", async (msg) => {
       const { serverName, promptName, args } = msg.data;
@@ -472,15 +550,26 @@ export class Core {
     });
     on("mcp/startAuthentication", async (msg) => {
       await new Promise((resolve) => setTimeout(resolve, 5000));
-      MCPManagerSingleton.getInstance().setStatus(msg.data, "authenticating");
-      const status = await performAuth(msg.data, this.ide);
+      MCPManagerSingleton.getInstance().setStatus(
+        msg.data.serverId,
+        "authenticating",
+      );
+      const status = await performAuth(
+        msg.data.serverId,
+        msg.data.serverUrl,
+        this.ide,
+      );
       if (status === "AUTHORIZED") {
-        await MCPManagerSingleton.getInstance().refreshConnection(msg.data.id);
+        await MCPManagerSingleton.getInstance().refreshConnection(
+          msg.data.serverId,
+        );
       }
     });
     on("mcp/removeAuthentication", async (msg) => {
-      removeMCPAuth(msg.data, this.ide);
-      await MCPManagerSingleton.getInstance().refreshConnection(msg.data.id);
+      removeMCPAuth(msg.data.serverUrl, this.ide);
+      await MCPManagerSingleton.getInstance().refreshConnection(
+        msg.data.serverId,
+      );
     });
 
     // Context providers
@@ -737,20 +826,17 @@ export class Core {
         data.fileUri ?? "current-file-stream",
       ); // not super important since currently cancelling apply will cancel all streams it's one file at a time
 
-      return streamDiffLines({
-        highlighted: data.highlighted,
-        prefix: data.prefix,
-        suffix: data.suffix,
+      return streamDiffLines(
+        data,
         llm,
-        // rules included for edit, NOT apply
-        rulesToInclude: data.includeRulesInSystemMessage
-          ? config.rules
-          : undefined,
-        input: data.input,
-        language: data.language,
-        overridePrompt: undefined,
         abortController,
-      });
+        undefined,
+        data.includeRulesInSystemMessage ? config.rules : undefined,
+      );
+    });
+
+    on("getDiffLines", (msg) => {
+      return myersDiff(msg.data.oldContent, msg.data.newContent);
     });
 
     on("cancelApply", async (msg) => {
@@ -780,7 +866,6 @@ export class Core {
       if (data?.shouldClearIndexes) {
         await this.codeBaseIndexer.clearIndexes();
       }
-
       const dirs = data?.dirs ?? (await this.ide.getWorkspaceDirs());
       await this.codeBaseIndexer.refreshCodebaseIndex(dirs);
     });
@@ -821,45 +906,70 @@ export class Core {
     };
 
     on("files/created", async ({ data }) => {
-      if (data?.uris?.length) {
-        walkDirCache.invalidate();
-        void refreshIfNotIgnored(data.uris);
+      if (!data?.uris?.length) {
+        return;
+      }
 
-        if (hasRulesFiles(data.uris)) {
-          const rulesCache = CodebaseRulesCache.getInstance();
-          await Promise.all(
-            data.uris.map((uri) => rulesCache.update(this.ide, uri)),
-          );
-          await this.configHandler.reloadConfig("Rules file created");
-        }
-        // If it's a local assistant being created, we want to reload all assistants so it shows up in the list
-        let localAssistantCreated = false;
-        for (const uri of data.uris) {
-          if (isLocalDefinitionFile(uri)) {
-            localAssistantCreated = true;
-          }
-        }
-        if (localAssistantCreated) {
-          await this.configHandler.refreshAll("Local assistant file created");
-        }
+      walkDirCache.invalidate();
+      void refreshIfNotIgnored(data.uris);
+
+      const colocatedRulesUris = data.uris.filter(isColocatedRulesFile);
+      const nonColocatedRuleUris = data.uris.filter(
+        (uri) => !isColocatedRulesFile(uri),
+      );
+      if (colocatedRulesUris) {
+        const rulesCache = CodebaseRulesCache.getInstance();
+        void Promise.all(
+          colocatedRulesUris.map((uri) => rulesCache.update(this.ide, uri)),
+        ).then(() => {
+          void this.configHandler.reloadConfig("Codebase rule file created");
+        });
+      }
+
+      // If it's a local config being created, we want to reload all configs so it shows up in the list
+      if (nonColocatedRuleUris.some(isContinueAgentConfigFile)) {
+        await this.configHandler.refreshAll("Local config file created");
+      } else if (nonColocatedRuleUris.some(isContinueConfigRelatedUri)) {
+        await this.configHandler.reloadConfig(
+          ".continue config-related file created",
+        );
       }
     });
 
     on("files/deleted", async ({ data }) => {
-      if (data?.uris?.length) {
-        walkDirCache.invalidate();
-        void refreshIfNotIgnored(data.uris);
+      if (!data?.uris?.length) {
+        return;
+      }
 
-        if (hasRulesFiles(data.uris)) {
-          const rulesCache = CodebaseRulesCache.getInstance();
-          data.uris.forEach((uri) => rulesCache.remove(uri));
-          await this.configHandler.reloadConfig("Codebase rule file deleted");
-        }
+      walkDirCache.invalidate();
+      void refreshIfNotIgnored(data.uris);
+
+      const colocatedRulesUris = data.uris.filter(isColocatedRulesFile);
+      const nonColocatedRuleUris = data.uris.filter(
+        (uri) => !isColocatedRulesFile(uri),
+      );
+
+      if (colocatedRulesUris) {
+        const rulesCache = CodebaseRulesCache.getInstance();
+        void Promise.all(
+          colocatedRulesUris.map((uri) => rulesCache.remove(uri)),
+        ).then(() => {
+          void this.configHandler.reloadConfig("Codebase rule file deleted");
+        });
+      }
+
+      // If it's a local config being deleted, we want to reload all configs so it disappears from the list
+      if (nonColocatedRuleUris.some(isContinueAgentConfigFile)) {
+        await this.configHandler.refreshAll("Local config file deleted");
+      } else if (nonColocatedRuleUris.some(isContinueConfigRelatedUri)) {
+        await this.configHandler.reloadConfig(
+          ".continue config-related file deleted",
+        );
       }
     });
 
     on("files/closed", async ({ data }) => {
-      console.log("deleteChain called from files/closed");
+      console.debug("deleteChain called from files/closed");
       await NextEditProvider.getInstance().deleteChain();
 
       try {
@@ -1026,7 +1136,7 @@ export class Core {
 
     on(
       "tools/evaluatePolicy",
-      async ({ data: { toolName, basePolicy, args } }) => {
+      async ({ data: { toolName, basePolicy, parsedArgs, processedArgs } }) => {
         const { config } = await this.configHandler.loadConfig();
         if (!config) {
           throw new Error("Config not loaded");
@@ -1034,26 +1144,59 @@ export class Core {
 
         const tool = config.tools.find((t) => t.function.name === toolName);
         if (!tool) {
-          // Tool not found, return base policy
           return { policy: basePolicy };
         }
 
         // Extract display value for specific tools
         let displayValue: string | undefined;
-        if (toolName === "runTerminalCommand" && args.command) {
-          displayValue = args.command as string;
+        if (toolName === "runTerminalCommand" && parsedArgs.command) {
+          displayValue = parsedArgs.command as string;
         }
 
-        // If tool has evaluateToolCallPolicy function, use it
         if (tool.evaluateToolCallPolicy) {
-          const evaluatedPolicy = tool.evaluateToolCallPolicy(basePolicy, args);
+          const evaluatedPolicy = tool.evaluateToolCallPolicy(
+            basePolicy,
+            parsedArgs,
+            processedArgs,
+          );
           return { policy: evaluatedPolicy, displayValue };
         }
-
-        // Otherwise return base policy unchanged
         return { policy: basePolicy, displayValue };
       },
     );
+
+    on("tools/preprocessArgs", async ({ data: { toolName, args } }) => {
+      const { config } = await this.configHandler.loadConfig();
+      if (!config) {
+        throw new Error("Config not loaded");
+      }
+
+      const tool = config?.tools.find((t) => t.function.name === toolName);
+      if (!tool) {
+        throw new Error(`Tool ${toolName} not found`);
+      }
+
+      try {
+        const preprocessedArgs = await tool.preprocessArgs?.(args, {
+          ide: this.ide,
+        });
+        return {
+          preprocessedArgs,
+        };
+      } catch (e) {
+        let errorReason =
+          e instanceof ContinueError ? e.reason : ContinueErrorReason.Unknown;
+        let errorMessage =
+          e instanceof Error
+            ? e.message
+            : `Error preprocessing tool call args for ${toolName}\n${JSON.stringify(args)}`;
+        return {
+          preprocessedArgs: undefined,
+          errorReason,
+          errorMessage,
+        };
+      }
+    });
 
     on("isItemTooBig", async ({ data: { item } }) => {
       return this.isItemTooBig(item);
@@ -1072,51 +1215,56 @@ export class Core {
       },
     );
 
+    on("process/killTerminalProcess", async ({ data: { toolCallId } }) => {
+      await killTerminalProcess(toolCallId);
+    });
+
     on("mdm/setLicenseKey", ({ data: { licenseKey } }) => {
       const isValid = setMdmLicenseKey(licenseKey);
       return isValid;
     });
 
     on("auth/login", async (msg: any) => {
-      
-        const ur = new URL("api/extension-keys/exchange-key", SSI_DEVBUDDY_CONFIG.API_BASE);
-        const resp = await fetch(ur, {
-            method: "POST",
-            body: JSON.stringify({ apiKey: msg.data.apiKey }),
-            headers: {
-                "Content-Type": "application/json",
-                ...(await getHeaders()),
-            },
-        });
+      const ur = new URL(
+        "api/extension-keys/exchange-key",
+        SSI_DEVBUDDY_CONFIG.API_BASE,
+      );
+      const resp = await fetch(ur, {
+        method: "POST",
+        body: JSON.stringify({ apiKey: msg.data.apiKey }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(await getHeaders()),
+        },
+      });
 
-        if (!resp.ok) {
-            return { success: true, accessToken: "failed", user: "-" };
-        }else{
+      if (!resp.ok) {
+        return { success: true, accessToken: "failed", user: "-" };
+      } else {
+        const data = await resp.json();
+        const token = data.token;
 
-          const data = await resp.json();
-          const token = data.token;
+        addUserTokenForSSIDevBuddy(token);
 
-          addUserTokenForSSIDevBuddy(token);
-          
-          return { success: true, accessToken: token, user: {} };
-        }
+        return { success: true, accessToken: token, user: {} };
+      }
     });
 
     on("auth/saveApiKey", async (msg: any) => {
-        await this.ide.storeSecret(API_KEY_STORAGE_KEY, msg.data.apiKey);
-        return { success: true };
+      await this.ide.storeSecret(API_KEY_STORAGE_KEY, msg.data.apiKey);
+      return { success: true };
     });
 
     // Retrieves the long-lived API key from secure storage
     on("auth/getApiKey", async (msg) => {
-        const apiKey = await this.ide.getSecret(API_KEY_STORAGE_KEY);
-        return { apiKey: apiKey };
+      const apiKey = await this.ide.getSecret(API_KEY_STORAGE_KEY);
+      return { apiKey: apiKey };
     });
 
     // Deletes the long-lived API key from secure storage
     on("auth/deleteApiKey", async (msg) => {
-        await this.ide.deleteSecret(API_KEY_STORAGE_KEY);
-        return { success: true };
+      await this.ide.deleteSecret(API_KEY_STORAGE_KEY);
+      return { success: true };
     });
 
     on("auth/initialize", async (msg) => {
@@ -1172,28 +1320,30 @@ export class Core {
   }
 
   public async exchangeApiKeyForToken(apiKey: string): Promise<any> {
-        const ur = new URL("api/extension-keys/exchange-key", SSI_DEVBUDDY_CONFIG.API_BASE);
-        const resp = await fetch(ur, {
-            method: "POST",
-            body: JSON.stringify({ apiKey: apiKey }),
-            headers: {
-                "Content-Type": "application/json",
-                ...(await getHeaders()),
-            },
-        });
+    const ur = new URL(
+      "api/extension-keys/exchange-key",
+      SSI_DEVBUDDY_CONFIG.API_BASE,
+    );
+    const resp = await fetch(ur, {
+      method: "POST",
+      body: JSON.stringify({ apiKey: apiKey }),
+      headers: {
+        "Content-Type": "application/json",
+        ...(await getHeaders()),
+      },
+    });
 
-        if (!resp.ok) {
-            return { success: true, accessToken: "failed", user: "-" };
-        }else{
+    if (!resp.ok) {
+      return { success: true, accessToken: "failed", user: "-" };
+    } else {
+      const data = await resp.json();
+      const token = data.token;
 
-          const data = await resp.json();
-          const token = data.token;
+      addUserTokenForSSIDevBuddy(token);
 
-          addUserTokenForSSIDevBuddy(token);
-          
-          return { success: true, accessToken: token, user: {} };
-        }
-      }
+      return { success: true, accessToken: token, user: {} };
+    }
+  }
 
   private async handleToolCall(toolCall: ToolCall) {
     const { config } = await this.configHandler.loadConfig();
@@ -1296,10 +1446,9 @@ export class Core {
       const diffCache = GitDiffCache.getInstance(getDiffFn(this.ide));
       diffCache.invalidate();
       walkDirCache.invalidate(); // safe approach for now - TODO - only invalidate on relevant changes
+      const currentProfileUri =
+        this.configHandler.currentProfile?.profileDescription.uri ?? "";
       for (const uri of data.uris) {
-        const currentProfileUri =
-          this.configHandler.currentProfile?.profileDescription.uri ?? "";
-
         if (URI.equal(uri, currentProfileUri)) {
           // Trigger a toast notification to provide UI feedback that config has been updated
           const showToast =
@@ -1319,21 +1468,7 @@ export class Core {
           );
           continue;
         }
-
-        if (
-          uri.endsWith(".continuerc.json") ||
-          uri.endsWith(".prompt") ||
-          uri.endsWith(SYSTEM_PROMPT_DOT_FILE) ||
-          (uri.includes(".continue") &&
-            (uri.endsWith(".yaml") || uri.endsWith("yml"))) ||
-          BLOCK_TYPES.some((blockType) =>
-            uri.includes(`.continue/${blockType}`),
-          )
-        ) {
-          await this.configHandler.reloadConfig(
-            "Config-related file updated: continuerc, prompt, local block, etc",
-          );
-        } else if (uri.endsWith(RULES_MARKDOWN_FILENAME)) {
+        if (isColocatedRulesFile(uri)) {
           try {
             const codebaseRulesCache = CodebaseRulesCache.getInstance();
             void codebaseRulesCache.update(this.ide, uri).then(() => {
@@ -1342,6 +1477,10 @@ export class Core {
           } catch (e) {
             Logger.error(`Failed to update codebase rule: ${e}`);
           }
+        } else if (isContinueConfigRelatedUri(uri)) {
+          await this.configHandler.reloadConfig(
+            "Local config-related file updated",
+          );
         } else if (
           uri.endsWith(".continueignore") ||
           uri.endsWith(".gitignore")
@@ -1384,6 +1523,9 @@ export class Core {
       } else {
         if (msg.data.title === "Ollama") {
           const models = await new Ollama({ model: "" }).listModels();
+          return models;
+        } else if (msg.data.title === "Lemonade") {
+          const models = await new Lemonade({ model: "" }).listModels();
           return models;
         } else {
           return undefined;
@@ -1473,6 +1615,8 @@ export class Core {
         reranker: config.selectedModelByRole.rerank,
         selectedProjectId: selectedProjectId,
         fetch: (url, init) =>
+          // Important note: context providers fetch uses global request options not LLM request options
+          // Because LLM calls are handled separately
           fetchwithRequestOptions(url, init, config.requestOptions),
         isInAgentMode: msg.data.isInAgentMode,
       });

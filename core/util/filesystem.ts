@@ -50,7 +50,6 @@ class FileSystemIde implements IDE {
     this.secrets.delete(key);
   }
 
-
   fileExists(fileUri: string): Promise<boolean> {
     const filepath = fileURLToPath(fileUri);
     return Promise.resolve(fs.existsSync(filepath));
@@ -211,6 +210,18 @@ class FileSystemIde implements IDE {
     const filepath = fileURLToPath(fileUri);
     return new Promise((resolve, reject) => {
       fs.writeFile(filepath, contents, (err) => {
+        if (err) {
+          reject(err);
+        }
+        resolve();
+      });
+    });
+  }
+
+  removeFile(fileUri: string): Promise<void> {
+    const filepath = fileURLToPath(fileUri);
+    return new Promise((resolve, reject) => {
+      fs.unlink(filepath, (err) => {
         if (err) {
           reject(err);
         }

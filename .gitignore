@@ -173,3 +173,9 @@ extensions/.continue-debug/
 **/.continue/assistants/
 **/.continue/agents/
 keys
+
+.channels_cache.json
+.users_cache.json
+.copy-status
+.copy-log
+

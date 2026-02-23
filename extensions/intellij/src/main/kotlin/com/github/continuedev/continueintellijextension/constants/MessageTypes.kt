@@ -4,7 +4,6 @@ class MessageTypes {
     companion object {
         val IDE_MESSAGE_TYPES = listOf(
             "readRangeInFile",
-            "isTelemetryEnabled",
             "getSecret",
             "storeSecret",
             "deleteSecret",
@@ -94,6 +93,8 @@ class MessageTypes {
             "config/newAssistantFile",
             "config/ideSettingsUpdate",
             "config/addLocalWorkspaceBlock",
+            "config/addGlobalRule",
+            "config/deleteRule",
             "config/getSerializedProfileInfo",
             "config/deleteModel",
             "config/refreshProfiles",
@@ -101,6 +102,9 @@ class MessageTypes {
             "config/updateSharedConfig",
             "config/updateSelectedModel",
             "mcp/reloadServer",
+            "mcp/startAuthentication",
+            "mcp/removeAuthentication",
+            "mcp/setServerEnabled",
             "mcp/getPrompt",
             "context/getContextItems",
             "context/getSymbolsForFiles",
@@ -128,6 +132,7 @@ class MessageTypes {
             "llm/listModels",
             "llm/compileChat",
             "streamDiffLines",
+            "getDiffLines",
             "chatDescriber/describe",
             "conversation/compact",
             "stats/getTokensPerDay",
@@ -151,11 +156,13 @@ class MessageTypes {
             "didChangeSelectedOrg",
             "tools/call",
             "tools/evaluatePolicy",
+            "tools/preprocessArgs",
             "controlPlane/openUrl",
             "isItemTooBig",
             "process/markAsBackgrounded",
             "process/isBackgrounded",
             "projects/users",
+            "process/killTerminalProcess"
         )
     }
 }

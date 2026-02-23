@@ -24,6 +24,7 @@ export const EMPTY_CONFIG: BrowserSerializedContinueConfig = {
     autocomplete: [],
     rerank: [],
     embed: [],
+    subagent: [],
   },
   selectedModelByRole: {
     chat: null,
@@ -33,11 +34,12 @@ export const EMPTY_CONFIG: BrowserSerializedContinueConfig = {
     autocomplete: null,
     rerank: null,
     embed: null,
+    subagent: null,
   },
   rules: [],
 };
 
-const initialState: ConfigState = {
+export const INITIAL_CONFIG_SLICE: ConfigState = {
   configError: undefined,
   config: EMPTY_CONFIG,
   loading: false,
@@ -46,7 +48,7 @@ const initialState: ConfigState = {
 
 export const configSlice = createSlice({
   name: "config",
-  initialState,
+  initialState: INITIAL_CONFIG_SLICE,
   reducers: {
     setConfigResult: (
       state,

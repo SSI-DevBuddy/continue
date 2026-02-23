@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 
 import { IContextProvider } from "core";
 import { ConfigHandler } from "core/config/ConfigHandler";
@@ -10,6 +11,7 @@ import {
   getConfigJsonPath,
   getConfigTsPath,
   getConfigYamlPath,
+  getContinueGlobalPath,
 } from "core/util/paths";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from "vscode";
@@ -42,13 +44,10 @@ import { VsCodeIde } from "../VsCodeIde";
 import { ConfigYamlDocumentLinkProvider } from "./ConfigYamlDocumentLinkProvider";
 import { VsCodeMessenger } from "./VsCodeMessenger";
 
-import { getAst } from "core/autocomplete/util/ast";
 import { modelSupportsNextEdit } from "core/llm/autodetect";
 import { NEXT_EDIT_MODELS } from "core/llm/constants";
-import { DocumentHistoryTracker } from "core/nextEdit/DocumentHistoryTracker";
 import { NextEditProvider } from "core/nextEdit/NextEditProvider";
 import { isNextEditTest } from "core/nextEdit/utils";
-import { localPathOrUriToPath } from "core/util/pathToUri";
 import { JumpManager } from "../activation/JumpManager";
 import setupNextEditWindowManager, {
   NextEditWindowManager,
@@ -59,7 +58,11 @@ import {
 } from "../activation/SelectionChangeManager";
 import { GhostTextAcceptanceTracker } from "../autocomplete/GhostTextAcceptanceTracker";
 import { getDefinitionsFromLsp } from "../autocomplete/lsp";
-import { handleTextDocumentChange } from "../util/editLoggingUtils";
+import {
+  clearDocumentContentCache,
+  handleTextDocumentChange,
+  initDocumentContentCache,
+} from "../util/editLoggingUtils";
 import type { VsCodeWebviewProtocol } from "../webviewProtocol";
 
 export class VsCodeExtension {
@@ -232,7 +235,9 @@ export class VsCodeExtension {
           timeSinceLastDocChange < this.ARBITRARY_TYPING_DELAY &&
           !NextEditWindowManager.getInstance().hasAccepted()
         ) {
-          console.log("VsCodeExtension: typing in progress, preserving chain");
+          // console.debug(
+          //   "VsCodeExtension: typing in progress, preserving chain",
+          // );
           return true;
         }
 
@@ -463,6 +468,28 @@ export class VsCodeExtension {
       void this.configHandler.reloadConfig("config.ts updated - fs file watch");
     });
 
+    // watch global rules directory for changes
+    const globalRulesDir = path.join(getContinueGlobalPath(), "rules");
+    if (fs.existsSync(globalRulesDir)) {
+      fs.watch(globalRulesDir, { recursive: true }, (eventType, filename) => {
+        if (filename && filename.endsWith(".md")) {
+          void this.configHandler.reloadConfig(
+            "Global rules directory updated - fs file watch",
+          );
+        }
+      });
+    }
+
+    // Initialize document content cache for tracking pre-edit content
+    vscode.workspace.onDidOpenTextDocument((document) => {
+      initDocumentContentCache(document);
+    });
+
+    // Initialize cache for all currently open documents
+    for (const document of vscode.workspace.textDocuments) {
+      initDocumentContentCache(document);
+    }
+
     vscode.workspace.onDidChangeTextDocument(async (event) => {
       if (event.contentChanges.length > 0) {
         selectionManager.documentChanged();
@@ -492,6 +519,7 @@ export class VsCodeExtension {
     });
 
     vscode.workspace.onDidCloseTextDocument(async (event) => {
+      clearDocumentContentCache(event.uri.toString());
       this.core.invoke("files/closed", {
         uris: [event.uri.toString()],
       });
@@ -503,17 +531,32 @@ export class VsCodeExtension {
       });
     });
 
-    vscode.workspace.onDidOpenTextDocument(async (event) => {
-      console.log("onDidOpenTextDocument");
-      const ast = await getAst(event.fileName, event.getText());
-      if (ast) {
-        DocumentHistoryTracker.getInstance().addDocument(
-          localPathOrUriToPath(event.fileName),
-          event.getText(),
-          ast,
-        );
-      }
+    vscode.workspace.onDidChangeWorkspaceFolders(async (event) => {
+      const dirs = vscode.workspace.workspaceFolders?.map(
+        (folder) => folder.uri,
+      );
+
+      this.ideUtils.setWokspaceDirectories(dirs);
+
+      this.core.invoke("index/forceReIndex", {
+        dirs: [
+          ...event.added.map((folder) => folder.uri.toString()),
+          ...event.removed.map((folder) => folder.uri.toString()),
+        ],
+      });
     });
+
+    // TODO merge this and re-enable https://github.com/continuedev/continue/pull/8364
+    // vscode.workspace.onDidOpenTextDocument(async (event) => {
+    //   const ast = await getAst(event.fileName, event.getText());
+    //   if (ast) {
+    //     DocumentHistoryTracker.getInstance().addDocument(
+    //       localPathOrUriToPath(event.fileName),
+    //       event.getText(),
+    //       ast,
+    //     );
+    //   }
+    // });
 
     // When GitHub sign-in status changes, reload config
     vscode.authentication.onDidChangeSessions(async (e) => {

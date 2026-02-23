@@ -1,4 +1,5 @@
 import { OnboardingModes } from "core/protocol/core";
+import { useEffect } from "react";
 import { useAppSelector } from "../../redux/hooks";
 import { getLocalStorage, setLocalStorage } from "../../util/localStorage";
 import { useOnboardingCard } from "./hooks/useOnboardingCard";
@@ -10,19 +11,22 @@ export interface OnboardingCardState {
 
 interface OnboardingCardProps {
   isDialog?: boolean;
-  showFreeTrialExceededAlert?: boolean;
 }
 
-export function OnboardingCard({
-  isDialog,
-  showFreeTrialExceededAlert,
-}: OnboardingCardProps) {
+export function OnboardingCard({ isDialog }: OnboardingCardProps) {
   const { activeTab, close, setActiveTab } = useOnboardingCard();
   const config = useAppSelector((store) => store.config.config);
 
   if (getLocalStorage("onboardingStatus") === undefined) {
     setLocalStorage("onboardingStatus", "Completed");
   }
+
+  // Default to MODELS_ADD_ON tab if no active tab is set
+  useEffect(() => {
+    if (!activeTab) {
+      setActiveTab(OnboardingModes.MODELS_ADD_ON);
+    }
+  }, [activeTab, setActiveTab]);
 
   // function renderTabContent() {
   //   switch (activeTab) {
@@ -33,7 +37,7 @@ export function OnboardingCard({
   //     case OnboardingModes.MODELS_ADD_ON:
   //       return <OnboardingModelsAddOnTab />;
   //     default:
-  //       return <OnboardingProvidersTab />;
+  //       return <OnboardingModelsAddOnTab />;
   //   }
   // }
 

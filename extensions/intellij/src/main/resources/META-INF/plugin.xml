@@ -40,7 +40,6 @@
                            displayType="BALLOON"/>
         <actionPromoter order="last"
                         implementation="com.github.continuedev.continueintellijextension.actions.ContinueActionPromote"/>
-        <errorHandler implementation="com.github.continuedev.continueintellijextension.error.ContinueErrorSubmitter"/>
         <postStartupActivity
                 implementation="com.github.continuedev.continueintellijextension.activities.ContinuePluginStartupActivity"/>
         <postStartupActivity implementation="com.github.continuedev.continueintellijextension.proxy.ProxyPoolingActivity"/>
@@ -155,6 +154,14 @@
             <override-text place="GoToAction" text="Settings"/>
         </action>
 
+        <action id="continue.reloadPage.onprem"
+                class="com.github.continuedev.continueintellijextension.actions.ReloadBrowserAction"
+                icon="AllIcons.Actions.Refresh"
+                text="Reload Continue Browser"
+                description="Reload Continue Browser">
+            <override-text place="GoToAction" text="Reload Continue Browser"/>
+        </action>
+
         <action id="continue.openLogs.onprem"
                 class="com.github.continuedev.continueintellijextension.actions.OpenLogsAction"
                 icon="AllIcons.General.ShowInfos"
@@ -167,6 +174,7 @@
             <reference ref="continue.newContinueSession.onprem"/>
             <reference ref="continue.viewHistory.onprem"/>
             <reference ref="continue.openConfigPage.onprem"/>
+            <reference ref="continue.reloadPage.onprem" />
         </group>
 
         <action id="continue.focusContinueInput.onprem"
@@ -180,5 +188,12 @@
             <add-to-group group-id="EditorPopupMenu"/>
             <override-text place="GoToAction" text="Devbuddy: Add Highlighted Code to Context and Clear Chat"/>
         </action>
+        <group id="ContinueProjectViewPopUpMenuGroup" popup="true" text="Continue" icon="/icons/continue.svg">
+            <action id="com.github.continuedev.continueintellijextension.actions.AddToChatAction"
+                    class="com.github.continuedev.continueintellijextension.actions.AddToChatAction"
+                    text="Add to Chat">
+            </action>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+        </group>
     </actions>
 </idea-plugin>

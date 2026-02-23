@@ -88,8 +88,10 @@
       "properties": {
         "devbuddy-onprem.telemetryEnabled": {
           "type": "boolean",
-          "default": false,
-          "markdownDescription": "Continue collects anonymous usage data, cleaned of PII, to help us improve the product for our users. Read more  at [continue.dev › Telemetry](https://docs.continue.dev/telemetry)."
+          "default": true,
+          "markdownDescription": "Continue collects anonymous usage data, cleaned of PII, to help us improve the product for our users. Read more  at [continue.dev › Telemetry](https://docs.continue.dev/telemetry).",
+          "markdownDeprecationMessage": "This setting is deprecated and will be removed in a later version. Please use the _Telemetry > Allow Anonymous Telemetry_ setting in the extension's User Settings page.",
+          "deprecationMessage": "Please use the _Telemetry > Allow Anonymous Telemetry_ setting in the extension's User Settings page."
         },
         "devbuddy-onprem.showInlineTip": {
           "type": "boolean",
@@ -225,8 +227,8 @@
       },
       {
         "command": "devbuddy-onprem.forceAutocomplete",
-        "title": "Continue: Force Autocomplete",
-        "category": "Continue"
+        "title": "Devbuddy: Force Autocomplete",
+        "category": "SSI Devbuddy"
       },
       {
         "command": "devbuddy-onprem.selectFilesAsContext",
@@ -242,6 +244,12 @@
         "group": "SSI Devbuddy"
       },
       {
+        "command": "devbuddy-onprem.shareSession",
+        "category": "SSI Devbuddy",
+        "title": "Share Current Chat Session as Markdown",
+        "group": "SSI Devbuddy"
+      },
+      {
         "command": "devbuddy-onprem.viewHistory",
         "category": "SSI Devbuddy",
         "title": "View History",
@@ -251,7 +259,7 @@
       {
         "command": "devbuddy-onprem.viewLogs",
         "category": "SSI Devbuddy",
-        "title": "View History",
+        "title": "View Logs",
         "group": "SSI Devbuddy"
       },
       {
@@ -367,6 +375,12 @@
         "category": "SSI Devbuddy",
         "title": "Generate Rule",
         "group": "SSI Devbuddy"
+      },
+      {
+        "command": "devbuddy.openInNewWindow",
+        "category": "SSI Devbuddy",
+        "title": "Open in new window",
+        "group": "SSI Devbuddy"
       }
     ],
     "keybindings": [
@@ -438,6 +452,12 @@
         "key": "ctrl+shift+r"
       },
       {
+        "command": "devbuddy-onprem.openInNewWindow",
+        "mac": "cmd+k cmd+m",
+        "key": "ctrl+k ctrl+m",
+        "when": "!terminalFocus"
+      },
+      {
         "command": "devbuddy-onprem.toggleTabAutocompleteEnabled",
         "mac": "cmd+k cmd+a",
         "key": "ctrl+k ctrl+a",
@@ -506,6 +526,9 @@
         },
         {
           "command": "devbuddy-onprem.generateRule"
+        },
+        {
+          "command": "devbuddy-onprem.openInNewWindow"
         }
       ],
       "editor/context": [
@@ -524,13 +547,12 @@
       "devbuddy-onprem.devbuddySubMenu": [
         {
           "command": "devbuddy-onprem.focusContinueInputWithoutClear",
-          "group": "SSI Devbuddy",
-          "when": "editorHasSelection"
+          "group": "SSI Devbuddy"
         },
         {
           "command": "devbuddy-onprem.focusEdit",
           "group": "SSI Devbuddy",
-          "when": "editorHasSelection && !editorReadonly"
+          "when": "!editorReadonly"
         }
       ],
       "explorer/context": [
@@ -715,13 +737,12 @@
     "@electron/rebuild": "^3.2.10",
     "@reduxjs/toolkit": "^1.9.3",
     "@vscode/ripgrep": "^1.15.9",
-    "axios": "^1.2.5",
+    "axios": "^1.13.1",
     "core": "file:../../core",
     "cors": "^2.8.5",
     "dbinfoz": "^0.14.0",
     "diff": "^7.0.0",
     "downshift": "^7.6.0",
-    "esbuild": "0.17.19",
     "express": "^4.18.2",
     "fkill": "^8.1.0",
     "follow-redirects": "^1.15.4",
@@ -734,10 +755,10 @@
     "https-proxy-agent": "^7.0.2",
     "ignore": "^5.3.0",
     "jsdom": "^24.0.0",
-    "lru-cache": "^11.0.2",
+    "lru-cache": "^11.2.4",
     "minisearch": "^7.0.0",
-    "mocha": "^11.7.1",
-    "monaco-editor": "^0.45.0",
+    "mocha": "^11.7.5",
+    "monaco-editor": "^0.55.1",
     "monaco-vscode-textmate-theme-converter": "^0.1.7",
     "ncp": "^2.0.0",
     "node-fetch": "^3.3.2",
@@ -750,12 +771,12 @@
     "socket.io-client": "^4.7.2",
     "strip-ansi": "^7.1.0",
     "svg-builder": "^2.0.0",
-    "systeminformation": "^5.23.7",
+    "systeminformation": "^5.27.14",
     "tailwindcss": "^3.3.2",
     "undici": "^6.21.3",
     "uuid": "^9.0.1",
     "uuidv4": "^6.2.13",
-    "vectordb": "^0.4.20",
+    "vectordb": "0.4.20",
     "vitest": "^3.1.4",
     "vscode-languageclient": "^8.0.2",
     "ws": "^8.13.0",

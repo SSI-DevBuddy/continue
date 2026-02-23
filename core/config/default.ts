@@ -1,8 +1,8 @@
 import { ConfigYaml } from "@continuedev/config-yaml";
 import { SSI_DEVBUDDY_CONFIG } from "../../SSI_DEVBUDDY_CONFIG.js";
 
-const cloudConfig: ConfigYaml = {
-  name: "Local Agent",
+export const defaultConfig: ConfigYaml = {
+  name: "Local Config",
   version: "1.0.0",
   schema: "v1",
   models: [
@@ -76,12 +76,12 @@ const onPremisesConfigVLLM: ConfigYaml = {
   ],
 };
 
-const onPremisesConfig: ConfigYaml = 
-  SSI_DEVBUDDY_CONFIG.ON_PREMISES_LLM_PROVIDER === "vllm" 
-    ? onPremisesConfigVLLM 
+const onPremisesConfig: ConfigYaml =
+  SSI_DEVBUDDY_CONFIG.ON_PREMISES_LLM_PROVIDER === "vllm"
+    ? onPremisesConfigVLLM
     : onPremisesConfigOllama;
 
-export const defaultConfig: ConfigYaml = 
-  SSI_DEVBUDDY_CONFIG.APP_MODE === "on-premises" 
-    ? onPremisesConfig 
+export const defaultConfig: ConfigYaml =
+  SSI_DEVBUDDY_CONFIG.APP_MODE === "on-premises"
+    ? onPremisesConfig
     : cloudConfig;

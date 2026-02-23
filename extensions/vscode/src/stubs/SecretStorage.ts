@@ -62,6 +62,14 @@ export class SecretStorage {
     const key = await this.getOrCreateEncryptionKey();
     const data = fs.readFileSync(filePath);
 
+    // Validate minimum data size to detect corruption early
+    const minSize = this.saltLength + this.ivLength + this.tagLength;
+    if (data.length < minSize) {
+      throw new Error(
+        `Corrupted cache file: insufficient data (${data.length} bytes, expected at least ${minSize})`,
+      );
+    }
+
     const salt = data.subarray(0, this.saltLength);
     const iv = data.subarray(this.saltLength, this.saltLength + this.ivLength);
     const tag = data.subarray(
@@ -108,15 +116,9 @@ export class SecretStorage {
 
   async delete(key: string): Promise<void> {
     const filePath = this.keyToFilepath(key);
-    try {
-      // Use unlinkSync to delete the file, matching the synchronous style of your other methods
+    if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
-    } catch (error: any) {
-      // If the file doesn't exist, that's okay. The goal is for it to be gone.
-      // We only need to log other errors (like a permissions issue).
-      if (error.code !== 'ENOENT') {
-        console.error(`[Continue] Error deleting secret for key "${key}":`, error);
-      }
+      console.log(`Successfully deleted cache file: ${filePath}`);
     }
   }
 }

@@ -1,11 +1,11 @@
 import Handlebars from "handlebars";
 import {
-    BaseCompletionOptions,
-    IdeSettings,
-    ILLM,
-    ILLMLogger,
-    JSONModelDescription,
-    LLMOptions,
+  BaseCompletionOptions,
+  IdeSettings,
+  ILLM,
+  ILLMLogger,
+  JSONModelDescription,
+  LLMOptions,
 } from "../..";
 import { renderTemplatedString } from "../../util/handlebars/renderTemplatedString";
 import { BaseLLM } from "../index";
@@ -17,6 +17,7 @@ import BedrockImport from "./BedrockImport";
 import Cerebras from "./Cerebras";
 import Cloudflare from "./Cloudflare";
 import Cohere from "./Cohere";
+import CometAPI from "./CometAPI";
 import DeepInfra from "./DeepInfra";
 import Deepseek from "./Deepseek";
 import Docker from "./Docker";
@@ -33,8 +34,10 @@ import Kindo from "./Kindo";
 import LlamaCpp from "./LlamaCpp";
 import Llamafile from "./Llamafile";
 import LlamaStack from "./LlamaStack";
+import Lemonade from "./Lemonade";
 import LMStudio from "./LMStudio";
 import Mistral from "./Mistral";
+import Mimo from "./Mimo";
 import MockLLM from "./Mock";
 import Moonshot from "./Moonshot";
 import Msty from "./Msty";
@@ -69,6 +72,7 @@ import xAI from "./xAI";
 export const LLMClasses = [
   Anthropic,
   Cohere,
+  CometAPI,
   FunctionNetwork,
   Gemini,
   Llamafile,
@@ -85,8 +89,10 @@ export const LLMClasses = [
   LlamaCpp,
   OpenAI,
   OVHcloud,
+  Lemonade,
   LMStudio,
   Mistral,
+  Mimo,
   Bedrock,
   BedrockImport,
   SageMaker,

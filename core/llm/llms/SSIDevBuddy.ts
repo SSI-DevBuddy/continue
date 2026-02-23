@@ -40,7 +40,6 @@ interface PromptCachingMetrics {
 }
 
 class SSIDevBuddy extends BaseLLM {
-
   private _currentToolResponse: Partial<ToolUseState> | null = null;
   private _promptCachingMetrics: PromptCachingMetrics = {
     cacheReadInputTokens: 0,
@@ -57,7 +56,6 @@ class SSIDevBuddy extends BaseLLM {
       this.apiBase = SSI_DEVBUDDY_CONFIG.API_BASE;
     }
   }
-
 
   protected async *_streamComplete(
     prompt: string,
@@ -76,7 +74,6 @@ class SSIDevBuddy extends BaseLLM {
     signal: AbortSignal,
     options: CompletionOptions,
   ): AsyncGenerator<ChatMessage> {
-
     const apiKey = this.apiKey;
 
     if (!apiKey) {
@@ -623,7 +620,9 @@ class SSIDevBuddy extends BaseLLM {
           }
 
           try {
-            const response = await fetch(new URL("chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL), {
+            const response = await fetch(
+              new URL("chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL),
+              {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -635,7 +634,9 @@ class SSIDevBuddy extends BaseLLM {
             );
             process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
             if (!response.ok) {
-                throw new Error(`API request failed with status ${response.status}`);
+              throw new Error(
+                `API request failed with status ${response.status}`,
+              );
             }
 
             const responseBody = await response.json();
@@ -748,8 +749,10 @@ class SSIDevBuddy extends BaseLLM {
       );
 
       if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+        const errorText = await response.text();
+        throw new Error(
+          `API request failed with status ${response.status}: ${errorText}`,
+        );
       }
 
       if (!response.body) {

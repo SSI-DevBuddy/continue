@@ -208,7 +208,10 @@ export class QuickEdit {
           break;
         case QuickEditInitialItemLabels.Submit:
           if (quickPick.value) {
-            await vscode.commands.executeCommand("devbuddy-onprem.rejectDiff", path);
+            await vscode.commands.executeCommand(
+              "devbuddy-onprem.rejectDiff",
+              path,
+            );
             const newPrompt = quickPick.value;
             appendToHistory(newPrompt, this.context);
             this.handleUserPrompt(newPrompt, path);
@@ -332,6 +335,7 @@ export class QuickEdit {
       quickEdit: this.previousInput,
       range: this.range,
       rulesToInclude: rules,
+      isApply: false,
     });
   }
 
