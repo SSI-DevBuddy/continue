@@ -1,8 +1,8 @@
 import { ConfigYaml } from "@continuedev/config-yaml";
 import { SSI_DEVBUDDY_CONFIG } from "../../SSI_DEVBUDDY_CONFIG.js";
 
-export const defaultConfig: ConfigYaml = {
-  name: "Local Config",
+export const cloudConfig: ConfigYaml = {
+  name: "Local Agent",
   version: "1.0.0",
   schema: "v1",
   models: [
