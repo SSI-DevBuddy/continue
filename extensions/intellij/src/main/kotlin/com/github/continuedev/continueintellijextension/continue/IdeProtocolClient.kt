@@ -40,6 +40,13 @@ class IdeProtocolClient(
     private val ide: IDE = IntelliJIDE(project, continuePluginService)
     private val diffStreamService = project.service<DiffStreamService>()
 
+    /**
+     * Decode filepath to handle URL-encoded characters like spaces (%20)
+     */
+    private fun decodeFilepath(filepath: String?): String? {
+        return filepath?.let { java.net.URLDecoder.decode(it, "UTF-8") }
+    }
+
 
     /**
      * Create a dispatcher with limited parallelism to prevent UI freezing.
@@ -472,11 +479,16 @@ class IdeProtocolClient(
                             ApplyToFileParams::class.java
                         )
 
+                        // Decode filepath to handle spaces and special characters
+                        val decodedParams = params.copy(
+                            filepath = decodeFilepath(params.filepath)
+                        )
+
                         ApplyToFileHandler.apply(
                             project,
                             continuePluginService,
                             ide,
-                            params
+                            decodedParams
                         )
                         respond(null)
                     }

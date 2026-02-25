@@ -80,7 +80,25 @@ fun uuid(): String {
     return UUID.randomUUID().toString()
 }
 
-fun VirtualFile.toUriOrNull(): String? = fileSystem.getNioPath(this)?.toUri()?.toString()?.removeSuffix("/")
+fun VirtualFile.toUriOrNull(): String? {
+    val nioPath = fileSystem.getNioPath(this) ?: return null
+    // Get raw path and normalize separators to forward slashes
+    var rawPath = nioPath.toString().replace("\\", "/")
+    
+    // Ensure proper file:// URI format without URL encoding
+    // Windows: file:///C:/path/to/file
+    // Unix: file:///path/to/file
+    val fileUri = when {
+        // Windows absolute path (C:/, D:/, etc.)
+        rawPath.matches(Regex("^[A-Za-z]:/.*")) -> "file:///$rawPath"
+        // Unix absolute path (/home/user/...)
+        rawPath.startsWith("/") -> "file://$rawPath"
+        // Relative path (shouldn't happen but handle it)
+        else -> "file:///$rawPath"
+    }
+    
+    return fileUri.removeSuffix("/")
+}
 
 inline fun <reified T> Any?.castNestedOrNull(vararg keys: String): T? {
     return getNestedOrNull(*keys) as? T

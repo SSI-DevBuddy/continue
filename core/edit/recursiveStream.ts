@@ -5,7 +5,6 @@ import {
   PromptLog,
   type StreamDiffLinesType,
 } from "..";
-import { DEFAULT_MAX_TOKENS } from "../llm/constants";
 import { countTokens } from "../llm/countTokens";
 import { renderChatMessage } from "../util/messageContent";
 import { APPLY_UNIQUE_TOKEN } from "./constants.js";
