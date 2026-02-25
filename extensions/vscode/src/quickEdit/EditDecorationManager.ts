@@ -19,7 +19,7 @@ class EditDecorationManager {
   private updateInEditMode(inEditMode: boolean) {
     vscode.commands.executeCommand(
       "setContext",
-      "devbuddy.inEditMode",
+      "devbuddy-onprem.inEditMode",
       inEditMode,
     );
   }

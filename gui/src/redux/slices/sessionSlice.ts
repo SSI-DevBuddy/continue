@@ -224,6 +224,7 @@ type SessionState = {
   inlineErrorMessage?: InlineErrorMessageType;
   compactionLoading: Record<number, boolean>; // Track compaction loading by message index
   loggedInUser: any;
+  streamStartTime?: number;
 };
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -245,6 +246,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   newestToolbarPreviewForInput: {},
   compactionLoading: {},
   loggedInUser: undefined,
+  streamStartTime: undefined,
 };
 
 export const sessionSlice = createSlice({
@@ -412,6 +414,7 @@ export const sessionSlice = createSlice({
       }
 
       state.isStreaming = true;
+      state.streamStartTime = undefined;
     },
     truncateHistoryToMessage: (
       state,
@@ -518,10 +521,14 @@ export const sessionSlice = createSlice({
       }
 
       state.isStreaming = false;
+      state.streamStartTime = undefined;
     },
     abortStream: (state) => {
       state.streamAborter.abort();
       state.streamAborter = new AbortController();
+    },
+    setStreamStartTime: (state, action: PayloadAction<number>) => {
+      state.streamStartTime = action.payload;
     },
     streamUpdate: (state, action: PayloadAction<ChatMessage[]>) => {
       if (state.history.length) {
@@ -545,6 +552,17 @@ export const sessionSlice = createSlice({
           const messageContent = message.content
             ? renderChatMessage(message)
             : "";
+
+          if (
+            state.streamStartTime &&
+            !lastItem.timeToFirstToken &&
+            messageContent.trim().length > 0 &&
+            (lastMessage.role === "assistant" ||
+              lastMessage.role === "thinking")
+          ) {
+            lastItem.timeToFirstToken = Date.now() - state.streamStartTime;
+            state.streamStartTime = undefined; // Clear after calculating TTFT
+          }
 
           // OpenAI-compatible models in agent mode sometimes send
           // all of their data in one message, so we handle that case early.
@@ -685,6 +703,7 @@ export const sessionSlice = createSlice({
 
       state.isStreaming = false;
       state.symbols = {};
+      state.streamStartTime = undefined;
 
       state.inlineErrorMessage = undefined;
       state.isPruned = false;
@@ -1099,6 +1118,7 @@ export const {
   setContextPercentage,
   setCompactionLoading,
   setLoggedInUser,
+  setStreamStartTime,
   logOutUser,
 } = sessionSlice.actions;
 

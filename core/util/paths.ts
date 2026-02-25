@@ -32,7 +32,7 @@ const CONTINUE_GLOBAL_DIR = (() => {
       ? configPath
       : path.resolve(process.cwd(), configPath);
   }
-  return path.join(os.homedir(), ".continue");
+  return path.join(os.homedir(), ".devbuddy-onprem");
 })();
 
 // export const DEFAULT_CONFIG_TS_CONTENTS = `import { Config } from "./types"\n\nexport function modifyConfig(config: Config): Config {
@@ -67,7 +67,7 @@ export function getGlobalContinueIgnorePath(): string {
 }
 
 export function getContinueGlobalPath(): string {
-  // This is ~/.continue on mac/linux
+  // This is ~/.devbuddy-onprem on mac/linux
   const continuePath = CONTINUE_GLOBAL_DIR;
   if (!fs.existsSync(continuePath)) {
     fs.mkdirSync(continuePath);

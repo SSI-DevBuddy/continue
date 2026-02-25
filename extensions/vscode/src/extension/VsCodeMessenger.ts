@@ -110,7 +110,7 @@ export class VsCodeMessenger {
     });
 
     this.onWebview("toggleDevTools", (msg) => {
-      vscode.commands.executeCommand("devbuddy.viewLogs");
+      vscode.commands.executeCommand("devbuddy-onprem.viewLogs");
     });
 
     this.onWebview("reloadWindow", (msg) => {
@@ -125,7 +125,7 @@ export class VsCodeMessenger {
 
     this.onWebview("acceptDiff", async ({ data: { filepath, streamId } }) => {
       await vscode.commands.executeCommand(
-        "devbuddy.acceptDiff",
+        "devbuddy-onprem.acceptDiff",
         filepath,
         streamId,
       );
@@ -133,7 +133,7 @@ export class VsCodeMessenger {
 
     this.onWebview("rejectDiff", async ({ data: { filepath, streamId } }) => {
       await vscode.commands.executeCommand(
-        "devbuddy.rejectDiff",
+        "devbuddy-onprem.rejectDiff",
         filepath,
         streamId,
       );
@@ -767,7 +767,7 @@ export class VsCodeMessenger {
       );
       vscode.commands.executeCommand(
         "setContext",
-        "devbuddy.isSignedInToControlPlane",
+        "devbuddy-onprem.isSignedInToControlPlane",
         false,
       );
     });

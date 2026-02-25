@@ -10,7 +10,7 @@ import type { FileEdit } from "core";
 export class ContinueGUIWebviewViewProvider
   implements vscode.WebviewViewProvider
 {
-  public static readonly viewType = "devbuddy.devbuddyGUIView";
+  public static readonly viewType = "devbuddy-onprem.devbuddyGUIView";
   public webviewProtocol: VsCodeWebviewProtocol;
 
   public get isReady(): boolean {

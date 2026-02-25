@@ -297,7 +297,7 @@ export class Core {
   /* eslint-disable max-lines-per-function */
   private registerMessageHandlers(ideSettingsPromise: Promise<IdeSettings>) {
     const on = this.messenger.on.bind(this.messenger);
-    const API_KEY_STORAGE_KEY = "ssi-devbuddy-api-key";
+    const API_KEY_STORAGE_KEY = "ssi-devbuddy-onprem-api-key";
 
     // Note, VsCode's in-process messenger doesn't do anything with this
     // It will only show for jetbrains
@@ -1225,45 +1225,46 @@ export class Core {
     });
 
     on("auth/login", async (msg: any) => {
-      
-        const ur = new URL("/api/extension-keys/exchange-key", SSI_DEVBUDDY_CONFIG.API_BASE);
-        const resp = await fetch(ur, {
-            method: "POST",
-            body: JSON.stringify({ apiKey: msg.data.apiKey }),
-            headers: {
-                "Content-Type": "application/json",
-                ...(await getHeaders()),
-            },
-        });
+      const ur = new URL(
+        "api/extension-keys/exchange-key",
+        SSI_DEVBUDDY_CONFIG.API_BASE,
+      );
+      const resp = await fetch(ur, {
+        method: "POST",
+        body: JSON.stringify({ apiKey: msg.data.apiKey }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(await getHeaders()),
+        },
+      });
 
-        if (!resp.ok) {
-            return { success: true, accessToken: "failed", user: "-" };
-        }else{
+      if (!resp.ok) {
+        return { success: true, accessToken: "failed", user: "-" };
+      } else {
+        const data = await resp.json();
+        const token = data.token;
 
-          const data = await resp.json();
-          const token = data.token;
+        addUserTokenForSSIDevBuddy(token);
 
-          addUserTokenForSSIDevBuddy(token);
-          
-          return { success: true, accessToken: token, user: {} };
-        }
+        return { success: true, accessToken: token, user: {} };
+      }
     });
 
     on("auth/saveApiKey", async (msg: any) => {
-        await this.ide.storeSecret(API_KEY_STORAGE_KEY, msg.data.apiKey);
-        return { success: true };
+      await this.ide.storeSecret(API_KEY_STORAGE_KEY, msg.data.apiKey);
+      return { success: true };
     });
 
     // Retrieves the long-lived API key from secure storage
     on("auth/getApiKey", async (msg) => {
-        const apiKey = await this.ide.getSecret(API_KEY_STORAGE_KEY);
-        return { apiKey: apiKey };
+      const apiKey = await this.ide.getSecret(API_KEY_STORAGE_KEY);
+      return { apiKey: apiKey };
     });
 
     // Deletes the long-lived API key from secure storage
     on("auth/deleteApiKey", async (msg) => {
-        await this.ide.deleteSecret(API_KEY_STORAGE_KEY);
-        return { success: true };
+      await this.ide.deleteSecret(API_KEY_STORAGE_KEY);
+      return { success: true };
     });
 
     on("auth/initialize", async (msg) => {
@@ -1289,7 +1290,7 @@ export class Core {
         let data: { Label: string; Value: number }[] = [];
         try {
           const ur = new URL(
-            `/api/projects/users/${4}`,
+            `api/projects/users/${4}`,
             SSI_DEVBUDDY_CONFIG.API_BASE,
           );
           const resp = await fetch(ur, {
@@ -1319,28 +1320,30 @@ export class Core {
   }
 
   public async exchangeApiKeyForToken(apiKey: string): Promise<any> {
-        const ur = new URL("/api/extension-keys/exchange-key", SSI_DEVBUDDY_CONFIG.API_BASE);
-        const resp = await fetch(ur, {
-            method: "POST",
-            body: JSON.stringify({ apiKey: apiKey }),
-            headers: {
-                "Content-Type": "application/json",
-                ...(await getHeaders()),
-            },
-        });
+    const ur = new URL(
+      "api/extension-keys/exchange-key",
+      SSI_DEVBUDDY_CONFIG.API_BASE,
+    );
+    const resp = await fetch(ur, {
+      method: "POST",
+      body: JSON.stringify({ apiKey: apiKey }),
+      headers: {
+        "Content-Type": "application/json",
+        ...(await getHeaders()),
+      },
+    });
 
-        if (!resp.ok) {
-            return { success: true, accessToken: "failed", user: "-" };
-        }else{
+    if (!resp.ok) {
+      return { success: true, accessToken: "failed", user: "-" };
+    } else {
+      const data = await resp.json();
+      const token = data.token;
 
-          const data = await resp.json();
-          const token = data.token;
+      addUserTokenForSSIDevBuddy(token);
 
-          addUserTokenForSSIDevBuddy(token);
-          
-          return { success: true, accessToken: token, user: {} };
-        }
-      }
+      return { success: true, accessToken: token, user: {} };
+    }
+  }
 
   private async handleToolCall(toolCall: ToolCall) {
     const { config } = await this.configHandler.loadConfig();

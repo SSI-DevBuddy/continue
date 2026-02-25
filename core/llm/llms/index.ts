@@ -1,11 +1,11 @@
 import Handlebars from "handlebars";
 import {
-    BaseCompletionOptions,
-    IdeSettings,
-    ILLM,
-    ILLMLogger,
-    JSONModelDescription,
-    LLMOptions,
+  BaseCompletionOptions,
+  IdeSettings,
+  ILLM,
+  ILLMLogger,
+  JSONModelDescription,
+  LLMOptions,
 } from "../..";
 import { renderTemplatedString } from "../../util/handlebars/renderTemplatedString";
 import { BaseLLM } from "../index";
@@ -56,6 +56,8 @@ import SambaNova from "./SambaNova";
 import Scaleway from "./Scaleway";
 import SiliconFlow from "./SiliconFlow";
 import SSIDevBuddy from "./SSIDevBuddy";
+import SSIDevBuddyOnPremises from "./SSIDevBuddyOnPremises";
+import SSIDevBuddyOnPremisesVLLM from "./SSIDevBuddyOnPremisesVLLM";
 import ContinueProxy from "./stubs/ContinueProxy";
 import TARS from "./TARS";
 import TestLLM from "./Test";
@@ -116,6 +118,8 @@ export const LLMClasses = [
   Asksage,
   Nebius,
   SSIDevBuddy,
+  SSIDevBuddyOnPremises,
+  SSIDevBuddyOnPremisesVLLM,
   Venice,
   VertexAI,
   xAI,
