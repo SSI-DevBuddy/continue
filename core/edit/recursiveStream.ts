@@ -5,7 +5,6 @@ import {
   PromptLog,
   type StreamDiffLinesType,
 } from "..";
-import { DEFAULT_MAX_TOKENS } from "../llm/constants";
 import { countTokens } from "../llm/countTokens";
 import { renderChatMessage } from "../util/messageContent";
 import { APPLY_UNIQUE_TOKEN } from "./constants.js";
@@ -30,7 +29,7 @@ export async function* recursiveStream(
   currentBuffer = "",
   isContinuation = false,
 ): AsyncGenerator<string | ChatMessage> {
-  const maxTokens = llm.completionOptions?.maxTokens ?? DEFAULT_MAX_TOKENS;
+  const maxTokens = 60000;
   const safeTokens = maxTokens * INFINITE_STREAM_SAFETY;
   let totalTokens = 0;
   let buffer = currentBuffer;
