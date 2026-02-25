@@ -23,7 +23,9 @@ class FileUtils(
         findFile(fileUri) != null
 
     fun writeFile(fileUri: String, content: String) {
-        val path = VfsUtilCore.urlToPath(fileUri)
+        // Decode URL-encoded path before processing
+        val decodedUri = java.net.URLDecoder.decode(fileUri, "UTF-8")
+        val path = VfsUtilCore.urlToPath(decodedUri)
         val pathDirectory = VfsUtil.getParentDir(path)
             ?: return LOG.warn("Parent directory is null for $path")
         val vfsDirectory = VfsUtil.createDirectories(pathDirectory)
@@ -93,8 +95,10 @@ class FileUtils(
     private fun findFile(fileUri: String): VirtualFile? {
         val noParams = fileUri.substringBefore("?")
         val normalizedAuthority = normalizeWindowsAuthority(noParams)
+        // Decode URL-encoded characters (like %20 for spaces)
+        val decodedUri = java.net.URLDecoder.decode(normalizedAuthority, "UTF-8")
         return VirtualFileManager.getInstance()
-            .refreshAndFindFileByUrl(normalizedAuthority)
+            .refreshAndFindFileByUrl(decodedUri)
     }
 
     private fun readDocument(file: VirtualFile, maxLength: Int): String? {
