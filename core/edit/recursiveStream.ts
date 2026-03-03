@@ -8,6 +8,7 @@ import {
 import { countTokens } from "../llm/countTokens";
 import { renderChatMessage } from "../util/messageContent";
 import { APPLY_UNIQUE_TOKEN } from "./constants.js";
+import { DEFAULT_MAX_TOKENS } from "../llm/constants";
 
 const INFINITE_STREAM_SAFETY = 0.9;
 
@@ -29,7 +30,7 @@ export async function* recursiveStream(
   currentBuffer = "",
   isContinuation = false,
 ): AsyncGenerator<string | ChatMessage> {
-  const maxTokens = 25000;
+  const maxTokens = DEFAULT_MAX_TOKENS;
   const safeTokens = maxTokens * INFINITE_STREAM_SAFETY;
   let totalTokens = 0;
   let buffer = currentBuffer;
