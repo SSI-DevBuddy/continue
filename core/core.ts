@@ -92,6 +92,7 @@ import { NextEditProvider } from "./nextEdit/NextEditProvider";
 import type { FromCoreProtocol, ToCoreProtocol } from "./protocol";
 import { OnboardingModes } from "./protocol/core";
 import type { IMessenger, Message } from "./protocol/messenger";
+import * as DpopService from "./services/dpop-service";
 import { ContinueError, ContinueErrorReason } from "./util/errors";
 import { shareSession } from "./util/historyUtils";
 import { Logger } from "./util/Logger.js";
@@ -142,6 +143,73 @@ export class Core {
     try {
       // Ensure .continue directory is created
       migrateV1DevDataFiles();
+
+      // Initialize DPoP service with IDE storage
+      DpopService.initialize({
+        storeSecret: ide.storeSecret.bind(ide),
+        getSecret: ide.getSecret.bind(ide),
+        deleteSecret: ide.deleteSecret.bind(ide),
+      });
+
+      // Wrap global fetch to automatically add DPoP headers for SSI DevBuddy API calls
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = async (
+        input: RequestInfo | URL,
+        init?: RequestInit,
+      ): Promise<Response> => {
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : (input as Request).url;
+
+        // Only add DPoP for SSI DevBuddy API calls
+        const isSSIDevBuddyAPI =
+          url.includes(SSI_DEVBUDDY_CONFIG.API_BASE) ||
+          url.includes(SSI_DEVBUDDY_CONFIG.CHAT_URL);
+
+        if (isSSIDevBuddyAPI) {
+          try {
+            const normalizedUrl = DpopService.normalizeUrl(url);
+            const method = init?.method || "GET";
+            const dpopProof = await DpopService.generateDPoPProof({
+              method,
+              url: normalizedUrl,
+            });
+
+            // Add DPoP header to existing headers
+            const existingHeaders =
+              input instanceof Request
+                ? Object.fromEntries(input.headers.entries())
+                : {};
+
+            const initHeaders =
+              init?.headers instanceof Headers
+                ? Object.fromEntries(init.headers.entries())
+                : ((init?.headers || {}) as Record<string, string>);
+
+            init = {
+              ...init,
+              headers: {
+                ...existingHeaders,
+                ...initHeaders,
+                DPoP: dpopProof,
+              },
+            };
+
+            console.log(`[DPoP] Added proof to ${method} ${url}`);
+          } catch (e) {
+            // Graceful degradation: if DPoP fails, proceed without it
+            console.warn(
+              "[DPoP] Failed to add DPoP header, proceeding without it:",
+              e,
+            );
+          }
+        }
+
+        return originalFetch(input, init);
+      };
 
       const ideInfoPromise = messenger.request("getIdeInfo", undefined);
       const ideSettingsPromise = messenger.request("getIdeSettings", undefined);
@@ -1225,13 +1293,19 @@ export class Core {
     });
 
     on("auth/login", async (msg: any) => {
+      // Generate DPoP key pair (automatically stores in secret storage)
+      const keyPair = await DpopService.generateKeyPair();
+
       const ur = new URL(
         "api/extension-keys/exchange-key",
         SSI_DEVBUDDY_CONFIG.API_BASE,
       );
       const resp = await fetch(ur, {
         method: "POST",
-        body: JSON.stringify({ apiKey: msg.data.apiKey }),
+        body: JSON.stringify({
+          apiKey: msg.data.apiKey,
+          dpopPublicKey: keyPair.publicKeyJWK,
+        }),
         headers: {
           "Content-Type": "application/json",
           ...(await getHeaders()),
@@ -1269,18 +1343,32 @@ export class Core {
 
     on("auth/initialize", async (msg) => {
       const apiKey = await this.ide.getSecret(API_KEY_STORAGE_KEY);
-      console.log("Core: ide.getSecret() returnedd:", apiKey);
+      console.log("Core: ide.getSecret() returned:", apiKey);
       if (!apiKey) {
         return { success: false }; // No key stored, do nothing.
       }
-      console.log("Core: API key found. Exchanging for token...");
+      console.log("Core: API key found. Checking for DPoP keys...");
+
+      // Try to load existing DPoP keys
+      let keyPair = await DpopService.loadKeyPair();
+
+      // If no keys exist, generate new ones
+      if (!keyPair) {
+        console.log("Core: No DPoP keys found, generating new keys...");
+        keyPair = await DpopService.generateKeyPair();
+      }
+
+      console.log("Core: Exchanging API key for token with DPoP...");
       // Key found, attempt to exchange it for a session token.
-      return this.exchangeApiKeyForToken(apiKey);
+      return this.exchangeApiKeyForToken(apiKey, keyPair.publicKeyJWK);
     });
 
-    on("auth/logout", (msg) => {
+    on("auth/logout", async (msg) => {
       const token = "";
       addUserTokenForSSIDevBuddy(token);
+
+      // Clear DPoP keys from storage
+      await DpopService.clearKeys();
     });
 
     on("projects/users", async (msg) => {
@@ -1319,14 +1407,20 @@ export class Core {
     });
   }
 
-  public async exchangeApiKeyForToken(apiKey: string): Promise<any> {
+  public async exchangeApiKeyForToken(
+    apiKey: string,
+    dpopPublicKey?: any,
+  ): Promise<any> {
     const ur = new URL(
       "api/extension-keys/exchange-key",
       SSI_DEVBUDDY_CONFIG.API_BASE,
     );
     const resp = await fetch(ur, {
       method: "POST",
-      body: JSON.stringify({ apiKey: apiKey }),
+      body: JSON.stringify({
+        apiKey: apiKey,
+        dpopPublicKey: dpopPublicKey,
+      }),
       headers: {
         "Content-Type": "application/json",
         ...(await getHeaders()),
