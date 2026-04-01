@@ -8,6 +8,9 @@ import {
 } from "@continuedev/openai-adapters";
 import Handlebars from "handlebars";
 
+import { SSI_DEVBUDDY_CONFIG } from "../../SSI_DEVBUDDY_CONFIG.js";
+import * as DpopService from "../services/dpop-service.js";
+
 import { DevDataSqliteDb } from "../data/devdataSqlite.js";
 import { DataLogger } from "../data/log.js";
 import {
@@ -459,6 +462,35 @@ export abstract class BaseLLM implements ILLM {
     // Custom Node.js fetch
     const customFetch = async (input: URL | RequestInfo, init: any) => {
       try {
+        // Add DPoP headers for SSI DevBuddy URLs
+        const urlString = typeof input === "string" ? input : input.toString();
+        const isSSIDevBuddyURL =
+          urlString.includes(SSI_DEVBUDDY_CONFIG.API_BASE) ||
+          urlString.includes(SSI_DEVBUDDY_CONFIG.CHAT_URL);
+
+        if (isSSIDevBuddyURL) {
+          try {
+            const normalizedUrl = DpopService.normalizeUrl(urlString);
+            const method = init?.method || "GET";
+            const dpopProof = await DpopService.generateDPoPProof({
+              method,
+              url: normalizedUrl,
+            });
+
+            // Add DPoP header to existing headers
+            init = {
+              ...init,
+              headers: {
+                ...init?.headers,
+                DPoP: dpopProof,
+              },
+            };
+          } catch (dpopError) {
+            // Log but don't fail - graceful degradation
+            console.warn("[DPoP] Failed to add DPoP header:", dpopError);
+          }
+        }
+
         const resp = await fetchwithRequestOptions(
           new URL(input as any),
           { ...init },
