@@ -1,4 +1,7 @@
+import { fetchwithRequestOptions } from "@continuedev/fetch";
 import { SignJWT, exportJWK, importJWK } from "jose";
+import { SSI_DEVBUDDY_CONFIG } from "../../SSI_DEVBUDDY_CONFIG.js";
+import type { RequestOptions } from "../index.js";
 
 /**
  * DPoP (Demonstrating Proof-of-Possession) Service for VS Code Extension
@@ -228,4 +231,53 @@ export function normalizeUrl(url: string): string {
   console.log(`[DPoP] URL normalized: ${url} -> ${normalized}`);
 
   return normalized;
+}
+
+export async function fetchWithDPoP(
+  url: URL | string,
+  init: RequestInit | undefined,
+  requestOptions?: RequestOptions,
+) {
+  const urlString = typeof url === "string" ? url : url.toString();
+
+  const isSSIDevBuddyAPI =
+    urlString.includes(SSI_DEVBUDDY_CONFIG.API_BASE) ||
+    urlString.includes(SSI_DEVBUDDY_CONFIG.CHAT_URL);
+
+  if (isSSIDevBuddyAPI) {
+    try {
+      const normalizedUrl = normalizeUrl(urlString);
+      const method = init?.method || "GET";
+      const dpopProof = await generateDPoPProof({
+        method,
+        url: normalizedUrl,
+      });
+
+      const existingHeaders =
+        init?.headers instanceof Headers
+          ? Object.fromEntries(init.headers.entries())
+          : ((init?.headers || {}) as Record<string, string>);
+
+      init = {
+        ...init,
+        headers: {
+          ...existingHeaders,
+          DPoP: dpopProof,
+        },
+      };
+
+      console.log(`[DPoP] Added proof to ${method} ${urlString}`);
+    } catch (e) {
+      console.warn(
+        "[DPoP] Failed to add DPoP header, proceeding without it:",
+        e,
+      );
+    }
+  }
+
+  return fetchwithRequestOptions(
+    typeof url === "string" ? new URL(url) : url,
+    init as any,
+    requestOptions,
+  );
 }

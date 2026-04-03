@@ -1,5 +1,4 @@
 //// ---- more changes needed
-import { fetchwithRequestOptions } from "@continuedev/fetch";
 import * as URI from "uri-js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -666,7 +665,7 @@ export class Core {
             config,
             ide: this.ide,
             fetch: (url, init) =>
-              fetchwithRequestOptions(url, init, config.requestOptions),
+              DpopService.fetchWithDPoP(url, init, config.requestOptions),
           });
         return items || [];
       } catch (e) {
@@ -1470,7 +1469,7 @@ export class Core {
       ide: this.ide,
       llm: config.selectedModelByRole.chat,
       fetch: (url, init) =>
-        fetchwithRequestOptions(url, init, config.requestOptions),
+        DpopService.fetchWithDPoP(url, init, config.requestOptions),
       tool,
       toolCallId: toolCall.id,
       onPartialOutput,
@@ -1711,7 +1710,7 @@ export class Core {
         fetch: (url, init) =>
           // Important note: context providers fetch uses global request options not LLM request options
           // Because LLM calls are handled separately
-          fetchwithRequestOptions(url, init, config.requestOptions),
+          DpopService.fetchWithDPoP(url, init, config.requestOptions),
         isInAgentMode: msg.data.isInAgentMode,
       });
 
