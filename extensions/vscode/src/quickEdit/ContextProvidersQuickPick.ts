@@ -1,6 +1,6 @@
-import { fetchwithRequestOptions } from "@continuedev/fetch";
 import { ContinueConfig, IDE } from "core";
 import { QuickPickItem, window } from "vscode";
+import * as DpopService from "../../../../core/services/dpop-service.js";
 
 export async function getContextProviderItems({
   contextProviders,
@@ -47,7 +47,7 @@ export async function getContextProvidersString(
           fullInput: "",
           selectedCode: [],
           fetch: (url, init) =>
-            fetchwithRequestOptions(url, init, config.requestOptions),
+            DpopService.fetchWithDPoP(url, init, config.requestOptions),
           isInAgentMode: false,
         });
       }) || [],
