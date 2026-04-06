@@ -8,6 +8,16 @@ import {
 import { SSI_DEVBUDDY_CONFIG } from "../../SSI_DEVBUDDY_CONFIG.js";
 import type { RequestOptions } from "../index.js";
 
+if (typeof globalThis.crypto === "undefined" || !globalThis.crypto.subtle) {
+  try {
+    const nodeCrypto = require("node:crypto");
+    (globalThis as any).crypto = nodeCrypto.webcrypto;
+    console.log("[DPoP] Web Crypto polyfilled from node:crypto");
+  } catch (e) {
+    console.error("[DPoP] Failed to polyfill Web Crypto:", e);
+  }
+}
+
 /**
  * DPoP (Demonstrating Proof-of-Possession) Service for VS Code Extension
  *
