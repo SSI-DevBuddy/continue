@@ -94,9 +94,9 @@ const SVG_CONFIG = {
 
 // Command ID - can be used in package.json
 export const HIDE_NEXT_EDIT_SUGGESTION_COMMAND =
-  "devbuddy-onprem.nextEditWindow.hideNextEditSuggestion";
+  "devbuddy.nextEditWindow.hideNextEditSuggestion";
 export const ACCEPT_NEXT_EDIT_SUGGESTION_COMMAND =
-  "devbuddy-onprem.nextEditWindow.acceptNextEditSuggestion";
+  "devbuddy.nextEditWindow.acceptNextEditSuggestion";
 
 /**
  * This is where we create SVG windows and deletion decorations for non-FIM next edit suggestions.
@@ -305,8 +305,8 @@ export class NextEditWindowManager {
    */
   private registerCommandSafely(
     commandId:
-      | "devbuddy-onprem.nextEditWindow.hideNextEditSuggestion"
-      | "devbuddy-onprem.nextEditWindow.acceptNextEditSuggestion",
+      | "devbuddy.nextEditWindow.hideNextEditSuggestion"
+      | "devbuddy.nextEditWindow.acceptNextEditSuggestion",
     callback: () => Promise<void>,
   ) {
     if (!this.context) {
@@ -491,7 +491,7 @@ export class NextEditWindowManager {
 
     // Log with accept = false.
     await vscode.commands.executeCommand(
-      "devbuddy-onprem.logNextEditOutcomeReject",
+      "devbuddy.logNextEditOutcomeReject",
       this.mostRecentCompletionId,
       this.loggingService,
     );
@@ -568,7 +568,7 @@ export class NextEditWindowManager {
 
     // Log with accept = true.
     await vscode.commands.executeCommand(
-      "devbuddy-onprem.logNextEditOutcomeAccept",
+      "devbuddy.logNextEditOutcomeAccept",
       this.mostRecentCompletionId,
       this.loggingService,
     );

@@ -364,7 +364,7 @@ export class Core {
   /* eslint-disable max-lines-per-function */
   private registerMessageHandlers(ideSettingsPromise: Promise<IdeSettings>) {
     const on = this.messenger.on.bind(this.messenger);
-    const API_KEY_STORAGE_KEY = "ssi-devbuddy-onprem-api-key";
+    const API_KEY_STORAGE_KEY = "ssi-devbuddy-api-key";
 
     // Note, VsCode's in-process messenger doesn't do anything with this
     // It will only show for jetbrains
@@ -1377,7 +1377,7 @@ export class Core {
         let data: { Label: string; Value: number }[] = [];
         try {
           const ur = new URL(
-            `api/projects/users/${4}`,
+            `/api/projects/users/${4}`,
             SSI_DEVBUDDY_CONFIG.API_BASE,
           );
           const resp = await fetch(ur, {

@@ -1,8 +1,8 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>com.github.continuedev.continueintellijextension.onprem</id>
-    <name>SSI Devbuddy (On-Prem)</name>
-    <vendor>StrategicSystemsInternational-OnPrem</vendor>
+    <id>com.github.continuedev.continueintellijextension</id>
+    <name>SSI Devbuddy</name>
+    <vendor>StrategicSystemsInternational</vendor>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>org.jetbrains.plugins.terminal</depends>
@@ -13,30 +13,29 @@
     </depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow id="Continue.OnPrem" anchor="right" icon="com.github.continuedev.continueintellijextension.Icons.Continue"
+        <toolWindow id="Continue" anchor="right" icon="com.github.continuedev.continueintellijextension.Icons.Continue"
                     factoryClass="com.github.continuedev.continueintellijextension.toolWindow.ContinuePluginToolWindowFactory"/>
-        <projectService id="ContinuePluginService.OnPrem"
+        <projectService id="ContinuePluginService"
                         serviceImplementation="com.github.continuedev.continueintellijextension.services.ContinuePluginService"/>
         <projectService
-                id="DiffStreamService.OnPrem"
+                id="DiffStreamService"
                 serviceImplementation="com.github.continuedev.continueintellijextension.editor.DiffStreamService"/>
 
-        <projectService id="CompletionService.OnPrem"
-                        serviceInterface="com.github.continuedev.continueintellijextension.autocomplete.CompletionService"
+        <projectService serviceInterface="com.github.continuedev.continueintellijextension.autocomplete.CompletionService"
                         serviceImplementation="com.github.continuedev.continueintellijextension.autocomplete.ContinueCompletionService"/>
-        <projectService id="NextEditService.OnPrem"
+        <projectService
                 serviceInterface="com.github.continuedev.continueintellijextension.nextEdit.NextEditService"
                 serviceImplementation="com.github.continuedev.continueintellijextension.nextEdit.ContinueNextEditService"/>
 
-        <projectService id="NextEditWindowManager.OnPrem"
+        <projectService
                 serviceImplementation="com.github.continuedev.continueintellijextension.nextEdit.NextEditWindowManager"/>
 
-        <projectService id="NextEditJumpManager.OnPrem"
+        <projectService
                 serviceImplementation="com.github.continuedev.continueintellijextension.nextEdit.NextEditJumpManager"/>
 
-        <inline.completion.provider id="Continue.OnPrem" implementation="com.github.continuedev.continueintellijextension.autocomplete.ContinueInlineCompletionProvider"/>
+        <inline.completion.provider id="Continue" implementation="com.github.continuedev.continueintellijextension.autocomplete.ContinueInlineCompletionProvider"/>
         
-        <notificationGroup id="Continue.OnPrem"
+        <notificationGroup id="Continue"
                            displayType="BALLOON"/>
         <actionPromoter order="last"
                         implementation="com.github.continuedev.continueintellijextension.actions.ContinueActionPromote"/>
@@ -46,15 +45,15 @@
         <applicationConfigurable
                 parentId="tools"
                 instance="com.github.continuedev.continueintellijextension.services.ContinueExtensionConfigurable"
-                id="com.github.continuedev.continueintellijextension.services.ContinueExtensionConfigurable.OnPrem"
-                displayName="Devbuddy (On-Prem)"/>
-        <applicationService id="ContinueExtensionSettings.OnPrem"
+                id="com.github.continuedev.continueintellijextension.services.ContinueExtensionConfigurable"
+                displayName="Devbuddy"/>
+        <applicationService
                 serviceImplementation="com.github.continuedev.continueintellijextension.services.ContinueExtensionSettings"/>
     </extensions>
 
     <actions>
         <action class="com.github.continuedev.continueintellijextension.editor.InlineEditAction"
-                id="continue.inlineEdit.onprem"
+                id="continue.inlineEdit"
                 description="Inline Edit"
                 text="Inline Edit">
             <keyboard-shortcut keymap="$default"
@@ -64,7 +63,7 @@
             <override-text place="GoToAction" text="Devbuddy: Edit Code"/>
         </action>
 
-        <action id="continue.acceptDiff.onprem"
+        <action id="continue.acceptDiff"
                 class="com.github.continuedev.continueintellijextension.actions.AcceptDiffAction"
                 text="Accept Diff" description="Accept Diff">
             <keyboard-shortcut keymap="$default"
@@ -74,14 +73,14 @@
             <override-text place="GoToAction" text="Devbuddy: Accept Diff"/>
         </action>
 
-        <action id="continue.restartProcess.onprem"
+        <action id="continue.restartProcess"
                 class="com.github.continuedev.continueintellijextension.actions.RestartContinueProcess"
                 text="Restart Process"
                 description="Restart Process">
             <override-text place="GoToAction" text="Devbuddy: Restart Process"/>
         </action>
 
-        <action id="continue.rejectDiff.onprem"
+        <action id="continue.rejectDiff"
                 class="com.github.continuedev.continueintellijextension.actions.RejectDiffAction"
                 text="Reject Diff" description="Reject Diff">
             <keyboard-shortcut keymap="$default"
@@ -91,7 +90,7 @@
             <override-text place="GoToAction" text="Devbuddy: Reject Diff"/>
         </action>
 
-        <action id="continue.acceptVerticalDiffBlock.onprem"
+        <action id="continue.acceptVerticalDiffBlock"
                 class="com.github.continuedev.continueintellijextension.actions.AcceptDiffAction"
                 text="Accept Diff" description="Accept Vertical Diff Block">
             <keyboard-shortcut keymap="$default"
@@ -101,7 +100,7 @@
             <override-text place="GoToAction" text="Devbuddy: Accept Vertical Diff Block"/>
         </action>
 
-        <action id="continue.rejectVerticalDiffBlock.onprem"
+        <action id="continue.rejectVerticalDiffBlock"
                 class="com.github.continuedev.continueintellijextension.actions.RejectDiffAction"
                 text="Reject Diff" description="Reject Vertical Diff Block">
             <keyboard-shortcut keymap="$default"
@@ -111,14 +110,14 @@
             <override-text place="GoToAction" text="Devbuddy: Reject Vertical Diff Block"/>
         </action>
 
-        <action id="continue.addLicenseKey.onprem"
+        <action id="continue.addLicenseKey"
                 class="com.github.continuedev.continueintellijextension.license.AddLicenseKey"
                 text="Enter Enterprise License Key"
                 description="Enter Enterprise License Key">
             <override-text place="GoToAction" text="Devbuddy: Enter Enterprise License Key"/>
         </action>
 
-        <action id="continue.focusContinueInputWithoutClear.onprem"
+        <action id="continue.focusContinueInputWithoutClear"
                 class="com.github.continuedev.continueintellijextension.actions.FocusContinueInputWithoutClearAction"
                 text="Add selected code to context"
                 description="Focus Devbuddy Input With Edit">
@@ -129,7 +128,7 @@
             <override-text place="GoToAction" text="Devbuddy: Add Highlighted Code to Context"/>
         </action>
 
-        <action id="continue.newContinueSession.onprem"
+        <action id="continue.newContinueSession"
                 icon="AllIcons.General.Add"
                 class="com.github.continuedev.continueintellijextension.actions.NewContinueSessionAction"
                 text="New Session"
@@ -138,7 +137,7 @@
             <override-text place="GoToAction" text="New Session"/>
         </action>
 
-        <action id="continue.viewHistory.onprem"
+        <action id="continue.viewHistory"
                 icon="AllIcons.Vcs.History"
                 class="com.github.continuedev.continueintellijextension.actions.ViewHistoryAction"
                 text="View History"
@@ -146,7 +145,7 @@
             <override-text place="GoToAction" text="View History"/>
         </action>
 
-        <action id="continue.openConfigPage.onprem"
+        <action id="continue.openConfigPage"
                 class="com.github.continuedev.continueintellijextension.actions.OpenConfigAction"
                 icon="AllIcons.General.GearPlain"
                 text="Settings"
@@ -154,7 +153,7 @@
             <override-text place="GoToAction" text="Settings"/>
         </action>
 
-        <action id="continue.reloadPage.onprem"
+        <action id="continue.reloadPage"
                 class="com.github.continuedev.continueintellijextension.actions.ReloadBrowserAction"
                 icon="AllIcons.Actions.Refresh"
                 text="Reload Continue Browser"
@@ -162,7 +161,7 @@
             <override-text place="GoToAction" text="Reload Continue Browser"/>
         </action>
 
-        <action id="continue.openLogs.onprem"
+        <action id="continue.openLogs"
                 class="com.github.continuedev.continueintellijextension.actions.OpenLogsAction"
                 icon="AllIcons.General.ShowInfos"
                 text="Open Logs"
@@ -170,14 +169,14 @@
             <override-text place="GoToAction" text="Open Devbuddy Logs"/>
         </action>
 
-        <group id="ContinueSidebarActionsGroup.OnPrem">
-            <reference ref="continue.newContinueSession.onprem"/>
-            <reference ref="continue.viewHistory.onprem"/>
-            <reference ref="continue.openConfigPage.onprem"/>
-            <reference ref="continue.reloadPage.onprem" />
+        <group id="ContinueSidebarActionsGroup">
+            <reference ref="continue.newContinueSession"/>
+            <reference ref="continue.viewHistory"/>
+            <reference ref="continue.openConfigPage"/>
+            <reference ref="continue.reloadPage" />
         </group>
 
-        <action id="continue.focusContinueInput.onprem"
+        <action id="continue.focusContinueInput"
                 class="com.github.continuedev.continueintellijextension.actions.FocusContinueInputAction"
                 text="Add selected code to context"
                 description="Focus Devbuddy Input">

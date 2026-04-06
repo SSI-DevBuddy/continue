@@ -595,7 +595,7 @@ export class ContinueCompletionProvider
         range,
         {
           title: "Log Autocomplete Outcome",
-          command: "devbuddy-onprem.logAutocompleteOutcome",
+          command: "devbuddy.logAutocompleteOutcome",
           arguments: [completionId, this.completionProvider],
         },
       );
@@ -665,7 +665,7 @@ export class ContinueCompletionProvider
           ),
           {
             title: "Log Next Edit Outcome",
-            command: "devbuddy-onprem.logNextEditOutcomeAccept",
+            command: "devbuddy.logNextEditOutcomeAccept",
             arguments: [completionId, this.nextEditLoggingService],
           },
         );

@@ -14,7 +14,11 @@ import {
 } from "../";
 import { SSI_DEVBUDDY_CONFIG } from "../../SSI_DEVBUDDY_CONFIG";
 import { GlobalContext } from "../util/GlobalContext";
-import { editConfigFile, getConfigJson, getConfigYamlPath } from "../util/paths";
+import {
+  editConfigFile,
+  getConfigJson,
+  getConfigYamlPath,
+} from "../util/paths";
 
 function stringify(obj: any, indentation?: number): string {
   return JSON.stringify(
@@ -226,9 +230,9 @@ export function addUserTokenForSSIDevBuddy(userToken: string) {
         ];
       }
       config.models = config.models
-        .filter((model) => ["ssi-devbuddy-on-premises", "ssi-devbuddy-on-premises-vllm", "ssi-devbuddy"].includes(model.provider))
+        .filter((model) => model.provider === "ssi-devbuddy")
         .map((m: ModelDescription) => {
-          if (["ssi-devbuddy-on-premises", "ssi-devbuddy-on-premises-vllm", "ssi-devbuddy"].includes(m.provider)) {
+          if (m.provider === "ssi-devbuddy") {
             m.apiKey = userToken;
           }
           return m;
@@ -239,7 +243,7 @@ export function addUserTokenForSSIDevBuddy(userToken: string) {
       // Update YAML configuration
       if (config.models) {
         config.models = config.models.map((model: any) => {
-          if (["ssi-devbuddy-on-premises", "ssi-devbuddy-on-premises-vllm", "ssi-devbuddy"].includes(model.provider)) {
+          if (model.provider === "ssi-devbuddy") {
             return {
               ...model,
               apiKey: userToken,
@@ -248,7 +252,7 @@ export function addUserTokenForSSIDevBuddy(userToken: string) {
           return model;
         });
       }
-      
+
       if (config.context) {
         config.context = config.context.map((ctx: any) => {
           if (ctx.provider === "ssi-devbuddy-context") {
@@ -264,7 +268,7 @@ export function addUserTokenForSSIDevBuddy(userToken: string) {
           return ctx;
         });
       }
-      
+
       return config;
     },
   );
@@ -274,7 +278,9 @@ export function getUserTokenForSSIDevBuddy() {
   // Check YAML config first
   if (fs.existsSync(getConfigYamlPath())) {
     try {
-      const configYaml = YAML.parse(fs.readFileSync(getConfigYamlPath(), "utf8"));
+      const configYaml = YAML.parse(
+        fs.readFileSync(getConfigYamlPath(), "utf8"),
+      );
       const ssiDevBuddyContextConfig = configYaml.context?.filter(
         (ctx: any) => ctx.provider === "ssi-devbuddy-context",
       );
@@ -283,7 +289,7 @@ export function getUserTokenForSSIDevBuddy() {
       console.warn("Failed to parse YAML config:", error);
     }
   }
-  
+
   // Fallback to JSON config
   let configJson = getConfigJson();
   let ssiDevBuddyContextConfig = configJson.contextProviders.filter(

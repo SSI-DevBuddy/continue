@@ -36,9 +36,10 @@ class SSIDevBuddyContextProvider extends BaseContextProvider {
       projectId: extras.selectedProjectId,
       messages: [],
     };
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    console.log("edta", extras);
+
     const response = await extras.fetch(
-      new URL("chat/fetch_context", SSI_DEVBUDDY_CONFIG.CHAT_URL),
+      new URL("/chat/fetch_context", SSI_DEVBUDDY_CONFIG.CHAT_URL),
       {
         method: "POST",
         headers: {
@@ -48,8 +49,10 @@ class SSIDevBuddyContextProvider extends BaseContextProvider {
         body: JSON.stringify(body),
       },
     );
+    console.log(body);
     const json = await response.json();
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
+    console.log(json);
+
     try {
       const createContextItem = (item: any) => ({
         description: item.description ?? "SSI DevBuddy Context Item",

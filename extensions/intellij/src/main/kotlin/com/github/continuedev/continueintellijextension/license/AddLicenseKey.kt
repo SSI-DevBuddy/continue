@@ -59,5 +59,5 @@ class AddLicenseKey : AnAction() {
         )
 
     private fun getContinueNotifications() =
-        NotificationGroupManager.getInstance().getNotificationGroup("Continue.OnPrem")
+        NotificationGroupManager.getInstance().getNotificationGroup("Continue")
 }

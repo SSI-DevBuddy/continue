@@ -76,7 +76,7 @@ export {
 """
 
 fun getContinueGlobalPath(): String {
-  val continuePath = Paths.get(System.getProperty("user.home"), ".devbuddy-onprem")
+  val continuePath = Paths.get(System.getProperty("user.home"), ".continue")
   if (Files.notExists(continuePath)) {
     Files.createDirectories(continuePath)
   }

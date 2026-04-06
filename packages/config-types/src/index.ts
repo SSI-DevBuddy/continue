@@ -61,8 +61,6 @@ export const modelDescriptionSchema = z.object({
     "nebius",
     "scaleway",
     "ssi-devbuddy",
-    "ssi-devbuddy-on-premises",
-    "ssi-devbuddy-on-premises-vllm",
     "watsonx",
   ]),
   model: z.string(),

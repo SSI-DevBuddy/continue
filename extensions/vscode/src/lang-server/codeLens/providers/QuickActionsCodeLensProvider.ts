@@ -5,8 +5,8 @@ import * as vscode from "vscode";
 import { QuickEditShowParams } from "../../../quickEdit/QuickEditQuickPick";
 import { isTutorialFile } from "../../../util/tutorial";
 import {
-    CONTINUE_WORKSPACE_KEY,
-    getContinueWorkspaceConfig,
+  CONTINUE_WORKSPACE_KEY,
+  getContinueWorkspaceConfig,
 } from "../../../util/workspaceConfig";
 
 export const ENABLE_QUICK_ACTIONS_KEY = "enableQuickActions";
@@ -69,12 +69,12 @@ export class QuickActionsCodeLensProvider implements vscode.CodeLensProvider {
       return sendToChat
         ? {
             title,
-            command: "devbuddy-onprem.customQuickActionSendToChat",
+            command: "devbuddy.customQuickActionSendToChat",
             arguments: [prompt, range],
           }
         : {
             title,
-            command: "devbuddy-onprem.customQuickActionStreamInlineEdit",
+            command: "devbuddy.customQuickActionStreamInlineEdit",
             arguments: [prompt, range],
           };
     });
@@ -82,7 +82,7 @@ export class QuickActionsCodeLensProvider implements vscode.CodeLensProvider {
 
   getDefaultCommand(range: vscode.Range): vscode.Command[] {
     const quickEdit: vscode.Command = {
-      command: "devbuddy-onprem.defaultQuickAction",
+      command: "devbuddy.defaultQuickAction",
       title: "Continue",
       arguments: [{ range } as QuickEditShowParams],
     };

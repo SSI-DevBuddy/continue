@@ -74,8 +74,8 @@ data class ContinueRemoteConfigSyncResponse(
 )
 
 @State(
-    name = "com.github.continuedev.continueintellijextension.services.ContinueExtensionSettings.OnPrem",
-    storages = [Storage("ContinueExtensionSettings.OnPrem.xml")]
+    name = "com.github.continuedev.continueintellijextension.services.ContinueExtensionSettings",
+    storages = [Storage("ContinueExtensionSettings.xml")]
 )
 open class ContinueExtensionSettings : PersistentStateComponent<ContinueExtensionSettings.ContinueState> {
 

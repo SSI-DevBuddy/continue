@@ -29,7 +29,7 @@ export async function* recursiveStream(
   currentBuffer = "",
   isContinuation = false,
 ): AsyncGenerator<string | ChatMessage> {
-  const maxTokens = 25000;
+  const maxTokens = 60000;
   const safeTokens = maxTokens * INFINITE_STREAM_SAFETY;
   let totalTokens = 0;
   let buffer = currentBuffer;

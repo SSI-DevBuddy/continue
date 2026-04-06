@@ -1,1 +1,1 @@
-rootProject.name = "continue-intellij-extension-onprem"
+rootProject.name = "continue-intellij-extension"

@@ -111,12 +111,10 @@ class SSIDevBuddy extends BaseLLM {
     );
 
     if (response.status === 499) {
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
       return; // Aborted by user
     }
 
     if (!response.ok || !response.body) {
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
       throw new Error(`API request failed with status ${response.status}`);
     }
 
@@ -250,7 +248,6 @@ class SSIDevBuddy extends BaseLLM {
     } catch (error: unknown) {
       // Clean up state and let the original error bubble up to the retry decorator
       this._currentToolResponse = null;
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
       throw error;
     }
   }
@@ -621,7 +618,7 @@ class SSIDevBuddy extends BaseLLM {
 
           try {
             const response = await fetch(
-              new URL("chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL),
+              new URL("/chat/vscode_embed", SSI_DEVBUDDY_CONFIG.CHAT_URL),
               {
                 method: "POST",
                 headers: {
@@ -632,7 +629,7 @@ class SSIDevBuddy extends BaseLLM {
                 body: JSON.stringify(input),
               },
             );
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
+
             if (!response.ok) {
               throw new Error(
                 `API request failed with status ${response.status}`,
@@ -643,7 +640,6 @@ class SSIDevBuddy extends BaseLLM {
             return this._extractEmbeddings(responseBody);
           } catch (e) {
             console.error(`Error fetching embeddings for chunk:`, chunk, e);
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
             return [];
           }
         }),
@@ -771,7 +767,6 @@ class SSIDevBuddy extends BaseLLM {
         );
       }
     } catch (error: unknown) {
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
       if (error instanceof Error) {
         if ("code" in error) {
           // AWS SDK specific errors

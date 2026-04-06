@@ -18,7 +18,6 @@ import {
   setInactive,
   setInlineErrorMessage,
   setIsPruned,
-  setStreamStartTime,
   setToolGenerated,
   streamUpdate,
 } from "../slices/sessionSlice";
@@ -184,8 +183,6 @@ export const streamNormalInput = createAsyncThunk<
 
     dispatch(setIsPruned(didPrune));
     dispatch(setContextPercentage(contextPercentage));
-
-    dispatch(setStreamStartTime(Date.now()));
 
     const start = Date.now();
     const streamAborter = state.session.streamAborter;
