@@ -1,5 +1,10 @@
 import { fetchwithRequestOptions } from "@continuedev/fetch";
-import { SignJWT, exportJWK, importJWK } from "jose";
+import {
+  SignJWT,
+  exportJWK,
+  importJWK,
+  generateKeyPair as joseGenerateKeyPair,
+} from "jose";
 import { SSI_DEVBUDDY_CONFIG } from "../../SSI_DEVBUDDY_CONFIG.js";
 import type { RequestOptions } from "../index.js";
 
@@ -71,27 +76,16 @@ export async function generateKeyPair(): Promise<DPoPKeyPair> {
   ensureInitialized();
 
   try {
-    const subtle = getSubtleCrypto();
+    const { privateKey, publicKey } = await joseGenerateKeyPair("ES256");
 
-    const keyPair = await subtle.generateKey(
-      {
-        name: "ECDSA",
-        namedCurve: "P-256",
-      },
-      true, // extractable (needed for storage)
-      ["sign", "verify"],
-    );
-
-    // Export public key as JWK for transmission to server
-    const publicKeyJWK = await exportJWK(keyPair.publicKey);
+    const publicKeyJWK = await exportJWK(publicKey);
 
     const dpopKeyPair: DPoPKeyPair = {
-      privateKey: keyPair.privateKey,
+      privateKey: privateKey as CryptoKey,
       publicKeyJWK,
     };
 
     currentKeyPair = dpopKeyPair;
-
     await storeKeyPair(dpopKeyPair);
 
     console.log("[DPoP] Key pair generated and stored successfully");
@@ -127,7 +121,6 @@ async function storeKeyPair(keyPair: DPoPKeyPair): Promise<void> {
 }
 
 export async function loadKeyPair(): Promise<DPoPKeyPair | null> {
-  getSubtleCrypto();
   ensureInitialized();
 
   try {
@@ -165,7 +158,6 @@ export async function loadKeyPair(): Promise<DPoPKeyPair | null> {
 export async function generateDPoPProof(
   options: DPoPProofOptions,
 ): Promise<string> {
-  getSubtleCrypto();
   ensureInitialized();
 
   if (!currentKeyPair) {
@@ -278,23 +270,4 @@ export async function fetchWithDPoP(
     init as any,
     requestOptions,
   );
-}
-
-function getSubtleCrypto(): SubtleCrypto {
-  if (!globalThis.crypto?.subtle) {
-    try {
-      const { webcrypto } = require("crypto");
-      (globalThis as any).crypto = webcrypto;
-    } catch {
-      console.log("Crypto API Error");
-    }
-  }
-
-  if (!globalThis.crypto?.subtle) {
-    throw new Error(
-      "No SubtleCrypto implementation available in this environment.",
-    );
-  }
-
-  return globalThis.crypto.subtle;
 }
