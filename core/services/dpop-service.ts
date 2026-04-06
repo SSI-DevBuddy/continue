@@ -2,7 +2,6 @@ import { fetchwithRequestOptions } from "@continuedev/fetch";
 import { SignJWT, exportJWK, importJWK } from "jose";
 import { SSI_DEVBUDDY_CONFIG } from "../../SSI_DEVBUDDY_CONFIG.js";
 import type { RequestOptions } from "../index.js";
-import { webcrypto } from "crypto";
 
 /**
  * DPoP (Demonstrating Proof-of-Possession) Service for VS Code Extension
@@ -282,16 +281,20 @@ export async function fetchWithDPoP(
 }
 
 function getSubtleCrypto(): SubtleCrypto {
-  if (globalThis.crypto?.subtle) {
-    return globalThis.crypto.subtle;
+  if (!globalThis.crypto?.subtle) {
+    try {
+      const { webcrypto } = require("crypto");
+      (globalThis as any).crypto = webcrypto;
+    } catch {
+      console.log("Crypto API Error");
+    }
   }
 
-  if (webcrypto?.subtle) {
-    (globalThis as any).crypto = webcrypto;
-    return webcrypto.subtle as SubtleCrypto;
+  if (!globalThis.crypto?.subtle) {
+    throw new Error(
+      "No SubtleCrypto implementation available in this environment.",
+    );
   }
 
-  throw new Error(
-    "No SubtleCrypto implementation available in this environment.",
-  );
+  return globalThis.crypto.subtle;
 }
