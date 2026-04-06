@@ -2,6 +2,7 @@ import { fetchwithRequestOptions } from "@continuedev/fetch";
 import { SignJWT, exportJWK, importJWK } from "jose";
 import { SSI_DEVBUDDY_CONFIG } from "../../SSI_DEVBUDDY_CONFIG.js";
 import type { RequestOptions } from "../index.js";
+import { webcrypto } from "crypto";
 
 /**
  * DPoP (Demonstrating Proof-of-Possession) Service for VS Code Extension
@@ -71,13 +72,9 @@ export async function generateKeyPair(): Promise<DPoPKeyPair> {
   ensureInitialized();
 
   try {
-    if (!globalThis.crypto?.subtle) {
-      throw new Error(
-        "Web Crypto API not available. DPoP requires crypto.subtle support.",
-      );
-    }
+    const subtle = getSubtleCrypto();
 
-    const keyPair = await globalThis.crypto.subtle.generateKey(
+    const keyPair = await subtle.generateKey(
       {
         name: "ECDSA",
         namedCurve: "P-256",
@@ -131,6 +128,7 @@ async function storeKeyPair(keyPair: DPoPKeyPair): Promise<void> {
 }
 
 export async function loadKeyPair(): Promise<DPoPKeyPair | null> {
+  getSubtleCrypto();
   ensureInitialized();
 
   try {
@@ -168,6 +166,7 @@ export async function loadKeyPair(): Promise<DPoPKeyPair | null> {
 export async function generateDPoPProof(
   options: DPoPProofOptions,
 ): Promise<string> {
+  getSubtleCrypto();
   ensureInitialized();
 
   if (!currentKeyPair) {
@@ -279,5 +278,20 @@ export async function fetchWithDPoP(
     typeof url === "string" ? new URL(url) : url,
     init as any,
     requestOptions,
+  );
+}
+
+function getSubtleCrypto(): SubtleCrypto {
+  if (globalThis.crypto?.subtle) {
+    return globalThis.crypto.subtle;
+  }
+
+  if (webcrypto?.subtle) {
+    (globalThis as any).crypto = webcrypto;
+    return webcrypto.subtle as SubtleCrypto;
+  }
+
+  throw new Error(
+    "No SubtleCrypto implementation available in this environment.",
   );
 }
