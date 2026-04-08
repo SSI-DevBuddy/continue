@@ -1,8 +1,8 @@
 {
-  "name": "devbuddy",
+  "name": "devbuddy-onprem",
   "icon": "media/ssi-icon.png",
   "author": "Strategic Systems International",
-  "version": "1.3.30",
+  "version": "1.3.8",
   "repository": {
     "type": "git",
     "url": "https://github.com/continuedev/continue"
@@ -18,7 +18,7 @@
   "homepage": "https://www.ssidecisions.com",
   "qna": "https://github.com/continuedev/continue/issues/new/choose",
   "license": "Apache-2.0",
-  "displayName": "SSI DevBuddy",
+  "displayName": "SSI DevBuddy (Onprem)",
   "pricing": "Free",
   "description": "Wrapper over The leading open-source AI code assistant continue.dev",
   "publisher": "StrategicSystemsInternational",
@@ -53,7 +53,7 @@
   "activationEvents": [
     "onUri",
     "onStartupFinished",
-    "onView:devbuddyGUIView"
+    "onView:devbuddy-onprem.devbuddyGUIView"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -86,64 +86,64 @@
     "configuration": {
       "title": "devbuddy",
       "properties": {
-        "devbuddy.telemetryEnabled": {
+        "devbuddy-onprem.telemetryEnabled": {
           "type": "boolean",
           "default": true,
           "markdownDescription": "Continue collects anonymous usage data, cleaned of PII, to help us improve the product for our users. Read more  at [continue.dev › Telemetry](https://docs.continue.dev/telemetry).",
           "markdownDeprecationMessage": "This setting is deprecated and will be removed in a later version. Please use the _Telemetry > Allow Anonymous Telemetry_ setting in the extension's User Settings page.",
           "deprecationMessage": "Please use the _Telemetry > Allow Anonymous Telemetry_ setting in the extension's User Settings page."
         },
-        "devbuddy.showInlineTip": {
+        "devbuddy-onprem.showInlineTip": {
           "type": "boolean",
           "default": true,
           "description": "Show inline suggestion to use the Continue keyboard shortcuts (e.g. \"Cmd/Ctrl L to select code, Cmd/Ctrl I to edit\")."
         },
-        "devbuddy.disableQuickFix": {
+        "devbuddy-onprem.disableQuickFix": {
           "type": "boolean",
           "default": false,
           "description": "Disable the quick fix feature."
         },
-        "devbuddy.enableQuickActions": {
+        "devbuddy-onprem.enableQuickActions": {
           "type": "boolean",
           "default": false,
           "markdownDescription": "Enable the experimental Quick Actions feature. Read our walkthrough to learn about configuration and how to share feedback: [continue.dev › Walkthrough: Quick Actions (experimental)](https://docs.continue.dev/customize/deep-dives/vscode-actions#quick-actions)"
         },
-        "devbuddy.enableTabAutocomplete": {
+        "devbuddy-onprem.enableTabAutocomplete": {
           "type": "boolean",
           "default": true,
           "markdownDescription": "Enable Continue's tab autocomplete feature. Read our walkthrough to learn about configuration and how to share feedback: [continue.dev › Walkthrough: Tab Autocomplete (beta)](https://docs.continue.dev/features/tab-autocomplete)"
         },
-        "devbuddy.enableNextEdit": {
+        "devbuddy-onprem.enableNextEdit": {
           "type": "boolean",
           "default": true,
           "markdownDescription": "Enable Continue's next edit feature. Read our docs to learn about configuration and how to share feedback: [continue.dev › Features › Autocomplete › Next Edit (experimental)](https://docs.continue.dev/features/autocomplete/next-edit)"
         },
-        "devbuddy.pauseTabAutocompleteOnBattery": {
+        "devbuddy-onprem.pauseTabAutocompleteOnBattery": {
           "type": "boolean",
           "default": false,
           "markdownDescription": "Pause Continue's tab autocomplete feature when your battery is low."
         },
-        "devbuddy.pauseCodebaseIndexOnStart": {
+        "devbuddy-onprem.pauseCodebaseIndexOnStart": {
           "type": "boolean",
           "default": false,
           "markdownDescription": "Pause Continue's codebase index on start."
         },
-        "devbuddy.enableConsole": {
+        "devbuddy-onprem.enableConsole": {
           "type": "boolean",
           "default": false,
           "markdownDescription": "Enable a console to log and explore model inputs and outputs. It can be found in the bottom panel."
         },
-        "devbuddy.remoteConfigServerUrl": {
+        "devbuddy-onprem.remoteConfigServerUrl": {
           "type": "string",
           "default": null,
           "markdownDescription": "If your team is set up to use shared configuration, enter the server URL here and your user token below to enable automatic syncing."
         },
-        "devbuddy.userToken": {
+        "devbuddy-onprem.userToken": {
           "type": "string",
           "default": null,
           "markdownDescription": "If your team is set up to use shared configuration, enter your user token here and your server URL above to enable automatic syncing."
         },
-        "devbuddy.remoteConfigSyncPeriod": {
+        "devbuddy-onprem.remoteConfigSyncPeriod": {
           "type": "number",
           "default": 60,
           "description": "The period of time in minutes between automatic syncs."
@@ -152,226 +152,226 @@
     },
     "commands": [
       {
-        "command": "devbuddy.applyCodeFromChat",
+        "command": "devbuddy-onprem.applyCodeFromChat",
         "category": "SSI Devbuddy",
         "title": "Apply code from chat",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.acceptDiff",
+        "command": "devbuddy-onprem.acceptDiff",
         "category": "SSI Devbuddy",
         "title": "Accept Diff",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.rejectDiff",
+        "command": "devbuddy-onprem.rejectDiff",
         "category": "SSI Devbuddy",
         "title": "Reject Diff",
         "group": "SSI Devbuddy",
         "icon": "$(stop)"
       },
       {
-        "command": "devbuddy.acceptVerticalDiffBlock",
+        "command": "devbuddy-onprem.acceptVerticalDiffBlock",
         "category": "SSI Devbuddy",
         "title": "Accept Vertical Diff Block",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.rejectVerticalDiffBlock",
+        "command": "devbuddy-onprem.rejectVerticalDiffBlock",
         "category": "SSI Devbuddy",
         "title": "Reject Vertical Diff Block",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.focusEdit",
+        "command": "devbuddy-onprem.focusEdit",
         "category": "SSI Devbuddy",
         "title": "Add to Edit",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.focusContinueInput",
+        "command": "devbuddy-onprem.focusContinueInput",
         "category": "SSI Devbuddy",
         "title": "Add Highlighted Code to Context and Clear Chat",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.focusContinueInputWithoutClear",
+        "command": "devbuddy-onprem.focusContinueInputWithoutClear",
         "category": "SSI Devbuddy",
         "title": "Add to Chat",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.debugTerminal",
+        "command": "devbuddy-onprem.debugTerminal",
         "category": "SSI Devbuddy",
         "title": "Debug Terminal",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.exitEditMode",
+        "command": "devbuddy-onprem.exitEditMode",
         "category": "SSI Devbuddy",
         "title": "Exit Edit Mode",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.openConfigPage",
+        "command": "devbuddy-onprem.openConfigPage",
         "category": "SSI Devbuddy",
         "title": "Open Settings",
         "icon": "$(gear)",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.toggleTabAutocompleteEnabled",
+        "command": "devbuddy-onprem.toggleTabAutocompleteEnabled",
         "category": "SSI Devbuddy",
         "title": "Toggle Autocomplete Enabled",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.forceAutocomplete",
+        "command": "devbuddy-onprem.forceAutocomplete",
         "title": "Devbuddy: Force Autocomplete",
         "category": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.selectFilesAsContext",
+        "command": "devbuddy-onprem.selectFilesAsContext",
         "category": "SSI Devbuddy",
         "title": "Select Files as Context",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.newSession",
+        "command": "devbuddy-onprem.newSession",
         "category": "SSI Devbuddy",
         "title": "New Session",
         "icon": "$(add)",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.shareSession",
+        "command": "devbuddy-onprem.shareSession",
         "category": "SSI Devbuddy",
         "title": "Share Current Chat Session as Markdown",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.viewHistory",
+        "command": "devbuddy-onprem.viewHistory",
         "category": "SSI Devbuddy",
         "title": "View History",
         "icon": "$(history)",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.viewLogs",
+        "command": "devbuddy-onprem.viewLogs",
         "category": "SSI Devbuddy",
         "title": "View Logs",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.clearConsole",
+        "command": "devbuddy-onprem.clearConsole",
         "category": "SSI Devbuddy",
         "title": "Clear Console",
         "icon": "$(clear-all)",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.navigateTo",
+        "command": "devbuddy-onprem.navigateTo",
         "category": "SSI Devbuddy",
         "title": "Navigate to a path",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.writeCommentsForCode",
+        "command": "devbuddy-onprem.writeCommentsForCode",
         "category": "SSI Devbuddy",
         "title": "Write Comments for this Code",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.writeDocstringForCode",
+        "command": "devbuddy-onprem.writeDocstringForCode",
         "category": "SSI Devbuddy",
         "title": "Write a Docstring for this Code",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.fixCode",
+        "command": "devbuddy-onprem.fixCode",
         "category": "SSI Devbuddy",
         "title": "Fix this Code",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.optimizeCode",
+        "command": "devbuddy-onprem.optimizeCode",
         "category": "SSI Devbuddy",
         "title": "Optimize this Code",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.fixGrammar",
+        "command": "devbuddy-onprem.fixGrammar",
         "category": "SSI Devbuddy",
         "title": "Fix Grammar / Spelling",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.codebaseForceReIndex",
+        "command": "devbuddy-onprem.codebaseForceReIndex",
         "category": "SSI Devbuddy",
         "title": "Codebase Force Re-Index",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.rebuildCodebaseIndex",
+        "command": "devbuddy-onprem.rebuildCodebaseIndex",
         "category": "SSI Devbuddy",
         "title": "Rebuild codebase index",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.docsIndex",
+        "command": "devbuddy-onprem.docsIndex",
         "category": "SSI Devbuddy",
         "title": "Docs Index",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.docsReIndex",
+        "command": "devbuddy-onprem.docsReIndex",
         "category": "SSI Devbuddy",
         "title": "Docs Force Re-Index",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.focusContinueInput",
+        "command": "devbuddy-onprem.focusContinueInput",
         "category": "SSI Devbuddy",
         "title": "Focus Continue Chat",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.enterEnterpriseLicenseKey",
+        "command": "devbuddy-onprem.enterEnterpriseLicenseKey",
         "category": "SSI Devbuddy",
         "title": "Enter Enterprise License Key",
         "group": "SSI Devbuddy"
       },
       {
-        "command": "devbuddy.toggleNextEditEnabled",
+        "command": "devbuddy-onprem.toggleNextEditEnabled",
         "title": "Continue: Toggle Next Edit"
       },
       {
-        "command": "devbuddy.nextEditWindow.hideNextEditSuggestion",
+        "command": "devbuddy-onprem.nextEditWindow.hideNextEditSuggestion",
         "category": "SSI Devbuddy",
         "title": "Hide Next Edit Suggestion"
       },
       {
-        "command": "devbuddy.nextEditWindow.acceptNextEditSuggestion",
+        "command": "devbuddy-onprem.nextEditWindow.acceptNextEditSuggestion",
         "category": "SSI Devbuddy",
         "title": "Accept Next Edit Suggestion"
       },
       {
-        "command": "devbuddy.forceNextEdit",
+        "command": "devbuddy-onprem.forceNextEdit",
         "category": "SSI Devbuddy",
         "title": "Continue: Force Next Edit"
       },
       {
-        "command": "devbuddy.acceptJump",
+        "command": "devbuddy-onprem.acceptJump",
         "category": "SSI Devbuddy",
         "title": "Continue: Accept Jump Suggestion"
       },
       {
-        "command": "devbuddy.rejectJump",
+        "command": "devbuddy-onprem.rejectJump",
         "category": "SSI Devbuddy",
         "title": "Continue: Reject Jump Suggestion"
       },
       {
-        "command": "devbuddy.generateRule",
+        "command": "devbuddy-onprem.generateRule",
         "category": "SSI Devbuddy",
         "title": "Generate Rule",
         "group": "SSI Devbuddy"
@@ -385,219 +385,219 @@
     ],
     "keybindings": [
       {
-        "command": "devbuddy.focusContinueInput",
+        "command": "devbuddy-onprem.focusContinueInput",
         "mac": "cmd+l",
         "key": "ctrl+l"
       },
       {
-        "command": "devbuddy.focusContinueInputWithoutClear",
+        "command": "devbuddy-onprem.focusContinueInputWithoutClear",
         "mac": "cmd+shift+l",
         "key": "ctrl+shift+l"
       },
       {
-        "command": "devbuddy.acceptDiff",
+        "command": "devbuddy-onprem.acceptDiff",
         "mac": "shift+cmd+enter",
         "key": "shift+ctrl+enter",
-        "when": "devbuddy.diffVisible"
+        "when": "devbuddy-onprem.diffVisible"
       },
       {
-        "command": "devbuddy.rejectDiff",
+        "command": "devbuddy-onprem.rejectDiff",
         "mac": "shift+cmd+backspace",
         "key": "shift+ctrl+backspace",
-        "when": "devbuddy.diffVisible"
+        "when": "devbuddy-onprem.diffVisible"
       },
       {
-        "command": "devbuddy.rejectDiff",
+        "command": "devbuddy-onprem.rejectDiff",
         "mac": "cmd+z",
         "key": "ctrl+z",
-        "when": "devbuddy.diffVisible"
+        "when": "devbuddy-onprem.diffVisible"
       },
       {
-        "command": "devbuddy.quickEditHistoryUp",
+        "command": "devbuddy-onprem.quickEditHistoryUp",
         "mac": "up",
         "key": "up",
-        "when": "false && devbuddy.quickEditHistoryFocused"
+        "when": "false && devbuddy-onprem.quickEditHistoryFocused"
       },
       {
-        "command": "devbuddy.quickEditHistoryDown",
+        "command": "devbuddy-onprem.quickEditHistoryDown",
         "mac": "down",
         "key": "down",
-        "when": "false && devbuddy.quickEditHistoryFocused"
+        "when": "false && devbuddy-onprem.quickEditHistoryFocused"
       },
       {
-        "command": "devbuddy.acceptVerticalDiffBlock",
+        "command": "devbuddy-onprem.acceptVerticalDiffBlock",
         "mac": "alt+cmd+y",
         "key": "alt+ctrl+y"
       },
       {
-        "command": "devbuddy.rejectVerticalDiffBlock",
+        "command": "devbuddy-onprem.rejectVerticalDiffBlock",
         "mac": "alt+cmd+n",
         "key": "alt+ctrl+n"
       },
       {
-        "command": "devbuddy.focusEdit",
+        "command": "devbuddy-onprem.focusEdit",
         "title": "Edit code with natural language",
         "mac": "cmd+i",
         "key": "ctrl+i"
       },
       {
-        "command": "devbuddy.exitEditMode",
+        "command": "devbuddy-onprem.exitEditMode",
         "mac": "escape",
         "key": "escape",
-        "when": "devbuddy.inEditMode && editorFocus"
+        "when": "devbuddy-onprem.inEditMode && editorFocus"
       },
       {
-        "command": "devbuddy.debugTerminal",
+        "command": "devbuddy-onprem.debugTerminal",
         "mac": "cmd+shift+r",
         "key": "ctrl+shift+r"
       },
       {
-        "command": "devbuddy.openInNewWindow",
+        "command": "devbuddy-onprem.openInNewWindow",
         "mac": "cmd+k cmd+m",
         "key": "ctrl+k ctrl+m",
         "when": "!terminalFocus"
       },
       {
-        "command": "devbuddy.toggleTabAutocompleteEnabled",
+        "command": "devbuddy-onprem.toggleTabAutocompleteEnabled",
         "mac": "cmd+k cmd+a",
         "key": "ctrl+k ctrl+a",
         "when": "!terminalFocus"
       },
       {
-        "command": "devbuddy.forceAutocomplete",
+        "command": "devbuddy-onprem.forceAutocomplete",
         "key": "ctrl+alt+space",
         "mac": "cmd+alt+space",
         "when": "editorTextFocus && !editorHasSelection && !editorReadOnly && !inSnippetMode"
       },
       {
-        "command": "devbuddy.applyCodeFromChat",
+        "command": "devbuddy-onprem.applyCodeFromChat",
         "mac": "alt+a",
         "key": "alt+a"
       },
       {
-        "command": "devbuddy.toggleNextEditEnabled",
+        "command": "devbuddy-onprem.toggleNextEditEnabled",
         "key": "ctrl+k ctrl+n",
         "mac": "cmd+k cmd+n",
         "when": "editorTextFocus"
       },
       {
-        "command": "devbuddy.nextEditWindow.hideNextEditSuggestion",
+        "command": "devbuddy-onprem.nextEditWindow.hideNextEditSuggestion",
         "key": "escape",
-        "when": "editorTextFocus && nextEditWindowActive && !devbuddy.jumpDecorationVisible"
+        "when": "editorTextFocus && nextEditWindowActive && !devbuddy-onprem.jumpDecorationVisible"
       },
       {
-        "command": "devbuddy.nextEditWindow.acceptNextEditSuggestion",
+        "command": "devbuddy-onprem.nextEditWindow.acceptNextEditSuggestion",
         "key": "tab",
-        "when": "editorTextFocus && nextEditWindowActive && !devbuddy.jumpDecorationVisible"
+        "when": "editorTextFocus && nextEditWindowActive && !devbuddy-onprem.jumpDecorationVisible"
       },
       {
-        "command": "devbuddy.acceptJump",
+        "command": "devbuddy-onprem.acceptJump",
         "key": "tab",
-        "when": "editorTextFocus && devbuddy.jumpDecorationVisible"
+        "when": "editorTextFocus && devbuddy-onprem.jumpDecorationVisible"
       },
       {
-        "command": "devbuddy.rejectJump",
+        "command": "devbuddy-onprem.rejectJump",
         "key": "escape",
-        "when": "editorTextFocus && devbuddy.jumpDecorationVisible"
+        "when": "editorTextFocus && devbuddy-onprem.jumpDecorationVisible"
       }
     ],
     "submenus": [
       {
-        "id": "devbuddy.devbuddySubMenu",
+        "id": "devbuddy-onprem.devbuddySubMenu",
         "label": "devbuddy"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "devbuddy.focusContinueInput"
+          "command": "devbuddy-onprem.focusContinueInput"
         },
         {
-          "command": "devbuddy.focusContinueInputWithoutClear"
+          "command": "devbuddy-onprem.focusContinueInputWithoutClear"
         },
         {
-          "command": "devbuddy.debugTerminal"
+          "command": "devbuddy-onprem.debugTerminal"
         },
         {
-          "command": "devbuddy.newSession"
+          "command": "devbuddy-onprem.newSession"
         },
         {
-          "command": "devbuddy.enterEnterpriseLicenseKey"
+          "command": "devbuddy-onprem.enterEnterpriseLicenseKey"
         },
         {
-          "command": "devbuddy.generateRule"
+          "command": "devbuddy-onprem.generateRule"
         },
         {
-          "command": "devbuddy.openInNewWindow"
+          "command": "devbuddy-onprem.openInNewWindow"
         }
       ],
       "editor/context": [
         {
-          "submenu": "devbuddy.devbuddySubMenu",
+          "submenu": "devbuddy-onprem.devbuddySubMenu",
           "group": "0_acontinue"
         }
       ],
       "editor/title/run": [
         {
-          "command": "devbuddy.rejectDiff",
+          "command": "devbuddy-onprem.rejectDiff",
           "group": "SSI Devbuddy",
-          "when": "devbuddy.streamingDiff"
+          "when": "devbuddy-onprem.streamingDiff"
         }
       ],
-      "devbuddy.devbuddySubMenu": [
+      "devbuddy-onprem.devbuddySubMenu": [
         {
-          "command": "devbuddy.focusContinueInputWithoutClear",
+          "command": "devbuddy-onprem.focusContinueInputWithoutClear",
           "group": "SSI Devbuddy"
         },
         {
-          "command": "devbuddy.focusEdit",
+          "command": "devbuddy-onprem.focusEdit",
           "group": "SSI Devbuddy",
           "when": "!editorReadonly"
         }
       ],
       "explorer/context": [
         {
-          "command": "devbuddy.selectFilesAsContext",
+          "command": "devbuddy-onprem.selectFilesAsContext",
           "group": "1_debug@1"
         }
       ],
       "view/title": [
         {
-          "command": "devbuddy.newSession",
+          "command": "devbuddy-onprem.newSession",
           "group": "navigation@1",
-          "when": "view == devbuddy.devbuddyGUIView"
+          "when": "view == devbuddy-onprem.devbuddyGUIView"
         },
         {
-          "command": "devbuddy.viewHistory",
+          "command": "devbuddy-onprem.viewHistory",
           "group": "navigation@2",
-          "when": "view == devbuddy.devbuddyGUIView"
+          "when": "view == devbuddy-onprem.devbuddyGUIView"
         },
         {
-          "command": "devbuddy.openConfigPage",
+          "command": "devbuddy-onprem.openConfigPage",
           "group": "navigation@4",
-          "when": "view == devbuddy.devbuddyGUIView"
+          "when": "view == devbuddy-onprem.devbuddyGUIView"
         },
         {
-          "command": "devbuddy.clearConsole",
+          "command": "devbuddy-onprem.clearConsole",
           "group": "navigation@1",
-          "when": "view == devbuddy.devbuddyConsoleView"
+          "when": "view == devbuddy-onprem.devbuddyConsoleView"
         }
       ],
       "editor/title": [
         {
-          "command": "devbuddy.newSession",
+          "command": "devbuddy-onprem.newSession",
           "group": "navigation@1",
-          "when": "activeWebviewPanelId == devbuddy.devbuddyGUIView"
+          "when": "activeWebviewPanelId == devbuddy-onprem.devbuddyGUIView"
         },
         {
-          "command": "devbuddy.viewHistory",
+          "command": "devbuddy-onprem.viewHistory",
           "group": "navigation@2",
-          "when": "activeWebviewPanelId == devbuddy.devbuddyGUIView"
+          "when": "activeWebviewPanelId == devbuddy-onprem.devbuddyGUIView"
         }
       ],
       "terminal/context": [
         {
-          "command": "devbuddy.debugTerminal",
+          "command": "devbuddy-onprem.debugTerminal",
           "group": "navigation@top"
         }
       ]
@@ -605,43 +605,47 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "devbuddy",
+          "id": "devbuddy-onprem",
           "title": "SSI Devbuddy",
           "icon": "media/ssi-sidebar-icon.png"
         }
       ],
       "panel": [
         {
-          "id": "devbuddyConsole",
+          "id": "devbuddy-onpremConsole",
           "title": "SSI Devbuddy Console",
           "icon": "$(window)"
         }
       ]
     },
     "views": {
-      "devbuddy": [
+      "devbuddy-onprem": [
         {
           "type": "webview",
-          "id": "devbuddy.devbuddyGUIView",
+          "id": "devbuddy-onprem.devbuddyGUIView",
           "name": "SSI Devbuddy",
           "icon": "media/ssi-sidebar-icon.png",
           "visibility": "visible"
         }
       ],
-      "devbuddyConsole": [
+      "devbuddy-onpremConsole": [
         {
           "type": "webview",
-          "id": "devbuddy.devbuddyConsoleView",
+          "id": "devbuddy-onprem.devbuddyConsoleView",
           "name": "SSI Devbuddy Console",
           "icon": "$(window)",
           "visibility": "visible",
-          "when": "config.devbuddy.enableConsole"
+          "when": "config.devbuddy-onprem.enableConsole"
         }
       ]
     },
     "jsonValidation": [
       {
         "fileMatch": "**/.continue*/config.json",
+        "url": "./config_schema.json"
+      },
+      {
+        "fileMatch": "**/.devbuddy-*/config.json",
         "url": "./config_schema.json"
       },
       {
@@ -776,6 +780,7 @@
     "vitest": "^3.1.4",
     "vscode-languageclient": "^8.0.2",
     "ws": "^8.13.0",
+    "yaml": "^2.8.1",
     "yarn": "^1.22.21"
   },
   "overrides": {

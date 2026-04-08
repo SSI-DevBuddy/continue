@@ -142,7 +142,7 @@ export class VsCodeExtension {
             );
           } else if (selection === "Select different model") {
             vscode.commands.executeCommand(
-              "devbuddy.openTabAutocompleteConfigMenu",
+              "devbuddy-onprem.openTabAutocompleteConfigMenu",
             );
           }
         });
@@ -265,7 +265,7 @@ export class VsCodeExtension {
     // Sidebar
     context.subscriptions.push(
       vscode.window.registerWebviewViewProvider(
-        "devbuddy.devbuddyGUIView",
+        "devbuddy-onprem.devbuddyGUIView",
         this.sidebar,
         {
           webviewOptions: { retainContextWhenHidden: true },
@@ -414,7 +414,7 @@ export class VsCodeExtension {
 
     context.subscriptions.push(
       vscode.window.registerWebviewViewProvider(
-        "devbuddy.devbuddyConsoleView",
+        "devbuddy-onprem.devbuddyConsoleView",
         this.consoleView,
       ),
     );
@@ -564,7 +564,7 @@ export class VsCodeExtension {
       if (e.provider.id === env.AUTH_TYPE) {
         void vscode.commands.executeCommand(
           "setContext",
-          "devbuddy.isSignedInToControlPlane",
+          "devbuddy-onprem.isSignedInToControlPlane",
           true,
         );
 
@@ -575,7 +575,7 @@ export class VsCodeExtension {
       } else {
         void vscode.commands.executeCommand(
           "setContext",
-          "devbuddy.isSignedInToControlPlane",
+          "devbuddy-onprem.isSignedInToControlPlane",
           false,
         );
 

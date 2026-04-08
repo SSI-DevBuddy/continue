@@ -1,5 +1,4 @@
 //// ---- more changes needed
-import { fetchwithRequestOptions } from "@continuedev/fetch";
 import * as URI from "uri-js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -92,9 +91,15 @@ import { NextEditProvider } from "./nextEdit/NextEditProvider";
 import type { FromCoreProtocol, ToCoreProtocol } from "./protocol";
 import { OnboardingModes } from "./protocol/core";
 import type { IMessenger, Message } from "./protocol/messenger";
+import * as DpopService from "./services/dpop-service";
 import { ContinueError, ContinueErrorReason } from "./util/errors";
 import { shareSession } from "./util/historyUtils";
 import { Logger } from "./util/Logger.js";
+import { webcrypto } from "node:crypto";
+
+if (typeof globalThis.crypto === "undefined") {
+  globalThis.crypto = webcrypto as unknown as Crypto;
+}
 
 export class Core {
   configHandler: ConfigHandler;
@@ -142,6 +147,73 @@ export class Core {
     try {
       // Ensure .continue directory is created
       migrateV1DevDataFiles();
+
+      // Initialize DPoP service with IDE storage
+      DpopService.initialize({
+        storeSecret: ide.storeSecret.bind(ide),
+        getSecret: ide.getSecret.bind(ide),
+        deleteSecret: ide.deleteSecret.bind(ide),
+      });
+
+      // Wrap global fetch to automatically add DPoP headers for SSI DevBuddy API calls
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = async (
+        input: RequestInfo | URL,
+        init?: RequestInit,
+      ): Promise<Response> => {
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : (input as Request).url;
+
+        // Only add DPoP for SSI DevBuddy API calls
+        const isSSIDevBuddyAPI =
+          url.includes(SSI_DEVBUDDY_CONFIG.API_BASE) ||
+          url.includes(SSI_DEVBUDDY_CONFIG.CHAT_URL);
+
+        if (isSSIDevBuddyAPI) {
+          try {
+            const normalizedUrl = DpopService.normalizeUrl(url);
+            const method = init?.method || "GET";
+            const dpopProof = await DpopService.generateDPoPProof({
+              method,
+              url: normalizedUrl,
+            });
+
+            // Add DPoP header to existing headers
+            const existingHeaders =
+              input instanceof Request
+                ? Object.fromEntries(input.headers.entries())
+                : {};
+
+            const initHeaders =
+              init?.headers instanceof Headers
+                ? Object.fromEntries(init.headers.entries())
+                : ((init?.headers || {}) as Record<string, string>);
+
+            init = {
+              ...init,
+              headers: {
+                ...existingHeaders,
+                ...initHeaders,
+                DPoP: dpopProof,
+              },
+            };
+
+            console.log(`[DPoP] Added proof to ${method} ${url}`);
+          } catch (e) {
+            // Graceful degradation: if DPoP fails, proceed without it
+            console.warn(
+              "[DPoP] Failed to add DPoP header, proceeding without it:",
+              e,
+            );
+          }
+        }
+
+        return originalFetch(input, init);
+      };
 
       const ideInfoPromise = messenger.request("getIdeInfo", undefined);
       const ideSettingsPromise = messenger.request("getIdeSettings", undefined);
@@ -297,7 +369,7 @@ export class Core {
   /* eslint-disable max-lines-per-function */
   private registerMessageHandlers(ideSettingsPromise: Promise<IdeSettings>) {
     const on = this.messenger.on.bind(this.messenger);
-    const API_KEY_STORAGE_KEY = "ssi-devbuddy-api-key";
+    const API_KEY_STORAGE_KEY = "ssi-devbuddy-onprem-api-key";
 
     // Note, VsCode's in-process messenger doesn't do anything with this
     // It will only show for jetbrains
@@ -598,7 +670,7 @@ export class Core {
             config,
             ide: this.ide,
             fetch: (url, init) =>
-              fetchwithRequestOptions(url, init, config.requestOptions),
+              DpopService.fetchWithDPoP(url, init, config.requestOptions),
           });
         return items || [];
       } catch (e) {
@@ -1225,61 +1297,82 @@ export class Core {
     });
 
     on("auth/login", async (msg: any) => {
-      
-        const ur = new URL("/api/extension-keys/exchange-key", SSI_DEVBUDDY_CONFIG.API_BASE);
-        const resp = await fetch(ur, {
-            method: "POST",
-            body: JSON.stringify({ apiKey: msg.data.apiKey }),
-            headers: {
-                "Content-Type": "application/json",
-                ...(await getHeaders()),
-            },
-        });
+      // Generate DPoP key pair (automatically stores in secret storage)
+      const keyPair = await DpopService.generateKeyPair();
 
-        if (!resp.ok) {
-            return { success: true, accessToken: "failed", user: "-" };
-        }else{
+      const ur = new URL(
+        "api/extension-keys/exchange-key",
+        SSI_DEVBUDDY_CONFIG.API_BASE,
+      );
+      const resp = await fetch(ur, {
+        method: "POST",
+        body: JSON.stringify({
+          apiKey: msg.data.apiKey,
+          dpopPublicKey: keyPair.publicKeyJWK,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(await getHeaders()),
+        },
+      });
 
-          const data = await resp.json();
-          const token = data.token;
+      if (!resp.ok) {
+        return { success: true, accessToken: "failed", user: "-" };
+      } else {
+        const data = await resp.json();
+        const token = data.token;
 
-          addUserTokenForSSIDevBuddy(token);
-          
-          return { success: true, accessToken: token, user: {} };
-        }
+        addUserTokenForSSIDevBuddy(token);
+
+        return { success: true, accessToken: token, user: {} };
+      }
     });
 
     on("auth/saveApiKey", async (msg: any) => {
-        await this.ide.storeSecret(API_KEY_STORAGE_KEY, msg.data.apiKey);
-        return { success: true };
+      await this.ide.storeSecret(API_KEY_STORAGE_KEY, msg.data.apiKey);
+      return { success: true };
     });
 
     // Retrieves the long-lived API key from secure storage
     on("auth/getApiKey", async (msg) => {
-        const apiKey = await this.ide.getSecret(API_KEY_STORAGE_KEY);
-        return { apiKey: apiKey };
+      const apiKey = await this.ide.getSecret(API_KEY_STORAGE_KEY);
+      return { apiKey: apiKey };
     });
 
     // Deletes the long-lived API key from secure storage
     on("auth/deleteApiKey", async (msg) => {
-        await this.ide.deleteSecret(API_KEY_STORAGE_KEY);
-        return { success: true };
+      await this.ide.deleteSecret(API_KEY_STORAGE_KEY);
+      return { success: true };
     });
 
     on("auth/initialize", async (msg) => {
       const apiKey = await this.ide.getSecret(API_KEY_STORAGE_KEY);
-      console.log("Core: ide.getSecret() returnedd:", apiKey);
+      console.log("Core: ide.getSecret() returned:", apiKey);
       if (!apiKey) {
         return { success: false }; // No key stored, do nothing.
       }
-      console.log("Core: API key found. Exchanging for token...");
+      console.log("Core: API key found. Checking for DPoP keys...");
+
+      // Try to load existing DPoP keys
+      let keyPair = await DpopService.loadKeyPair();
+
+      // If no keys exist, generate new ones
+      if (!keyPair) {
+        console.log("Core: No DPoP keys found, generating new keys...");
+        keyPair = await DpopService.generateKeyPair();
+      }
+
+      console.log("Core: Exchanging API key for token with DPoP...");
       // Key found, attempt to exchange it for a session token.
-      return this.exchangeApiKeyForToken(apiKey);
+      return this.exchangeApiKeyForToken(apiKey, keyPair.publicKeyJWK);
     });
 
-    on("auth/logout", (msg) => {
+    on("auth/logout", async (msg) => {
       const token = "";
       addUserTokenForSSIDevBuddy(token);
+
+      // Clear DPoP keys from storage
+      await DpopService.clearKeys();
     });
 
     on("projects/users", async (msg) => {
@@ -1289,7 +1382,7 @@ export class Core {
         let data: { Label: string; Value: number }[] = [];
         try {
           const ur = new URL(
-            `/api/projects/users/${4}`,
+            `api/projects/users/${4}`,
             SSI_DEVBUDDY_CONFIG.API_BASE,
           );
           const resp = await fetch(ur, {
@@ -1318,29 +1411,37 @@ export class Core {
     });
   }
 
-  public async exchangeApiKeyForToken(apiKey: string): Promise<any> {
-        const ur = new URL("/api/extension-keys/exchange-key", SSI_DEVBUDDY_CONFIG.API_BASE);
-        const resp = await fetch(ur, {
-            method: "POST",
-            body: JSON.stringify({ apiKey: apiKey }),
-            headers: {
-                "Content-Type": "application/json",
-                ...(await getHeaders()),
-            },
-        });
+  public async exchangeApiKeyForToken(
+    apiKey: string,
+    dpopPublicKey?: any,
+  ): Promise<any> {
+    const ur = new URL(
+      "api/extension-keys/exchange-key",
+      SSI_DEVBUDDY_CONFIG.API_BASE,
+    );
+    const resp = await fetch(ur, {
+      method: "POST",
+      body: JSON.stringify({
+        apiKey: apiKey,
+        dpopPublicKey: dpopPublicKey,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        ...(await getHeaders()),
+      },
+    });
 
-        if (!resp.ok) {
-            return { success: true, accessToken: "failed", user: "-" };
-        }else{
+    if (!resp.ok) {
+      return { success: true, accessToken: "failed", user: "-" };
+    } else {
+      const data = await resp.json();
+      const token = data.token;
 
-          const data = await resp.json();
-          const token = data.token;
+      addUserTokenForSSIDevBuddy(token);
 
-          addUserTokenForSSIDevBuddy(token);
-          
-          return { success: true, accessToken: token, user: {} };
-        }
-      }
+      return { success: true, accessToken: token, user: {} };
+    }
+  }
 
   private async handleToolCall(toolCall: ToolCall) {
     const { config } = await this.configHandler.loadConfig();
@@ -1373,7 +1474,7 @@ export class Core {
       ide: this.ide,
       llm: config.selectedModelByRole.chat,
       fetch: (url, init) =>
-        fetchwithRequestOptions(url, init, config.requestOptions),
+        DpopService.fetchWithDPoP(url, init, config.requestOptions),
       tool,
       toolCallId: toolCall.id,
       onPartialOutput,
@@ -1614,7 +1715,7 @@ export class Core {
         fetch: (url, init) =>
           // Important note: context providers fetch uses global request options not LLM request options
           // Because LLM calls are handled separately
-          fetchwithRequestOptions(url, init, config.requestOptions),
+          DpopService.fetchWithDPoP(url, init, config.requestOptions),
         isInAgentMode: msg.data.isInAgentMode,
       });
 

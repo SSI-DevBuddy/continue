@@ -70,6 +70,7 @@ kotlin {
 
 intellijPlatform {
     pluginConfiguration {
+        name = "SSI-Devbuddy-OnPrem"
         ideaVersion {
             sinceBuild = "241"
         }

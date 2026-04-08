@@ -717,4 +717,3 @@ class VsCodeIde implements IDE {
 }
 
 export { VsCodeIde };
-

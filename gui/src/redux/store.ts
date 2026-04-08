@@ -1,15 +1,15 @@
 import {
-    combineReducers,
-    configureStore,
-    ThunkDispatch,
-    UnknownAction,
+  combineReducers,
+  configureStore,
+  ThunkDispatch,
+  UnknownAction,
 } from "@reduxjs/toolkit";
 import { createLogger } from "redux-logger";
 import {
-    createMigrate,
-    MigrationManifest,
-    persistReducer,
-    persistStore,
+  createMigrate,
+  MigrationManifest,
+  persistReducer,
+  persistStore,
 } from "redux-persist";
 import { createFilter } from "redux-persist-transform-filter";
 import autoMergeLevel2 from "redux-persist/lib/stateReconciler/autoMergeLevel2";
@@ -90,13 +90,16 @@ const migrations: MigrationManifest = {
   "1": (state) => {
     // Migration to change default mode from "agent" to "chat"
     const currentState = state as any;
-    
+
     return {
       ...currentState,
       session: {
         ...currentState.session,
         // Change mode from "agent" to "chat" if it exists
-        mode: currentState.session?.mode === "agent" ? "chat" : currentState.session?.mode ?? "chat",
+        mode:
+          currentState.session?.mode === "agent"
+            ? "chat"
+            : (currentState.session?.mode ?? "chat"),
       },
     };
   },

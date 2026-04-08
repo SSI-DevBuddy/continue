@@ -146,7 +146,7 @@ export class VerticalDiffManager {
 
     void vscode.commands.executeCommand(
       "setContext",
-      "devbuddy.diffVisible",
+      "devbuddy-onprem.diffVisible",
       false,
     );
 
@@ -211,7 +211,11 @@ export class VerticalDiffManager {
     streamId: string,
     toolCallId?: string,
   ) {
-    vscode.commands.executeCommand("setContext", "devbuddy.diffVisible", true);
+    vscode.commands.executeCommand(
+      "setContext",
+      "devbuddy-onprem.diffVisible",
+      true,
+    );
 
     // Get the current editor fileUri/range
     let editor = vscode.window.activeTextEditor;
@@ -267,7 +271,7 @@ export class VerticalDiffManager {
 
     vscode.commands.executeCommand(
       "setContext",
-      "devbuddy.streamingDiff",
+      "devbuddy-onprem.streamingDiff",
       true,
     );
 
@@ -289,7 +293,7 @@ export class VerticalDiffManager {
     } finally {
       vscode.commands.executeCommand(
         "setContext",
-        "devbuddy.streamingDiff",
+        "devbuddy-onprem.streamingDiff",
         false,
       );
     }
@@ -377,7 +381,7 @@ export class VerticalDiffManager {
   }): Promise<string | undefined> {
     void vscode.commands.executeCommand(
       "setContext",
-      "devbuddy.diffVisible",
+      "devbuddy-onprem.diffVisible",
       true,
     );
 
@@ -518,7 +522,7 @@ export class VerticalDiffManager {
 
     void vscode.commands.executeCommand(
       "setContext",
-      "devbuddy.streamingDiff",
+      "devbuddy-onprem.streamingDiff",
       true,
     );
 
@@ -563,7 +567,7 @@ export class VerticalDiffManager {
       this.enableDocumentChangeListener();
 
       if (abortController.signal.aborted) {
-        void vscode.commands.executeCommand("devbuddy.rejectDiff");
+        void vscode.commands.executeCommand("devbuddy-onprem.rejectDiff");
       }
 
       const fileAfterEdit = `${prefix}${streamedLines.join("\n")}${suffix}`;
@@ -588,7 +592,7 @@ export class VerticalDiffManager {
     } finally {
       void vscode.commands.executeCommand(
         "setContext",
-        "devbuddy.streamingDiff",
+        "devbuddy-onprem.streamingDiff",
         false,
       );
     }

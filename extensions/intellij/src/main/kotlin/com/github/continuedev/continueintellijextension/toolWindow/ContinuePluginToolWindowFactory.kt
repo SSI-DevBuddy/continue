@@ -18,7 +18,7 @@ class ContinuePluginToolWindowFactory : ToolWindowFactory, DumbAware {
         toolWindow.contentManager.addContent(ContentFactory.getInstance().createContent(browserOrError, null, false))
         toolWindow.setTitleActions(
             listOf(
-                ActionManager.getInstance().getAction("ContinueSidebarActionsGroup"),
+                ActionManager.getInstance().getAction("ContinueSidebarActionsGroup.OnPrem"),
                 ActionManager.getInstance().getAction("MaximizeToolWindow")
             )
         )

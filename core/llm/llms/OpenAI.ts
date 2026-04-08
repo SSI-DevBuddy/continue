@@ -538,16 +538,32 @@ class OpenAI extends BaseLLM {
     }
 
     const body = this._convertArgs(options, messages);
-
-    const response = await this.fetch(this._getEndpoint("chat/completions"), {
-      method: "POST",
-      headers: this._getHeaders(),
-      body: JSON.stringify({
-        ...body,
-        ...this.extraBodyProperties(),
-      }),
-      signal,
-    });
+    let response = null;
+    if ((options as any).projectId) {
+      this.projectId = (options as any).projectId;
+    }
+    if (this.projectId) {
+      response = await this.fetch(this._getEndpoint("chat/completions"), {
+        method: "POST",
+        headers: this._getHeaders(),
+        body: JSON.stringify({
+          ...body,
+          ...this.extraBodyProperties(),
+          projectId: this.projectId,
+        }),
+        signal,
+      });
+    } else {
+      response = await this.fetch(this._getEndpoint("chat/completions"), {
+        method: "POST",
+        headers: this._getHeaders(),
+        body: JSON.stringify({
+          ...body,
+          ...this.extraBodyProperties(),
+        }),
+        signal,
+      });
+    }
 
     // Handle non-streaming response
     if (body.stream === false) {

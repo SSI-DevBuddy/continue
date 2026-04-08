@@ -527,6 +527,7 @@ export interface ChatHistoryItem {
   reasoning?: Reasoning;
   appliedRules?: RuleMetadata[];
   conversationSummary?: string;
+  timeToFirstToken?: number; // Time in milliseconds from stream start to first token
 }
 
 export interface LLMFullCompletionOptions extends BaseCompletionOptions {
