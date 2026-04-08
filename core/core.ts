@@ -95,6 +95,11 @@ import * as DpopService from "./services/dpop-service";
 import { ContinueError, ContinueErrorReason } from "./util/errors";
 import { shareSession } from "./util/historyUtils";
 import { Logger } from "./util/Logger.js";
+// import { webcrypto } from 'node:crypto';
+//
+// if (typeof globalThis.crypto === 'undefined') {
+//     globalThis.crypto = webcrypto as unknown as Crypto;
+// }
 
 export class Core {
   configHandler: ConfigHandler;
