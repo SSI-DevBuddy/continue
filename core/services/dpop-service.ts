@@ -1,5 +1,15 @@
+import { generateKeyPair as generateKeyPairCb, webcrypto } from "node:crypto";
+import { promisify } from "node:util";
+
+const nodeGenerateKeyPair = promisify(generateKeyPairCb);
+
+// /** jose signs JWKs via `crypto.subtle.importKey`; some hosts (e.g. IDE-embedded Node) omit `subtle`. */
+// if (typeof globalThis.crypto === "undefined" || !globalThis.crypto.subtle) {
+//   (globalThis as unknown as { crypto: typeof webcrypto }).crypto = webcrypto;
+// }
+
 import { fetchwithRequestOptions } from "@continuedev/fetch";
-import { SignJWT, exportJWK, importJWK } from "jose";
+import { SignJWT } from "jose";
 import { SSI_DEVBUDDY_CONFIG } from "../../SSI_DEVBUDDY_CONFIG.js";
 import type { RequestOptions } from "../index.js";
 
@@ -24,8 +34,8 @@ import type { RequestOptions } from "../index.js";
  */
 
 type DPoPKeyPair = {
-  privateKey: CryptoKey;
-  publicKeyJWK: any;
+  privateKeyJwk: JsonWebKey;
+  publicKeyJWK: JsonWebKey;
 };
 
 type DPoPProofOptions = {
@@ -45,6 +55,22 @@ const STORAGE_KEYS = {
   PRIVATE_KEY: "ssi_devbuddy_dpop_private_key",
   PUBLIC_KEY_JWK: "ssi_devbuddy_dpop_public_key_jwk",
 } as const;
+
+/** Node JWK exports omit `alg`; jose `importKey("jwk", …)` requires it for ES256. */
+const DPOP_ES256_ALG = "ES256" as const;
+
+function privateJwkForJose(jwk: JsonWebKey): JsonWebKey {
+  return { ...jwk, alg: jwk.alg ?? DPOP_ES256_ALG };
+}
+
+/**
+ * Public JWK for the DPoP JWT header. Node’s `export({ format: "jwk" })` omits `alg`, but
+ * `jose`’s `importJWK` → `jwkToKey` requires `alg` for EC keys (your backend uses `importJWK(jwk)`).
+ * RFC 7638 thumbprint for EC only uses crv, kty, x, y — adding `alg` does not change `cnf.jkt`.
+ */
+function publicJwkForDpopHeader(jwk: JsonWebKey): JsonWebKey {
+  return { ...jwk, alg: jwk.alg ?? DPOP_ES256_ALG };
+}
 
 export function initialize(storage: {
   storeSecret: (key: string, value: string) => Promise<void>;
@@ -71,37 +97,22 @@ export async function generateKeyPair(): Promise<DPoPKeyPair> {
   ensureInitialized();
 
   try {
-    if (!globalThis.crypto?.subtle) {
-      throw new Error(
-        "Web Crypto API not available. DPoP requires crypto.subtle support.",
-      );
-    }
+    const { privateKey, publicKey } = await nodeGenerateKeyPair("ec", {
+      namedCurve: "P-256",
+    });
 
-    const keyPair = await globalThis.crypto.subtle.generateKey(
-      {
-        name: "ECDSA",
-        namedCurve: "P-256",
-      },
-      true, // extractable (needed for storage)
-      ["sign", "verify"],
+    const publicKeyJWK = publicJwkForDpopHeader(
+      publicKey.export({ format: "jwk" }) as JsonWebKey,
+    );
+    const privateKeyJwk = privateJwkForJose(
+      privateKey.export({ format: "jwk" }) as JsonWebKey,
     );
 
-    // Export public key as JWK for transmission to server
-    const publicKeyJWK = await exportJWK(keyPair.publicKey);
+    currentKeyPair = { privateKeyJwk, publicKeyJWK: publicKeyJWK };
+    await storeKeyPair(currentKeyPair);
 
-    const dpopKeyPair: DPoPKeyPair = {
-      privateKey: keyPair.privateKey,
-      publicKeyJWK,
-    };
-
-    currentKeyPair = dpopKeyPair;
-
-    await storeKeyPair(dpopKeyPair);
-
-    console.log("[DPoP] Key pair generated and stored successfully");
-    return dpopKeyPair;
+    return currentKeyPair;
   } catch (error: any) {
-    console.error("[DPoP] Failed to generate key pair:", error);
     throw new Error(`DPoP key generation failed: ${error.message}`);
   }
 }
@@ -110,12 +121,9 @@ async function storeKeyPair(keyPair: DPoPKeyPair): Promise<void> {
   ensureInitialized();
 
   try {
-    // Export private key as JWK for storage
-    const privateKeyJWK = await exportJWK(keyPair.privateKey);
-
     await ideStorage!.storeSecret(
       STORAGE_KEYS.PRIVATE_KEY,
-      JSON.stringify(privateKeyJWK),
+      JSON.stringify(keyPair.privateKeyJwk),
     );
 
     await ideStorage!.storeSecret(
@@ -146,13 +154,11 @@ export async function loadKeyPair(): Promise<DPoPKeyPair | null> {
       return null;
     }
 
-    const privateKeyJWK = JSON.parse(privateKeyJWKString);
-    const publicKeyJWK = JSON.parse(publicKeyJWKString);
-
-    const privateKey = await importJWK(privateKeyJWK, "ES256");
+    const privateKeyJwk = JSON.parse(privateKeyJWKString) as JsonWebKey;
+    const publicKeyJWK = JSON.parse(publicKeyJWKString) as JsonWebKey;
 
     const keyPair: DPoPKeyPair = {
-      privateKey: privateKey as CryptoKey,
+      privateKeyJwk,
       publicKeyJWK,
     };
 
@@ -192,9 +198,9 @@ export async function generateDPoPProof(
       .setProtectedHeader({
         typ: "dpop+jwt",
         alg: "ES256",
-        jwk: currentKeyPair.publicKeyJWK,
+        jwk: publicJwkForDpopHeader(currentKeyPair.publicKeyJWK),
       })
-      .sign(currentKeyPair.privateKey);
+      .sign(privateJwkForJose(currentKeyPair.privateKeyJwk));
 
     return dpopProof;
   } catch (error: any) {
@@ -203,8 +209,8 @@ export async function generateDPoPProof(
   }
 }
 
-export function getPublicKeyJWK(): any | null {
-  return currentKeyPair?.publicKeyJWK || null;
+export function getPublicKeyJWK(): JsonWebKey | null {
+  return currentKeyPair?.publicKeyJWK ?? null;
 }
 
 export async function clearKeys(): Promise<void> {
