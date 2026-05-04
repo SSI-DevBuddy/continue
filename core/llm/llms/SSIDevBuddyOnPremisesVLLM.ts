@@ -1,5 +1,7 @@
 import { SSI_DEVBUDDY_CONFIG } from "../../../SSI_DEVBUDDY_CONFIG.js";
 import type {
+  ChatMessage,
+  CompletionOptions,
   LLMOptions,
 } from "../../index.js";
 import type { LlmApiRequestType } from "../openaiTypeConverters.js";
@@ -7,7 +9,7 @@ import OpenAI from "./OpenAI.js";
 
 /**
  * SSIDevBuddyOnPremisesVLLM LLM Provider
- * 
+ *
  * This provider connects to the SSI DevBuddy backend which routes to VLLM.
  * - Extends OpenAI to use OpenAI-compatible format
  * - Uses /chat/vscode endpoint through custom backend
@@ -40,7 +42,7 @@ class SSIDevBuddyOnPremisesVLLM extends OpenAI {
    * All chat requests go to /chat/vscode
    */
   protected _getEndpoint(
-    endpoint: "chat/completions" | "completions" | "models"
+    endpoint: "chat/completions" | "completions" | "models",
   ) {
     // Route all requests to /chat/vscode
     return new URL("chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL);
@@ -52,7 +54,7 @@ class SSIDevBuddyOnPremisesVLLM extends OpenAI {
    */
   protected _getHeaders() {
     const apiKey = this.apiKey ?? "";
-    
+
     if (!apiKey) {
       throw new Error(
         "SSI DevBuddy API key not set. Please log in first to authenticate.",
@@ -61,9 +63,30 @@ class SSIDevBuddyOnPremisesVLLM extends OpenAI {
 
     return {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
       "api-key": apiKey, // Required by OpenAI's type signature
     };
+  }
+
+  protected extraBodyProperties(): Record<string, any> {
+    const extra: Record<string, any> = {};
+    if (this.projectId) extra.projectId = this.projectId;
+    if (this.llmKey) extra.llmKey = this.llmKey;
+    return extra;
+  }
+
+  protected async *_streamChat(
+    messages: ChatMessage[],
+    signal: AbortSignal,
+    options: CompletionOptions,
+  ): AsyncGenerator<ChatMessage> {
+    if ((options as any).projectId) {
+      this.projectId = (options as any).projectId;
+    }
+    if ((options as any).llmKey) {
+      this.llmKey = (options as any).llmKey;
+    }
+    yield* super._streamChat(messages, signal, options);
   }
 
   /**
@@ -94,14 +117,14 @@ class SSIDevBuddyOnPremisesVLLM extends OpenAI {
                 body: JSON.stringify({
                   modelId: this.model,
                   input: [chunk],
-                  projectId: this.projectId ?? null
+                  projectId: this.projectId ?? null,
                 }),
-              }
+              },
             );
 
             if (!response.ok) {
               throw new Error(
-                `API request failed with status ${response.status}`
+                `API request failed with status ${response.status}`,
               );
             }
 
@@ -111,7 +134,7 @@ class SSIDevBuddyOnPremisesVLLM extends OpenAI {
             console.error(`Error fetching embeddings for chunk:`, chunk, e);
             return [];
           }
-        })
+        }),
       )
     ).flat();
   }

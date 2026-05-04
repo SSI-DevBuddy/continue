@@ -18,7 +18,7 @@ import { setHasReasoningEnabled } from "../../redux/slices/sessionSlice";
 import { exitEdit } from "../../redux/thunks/edit";
 import { getMetaKeyLabel, isMetaEquivalentKeyPressed } from "../../util";
 import { ToolTip } from "../gui/Tooltip";
-import ModelSelect from "../modelSelection/ModelSelect";
+import LlmSelect from "../LlmSelect/LlmSelect";
 import { ModeSelect } from "../ModeSelect";
 import ProjecSelect from "../ProjectSelect/ProjectSelect";
 import { Button } from "../ui";
@@ -91,9 +91,9 @@ function InputToolbar(props: InputToolbarProps) {
               </HoverItem>
             </ToolTip>
           )}
-          <ToolTip place="top" content="Select Model">
+          <ToolTip place="top" content="Select LLM">
             <HoverItem className="!p-0">
-              <ModelSelect />
+              <LlmSelect />
             </HoverItem>
           </ToolTip>
           <HoverItem data-tooltip-id="project-select-tooltip" className="!p-0">

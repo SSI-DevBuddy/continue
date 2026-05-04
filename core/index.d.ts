@@ -1224,6 +1224,9 @@ export interface ModelDescription {
 
   sourceFile?: string;
   isFromAutoDetect?: boolean;
+
+  // SSI DevBuddy Options
+  llmKey?: string;
 }
 
 export interface JSONEmbedOptions {

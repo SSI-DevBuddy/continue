@@ -20,7 +20,6 @@ import {
   toResponsesInput,
 } from "../openaiTypeConverters.js";
 import {
-  ResponseInput,
   ResponseInputItem,
   ResponseInputMessageContentList,
   ResponseCreateParamsBase,

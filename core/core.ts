@@ -54,6 +54,7 @@ import {
 } from ".";
 
 import { ConfigYaml } from "@continuedev/config-yaml";
+import { webcrypto } from "node:crypto";
 import { SSI_DEVBUDDY_CONFIG } from "../SSI_DEVBUDDY_CONFIG";
 import { getDiffFn, GitDiffCache } from "./autocomplete/snippets/gitDiffCache";
 import { stringifyMcpPrompt } from "./commands/slash/mcpSlashCommand";
@@ -95,7 +96,6 @@ import * as DpopService from "./services/dpop-service";
 import { ContinueError, ContinueErrorReason } from "./util/errors";
 import { shareSession } from "./util/historyUtils";
 import { Logger } from "./util/Logger.js";
-import { webcrypto } from "node:crypto";
 
 if (typeof globalThis.crypto === "undefined") {
   globalThis.crypto = webcrypto as unknown as Crypto;
@@ -1408,6 +1408,43 @@ export class Core {
         }
       }
       return { success: false, data: [] };
+    });
+
+    on("projects/llmConfigurations", async (msg) => {
+      const token = getUserTokenForSSIDevBuddy();
+
+      if (token) {
+        let data: { key: string; label: string }[] = [];
+        try {
+          const ur = new URL(
+            `api/projects/${msg.data.projectId}/available-llms`,
+            SSI_DEVBUDDY_CONFIG.API_BASE,
+          );
+          const resp = await fetch(ur, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+              ...(await getHeaders()),
+            },
+          });
+          if (resp.status === 401) {
+            addUserTokenForSSIDevBuddy("");
+          }
+          if (!resp.ok) {
+            throw new Error(await resp.text());
+          }
+          const rawData: string[] = await resp.json();
+          console.log(rawData);
+          data = rawData.map((k) => ({ key: k, label: k }));
+          console.log(data);
+          return { data };
+        } catch (ex) {
+          console.log(ex);
+          return { data: [{ key: "test1", label: "test1" }] };
+        }
+      }
+      return { data: [{ key: "token missing", label: "token missing" }] };
     });
   }
 
