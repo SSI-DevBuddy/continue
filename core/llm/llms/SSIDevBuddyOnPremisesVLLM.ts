@@ -70,7 +70,6 @@ class SSIDevBuddyOnPremisesVLLM extends OpenAI {
 
   protected extraBodyProperties(): Record<string, any> {
     const extra: Record<string, any> = {};
-    if (this.projectId) extra.projectId = this.projectId;
     if (this.llmKey) extra.llmKey = this.llmKey;
     return extra;
   }
@@ -80,9 +79,6 @@ class SSIDevBuddyOnPremisesVLLM extends OpenAI {
     signal: AbortSignal,
     options: CompletionOptions,
   ): AsyncGenerator<ChatMessage> {
-    if ((options as any).projectId) {
-      this.projectId = (options as any).projectId;
-    }
     if ((options as any).llmKey) {
       this.llmKey = (options as any).llmKey;
     }

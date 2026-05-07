@@ -1,11 +1,6 @@
-import {
-  ArrowPathIcon,
-  ChevronDownIcon,
-  CpuChipIcon,
-} from "@heroicons/react/24/outline";
+import { ChevronDownIcon, CpuChipIcon } from "@heroicons/react/24/outline";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import {
-  selectLlmsLoading,
   selectProjectLlms,
   selectSelectedLlmKey,
   setSelectedLlmKey,
@@ -16,19 +11,8 @@ function LlmSelect() {
   const dispatch = useAppDispatch();
   const projectLlms = useAppSelector(selectProjectLlms);
   const selectedLlmKey = useAppSelector(selectSelectedLlmKey);
-  const llmsLoading = useAppSelector(selectLlmsLoading);
-
   const selectedLlm = projectLlms.find((l) => l.key === selectedLlmKey);
   const displayLabel = selectedLlm?.label ?? "Select LLM";
-
-  // if (llmsLoading) {
-  //   return (
-  //     <div className="text-description flex h-[18px] items-center gap-1 text-xs">
-  //       <ArrowPathIcon className="animate-spin-slow h-3 w-3 flex-shrink-0" />
-  //       <span>Loading LLMs…</span>
-  //     </div>
-  //   );
-  // }
 
   return (
     <Listbox

@@ -292,7 +292,7 @@ export abstract class BaseLLM implements ILLM {
     this.apiType = options.apiType;
     this.region = options.region;
     this.projectId = options.projectId;
-    this.llmKey = (_options as any).llmKey;
+    this.llmKey = options.llmKey;
     this.profile = options.profile;
     this.accessKeyId = options.accessKeyId;
     this.secretAccessKey = options.secretAccessKey;

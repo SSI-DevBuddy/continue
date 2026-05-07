@@ -91,7 +91,7 @@ function InputToolbar(props: InputToolbarProps) {
               </HoverItem>
             </ToolTip>
           )}
-          <ToolTip place="top" content="Select LLM">
+          <ToolTip place="top" content="Select Model">
             <HoverItem className="!p-0">
               <LlmSelect />
             </HoverItem>
