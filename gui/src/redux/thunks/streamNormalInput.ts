@@ -7,6 +7,7 @@ import { selectActiveTools } from "../selectors/selectActiveTools";
 import {
   selectDefaultProjectId,
   selectSelectedChatModel,
+  selectSelectedLlmKey,
 } from "../slices/configSlice";
 import {
   abortStream,
@@ -92,6 +93,7 @@ export const streamNormalInput = createAsyncThunk<
     const state = getState();
     const selectedChatModel = selectSelectedChatModel(state);
     const defaultProjectId = selectDefaultProjectId(state);
+    const selectedLlmKey = selectSelectedLlmKey(state);
 
     if (!selectedChatModel) {
       throw new Error("No chat model selected");
@@ -195,6 +197,7 @@ export const streamNormalInput = createAsyncThunk<
           legacySlashCommandData,
           messageOptions: { precompiled: true },
           selectedProjectId: defaultProjectId,
+          selectedLlmKey: selectedLlmKey,
         },
         streamAborter.signal,
       );

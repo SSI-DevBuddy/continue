@@ -162,6 +162,7 @@ class MessageTypes {
             "process/markAsBackgrounded",
             "process/isBackgrounded",
             "projects/users",
+            "projects/llmConfigurations",
             "process/killTerminalProcess"
         )
     }
