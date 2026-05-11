@@ -695,6 +695,8 @@ export interface LLMOptions {
 
   sourceFile?: string;
   isFromAutoDetect?: boolean;
+
+  llmKey?: string;
 }
 
 type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<
@@ -1223,6 +1225,8 @@ export interface ModelDescription {
 
   sourceFile?: string;
   isFromAutoDetect?: boolean;
+
+  llmKey?: string;
 }
 
 export interface JSONEmbedOptions {

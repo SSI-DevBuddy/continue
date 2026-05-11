@@ -3,11 +3,19 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { BrowserSerializedContinueConfig } from "core";
 import { DEFAULT_MAX_TOKENS } from "core/llm/constants";
 
+export interface LlmConfig {
+  key: string;
+  label: string;
+}
+
 export type ConfigState = {
   configError: ConfigValidationError[] | undefined;
   config: BrowserSerializedContinueConfig;
   loading: boolean;
   defaultProjectId: number | undefined;
+  projectLlms: LlmConfig[];
+  selectedLlmKey: string | undefined;
+  llmsLoading: boolean;
 };
 
 export const EMPTY_CONFIG: BrowserSerializedContinueConfig = {
@@ -44,6 +52,9 @@ export const INITIAL_CONFIG_SLICE: ConfigState = {
   config: EMPTY_CONFIG,
   loading: false,
   defaultProjectId: undefined,
+  projectLlms: [],
+  selectedLlmKey: undefined,
+  llmsLoading: false,
 };
 
 export const configSlice = createSlice({
@@ -92,6 +103,18 @@ export const configSlice = createSlice({
         defaultProjectId: payload.value,
       };
     },
+    setProjectLlms: (state, { payload }: PayloadAction<LlmConfig[]>) => {
+      state.projectLlms = payload;
+    },
+    setSelectedLlmKey: (
+      state,
+      { payload }: PayloadAction<string | undefined>,
+    ) => {
+      state.selectedLlmKey = payload;
+    },
+    setLlmsLoading: (state, { payload }: PayloadAction<boolean>) => {
+      state.llmsLoading = payload;
+    },
   },
   selectors: {
     selectSelectedChatModelContextLength: (state): number => {
@@ -109,6 +132,9 @@ export const configSlice = createSlice({
     selectDefaultProjectId: (state) => {
       return state.defaultProjectId;
     },
+    selectProjectLlms: (state) => state.projectLlms,
+    selectSelectedLlmKey: (state) => state.selectedLlmKey,
+    selectLlmsLoading: (state) => state.llmsLoading,
   },
 });
 
@@ -117,6 +143,9 @@ export const {
   setConfigResult,
   setConfigLoading,
   setDefaultProjectId,
+  setProjectLlms,
+  setSelectedLlmKey,
+  setLlmsLoading,
 } = configSlice.actions;
 
 export const {
@@ -124,6 +153,9 @@ export const {
   selectUIConfig,
   selectSelectedChatModel,
   selectDefaultProjectId,
+  selectProjectLlms,
+  selectSelectedLlmKey,
+  selectLlmsLoading,
 } = configSlice.selectors;
 
 export default configSlice.reducer;

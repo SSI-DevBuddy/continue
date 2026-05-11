@@ -82,9 +82,12 @@ class SSIDevBuddy extends BaseLLM {
       );
     }
 
-    // Capture projectId from options if passed dynamically (e.g. from GUI selector)
+    // Capture projectId and llmKey from options if passed dynamically (e.g. from GUI selector)
     if ((options as any).projectId) {
       this.projectId = (options as any).projectId;
+    }
+    if ((options as any).llmKey) {
+      this.llmKey = (options as any).llmKey;
     }
 
     const input = this._generateConverseInput(messages, {
@@ -94,6 +97,9 @@ class SSIDevBuddy extends BaseLLM {
     input.modelId = this.model || "claude";
     if (this.projectId) {
       input.projectId = this.projectId;
+    }
+    if (this.llmKey) {
+      input.llmKey = this.llmKey;
     }
 
     const response = await fetch(

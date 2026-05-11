@@ -31,10 +31,15 @@ export async function* llmStreamChat(
     messages,
     messageOptions,
     selectedProjectId,
+    selectedLlmKey,
   } = msg.data;
 
   if (selectedProjectId) {
     (completionOptions as any).projectId = selectedProjectId.toString();
+  }
+
+  if (selectedLlmKey) {
+    (completionOptions as any).llmKey = selectedLlmKey;
   }
 
   const model = config.selectedModelByRole.chat;

@@ -15,6 +15,10 @@ import { useAppSelector } from "../../redux/hooks";
 import {
   selectDefaultProjectId,
   setDefaultProjectId,
+  setLlmsLoading,
+  setProjectLlms,
+  setSelectedLlmKey,
+  selectSelectedLlmKey,
 } from "../../redux/slices/configSlice";
 import { getFontSize, isMetaEquivalentKeyPressed } from "../../util";
 
@@ -164,7 +168,34 @@ function ProjecSelect() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [options, setOptions] = useState<Option[]>([]);
   const defaultProjectId = useAppSelector(selectDefaultProjectId);
+  const selectedLlmKey = useAppSelector(selectSelectedLlmKey);
   const navigate = useNavigate();
+  async function fetchLlmsForProject(projectId: number) {
+    dispatch(setLlmsLoading(true));
+    try {
+      const result = await ideMessenger.request("projects/llmConfigurations", {
+        projectId,
+      });
+      const llms =
+        result.status !== "error" ? (result.content?.data ?? []) : [];
+      if (llms.length > 0) {
+        dispatch(setProjectLlms(llms));
+        const llmStillExists = llms.some((l) => l.key === selectedLlmKey);
+        if (!selectedLlmKey || !llmStillExists) {
+          dispatch(setSelectedLlmKey(llms[0].key));
+        }
+      } else {
+        dispatch(setProjectLlms([]));
+        dispatch(setSelectedLlmKey(undefined));
+      }
+    } catch {
+      dispatch(setProjectLlms([]));
+      dispatch(setSelectedLlmKey(undefined));
+    } finally {
+      dispatch(setLlmsLoading(false));
+    }
+  }
+
   // Sort so that options without an API key are at the end
   useEffect(() => {
     const fetchUserProject = async () => {
@@ -175,10 +206,12 @@ function ProjecSelect() {
             title: con.Label,
             value: con.Value,
           }));
+          const initialProjectId = defaultProjectId ?? projectOptions[0].value;
           if (!defaultProjectId) {
-            dispatch(setDefaultProjectId({ value: projectOptions[0].value }));
+            dispatch(setDefaultProjectId({ value: initialProjectId }));
           }
           setOptions(projectOptions);
+          await fetchLlmsForProject(initialProjectId);
         }
       } catch (err) {
         navigate("/login");
@@ -228,8 +261,10 @@ function ProjecSelect() {
   return (
     <Listbox
       onChange={async (val: string) => {
-        if (parseInt(val) === defaultProjectId) return;
-        dispatch(setDefaultProjectId({ value: parseInt(val) }));
+        const newProjectId = parseInt(val);
+        if (newProjectId === defaultProjectId) return;
+        dispatch(setDefaultProjectId({ value: newProjectId }));
+        await fetchLlmsForProject(newProjectId);
       }}
     >
       <div className="relative">
