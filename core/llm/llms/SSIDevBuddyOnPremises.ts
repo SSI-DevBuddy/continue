@@ -7,7 +7,7 @@ import type {
   ChatMessageRole,
   CompletionOptions,
   LLMOptions,
-  ThinkingChatMessage
+  ThinkingChatMessage,
 } from "../../index.js";
 import { renderChatMessage, stripImages } from "../../util/messageContent.js";
 import { BaseLLM } from "../index.js";
@@ -46,7 +46,7 @@ type OllamaChatResponse = {
 
 /**
  * SSIDevBuddyOnPremises LLM Provider
- * 
+ *
  * This provider is identical to SSIDevBuddy in terms of API usage.
  * Both call the same /chat/vscode endpoint. The backend routes to
  * different models
@@ -88,23 +88,37 @@ class SSIDevBuddyOnPremises extends BaseLLM {
       );
     }
 
+    if ((options as any).projectId) {
+      this.projectId = (options as any).projectId;
+    }
+    if ((options as any).llmKey) {
+      this.llmKey = (options as any).llmKey;
+    }
+
     const input = this._generateConverseInput(messages, {
       ...options,
       stream: true,
     });
     input.modelId = this.model || "qwen2.5:14b-instruct";
+    if (this.projectId) {
+      input.projectId = this.projectId;
+    }
+    if (this.llmKey) {
+      input.llmKey = this.llmKey;
+    }
 
-    const response = await fetch( new URL("chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL),
+    const response = await fetch(
+      new URL("chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL),
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "text/event-stream",
+          Accept: "text/event-stream",
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify(input),
         signal: signal,
-      }
+      },
     );
 
     if (response.status === 499) {
@@ -146,7 +160,7 @@ class SSIDevBuddyOnPremises extends BaseLLM {
 
       if (role === "tool") {
         throw new Error(
-          "Unexpected message received from backend with role = tool"
+          "Unexpected message received from backend with role = tool",
         );
       }
 
@@ -174,9 +188,7 @@ class SSIDevBuddyOnPremises extends BaseLLM {
           }));
         }
 
-        return thinkingMessage
-          ? [thinkingMessage, chatMessage]
-          : [chatMessage];
+        return thinkingMessage ? [thinkingMessage, chatMessage] : [chatMessage];
       }
 
       // Fallback for all other roles
@@ -292,12 +304,12 @@ class SSIDevBuddyOnPremises extends BaseLLM {
                   modelId: this.model,
                   input: [chunk],
                 }),
-              }
+              },
             );
 
             if (!response.ok) {
               throw new Error(
-                `API request failed with status ${response.status}`
+                `API request failed with status ${response.status}`,
               );
             }
 
@@ -307,7 +319,7 @@ class SSIDevBuddyOnPremises extends BaseLLM {
             console.error(`Error fetching embeddings for chunk:`, chunk, e);
             return [];
           }
-        })
+        }),
       )
     ).flat();
   }

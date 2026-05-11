@@ -243,6 +243,7 @@ export type ToCoreFromIdeOrWebviewProtocol = {
         selectedCode: RangeInFile[];
       };
       selectedProjectId?: number;
+      selectedLlmKey?: string;
     },
     AsyncGenerator<ChatMessage, PromptLog>,
   ];
@@ -361,4 +362,8 @@ export type ToCoreFromIdeOrWebviewProtocol = {
   ];
   "auth/logout": [undefined, void];
   "projects/users": [undefined, { data: { Label: string; Value: number }[] }];
+  "projects/llmConfigurations": [
+    { projectId: number },
+    { data: { key: string; label: string }[] },
+  ];
 };
