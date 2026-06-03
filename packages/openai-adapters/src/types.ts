@@ -30,6 +30,7 @@ export const BasePlusConfig = BaseConfig.extend({
 
 // OpenAI and compatible
 export const OpenAIConfigSchema = BasePlusConfig.extend({
+  useResponsesApi: z.boolean().optional(),
   provider: z.union([
     z.literal("openai"),
     z.literal("mistral"),
@@ -51,11 +52,14 @@ export const OpenAIConfigSchema = BasePlusConfig.extend({
     z.literal("kindo"),
     z.literal("msty"),
     z.literal("openrouter"),
+    z.literal("clawrouter"),
     z.literal("sambanova"),
     z.literal("text-gen-webui"),
     z.literal("vllm"),
     z.literal("xAI"),
+    z.literal("zAI"),
     z.literal("scaleway"),
+    z.literal("tensorix"),
     z.literal("ncompass"),
     z.literal("relace"),
     z.literal("huggingface-inference-api"),
@@ -72,6 +76,11 @@ export const DeepseekConfigSchema = OpenAIConfigSchema.extend({
   provider: z.literal("deepseek"),
 });
 export type DeepseekConfig = z.infer<typeof DeepseekConfigSchema>;
+
+export const MiniMaxConfigSchema = OpenAIConfigSchema.extend({
+  provider: z.literal("minimax"),
+});
+export type MiniMaxConfig = z.infer<typeof MiniMaxConfigSchema>;
 
 export const BedrockConfigSchema = OpenAIConfigSchema.extend({
   provider: z.literal("bedrock"),
@@ -249,12 +258,20 @@ export const VertexAIConfigSchema = BasePlusConfig.extend({
 });
 export type VertexAIConfig = z.infer<typeof VertexAIConfigSchema>;
 
+export const AiSdkConfigSchema = BasePlusConfig.extend({
+  provider: z.literal("ai-sdk"),
+  model: z.string(),
+  providerOptions: z.record(z.unknown()).optional(),
+});
+export type AiSdkConfig = z.infer<typeof AiSdkConfigSchema>;
+
 // Discriminated union
 export const LLMConfigSchema = z.discriminatedUnion("provider", [
   OpenAIConfigSchema,
   BedrockConfigSchema,
   MoonshotConfigSchema,
   DeepseekConfigSchema,
+  MiniMaxConfigSchema,
   CohereConfigSchema,
   AzureConfigSchema,
   GeminiConfigSchema,
@@ -268,5 +285,6 @@ export const LLMConfigSchema = z.discriminatedUnion("provider", [
   ContinueProxyConfigSchema,
   CometAPIConfigSchema,
   AskSageConfigSchema,
+  AiSdkConfigSchema,
 ]);
 export type LLMConfig = z.infer<typeof LLMConfigSchema>;

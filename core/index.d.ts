@@ -2,7 +2,11 @@ import {
   DataDestination,
   ModelRole,
   PromptTemplates,
+  ToolOverrideConfig,
 } from "@continuedev/config-yaml";
+import { ToolPolicy } from "@continuedev/terminal-security";
+import { McpUiResourceMeta } from "@modelcontextprotocol/ext-apps";
+import { TextResourceContents } from "@modelcontextprotocol/sdk/types.js";
 import Parser from "web-tree-sitter";
 import { CodebaseIndexer } from "./indexing/CodebaseIndexer";
 import { LLMConfigurationStatuses } from "./llm/constants";
@@ -291,6 +295,7 @@ export interface BaseSessionMetadata {
   title: string;
   dateCreated: string;
   workspaceDirectory: string;
+  messageCount?: number;
 }
 
 export interface RangeInFile {
@@ -498,6 +503,16 @@ export type ToolStatus =
   | "done" // Tool execution completed successfully
   | "canceled"; // Tool call was canceled by user or system
 
+interface McpUiResourceContents extends TextResourceContents {
+  _meta?: {
+    ui?: McpUiResourceMeta;
+  };
+}
+
+interface McpUiState {
+  content: McpUiResourceContents;
+}
+
 // Will exist only on "assistant" messages with tool calls
 interface ToolCallState {
   toolCallId: string;
@@ -507,6 +522,7 @@ interface ToolCallState {
   processedArgs?: Record<string, any>; // Added in preprocesing step
   output?: ContextItem[];
   tool?: Tool;
+  mcpUiState?: McpUiState;
 }
 
 interface Reasoning {
@@ -662,6 +678,7 @@ export interface LLMOptions {
   roles?: ModelRole[];
 
   useLegacyCompletionsEndpoint?: boolean;
+  useResponsesApi?: boolean;
 
   // Embedding options
   embeddingId?: string;
@@ -697,6 +714,8 @@ export interface LLMOptions {
   isFromAutoDetect?: boolean;
 
   llmKey?: string;
+  /** Tool overrides for this model */
+  toolOverrides?: ToolOverride[];
 }
 
 type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<
@@ -1110,6 +1129,13 @@ export interface ToolExtras {
   codeBaseIndexer?: CodebaseIndexer;
 }
 
+export interface McpToolMeta {
+  ui?: {
+    resourceUri?: string;
+  };
+  "ui/resourceUri"?: string;
+}
+
 export interface Tool {
   type: "function";
   function: {
@@ -1145,7 +1171,17 @@ export interface Tool {
     parsedArgs: Record<string, unknown>,
     processedArgs?: Record<string, unknown>,
   ) => ToolPolicy;
+  mcpMeta?: McpToolMeta;
 }
+
+/**
+ * Configuration for overriding built-in tool prompts.
+ * Extends ToolOverrideConfig with required name for array usage.
+ */
+export type ToolOverride = ToolOverrideConfig & {
+  /** Tool name to override (matches function.name, e.g., "read_file") */
+  name: string;
+};
 
 interface ToolChoice {
   type: "function";
@@ -1227,6 +1263,8 @@ export interface ModelDescription {
   isFromAutoDetect?: boolean;
 
   llmKey?: string;
+  /** Tool overrides for this model */
+  toolOverrides?: ToolOverride[];
 }
 
 export interface JSONEmbedOptions {
@@ -1365,6 +1403,7 @@ export interface MCPTool {
     type: "object";
     properties?: Record<string, any>;
   };
+  _meta?: Record<string, unknown> | undefined;
 }
 
 type BaseInternalMCPOptions = {
@@ -1691,6 +1730,7 @@ export interface JSONModelDescription {
   maxStopWords?: number;
   template?: TemplateType;
   completionOptions?: BaseCompletionOptions;
+  capabilities?: ModelCapability;
   systemMessage?: string;
   requestOptions?: RequestOptions;
   cacheBehavior?: CacheBehavior;
@@ -1705,6 +1745,7 @@ export interface JSONModelDescription {
   accountId?: string;
   aiGatewaySlug?: string;
   useLegacyCompletionsEndpoint?: boolean;
+  useResponsesApi?: boolean;
   deploymentId?: string;
   isFromAutoDetect?: boolean;
 }

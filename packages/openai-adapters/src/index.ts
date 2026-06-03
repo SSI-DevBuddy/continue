@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import { z } from "zod";
+import { AiSdkApi } from "./apis/AiSdk.js";
 import { AnthropicApi } from "./apis/Anthropic.js";
 import { AskSageApi } from "./apis/AskSage.js";
 import { AzureApi } from "./apis/Azure.js";
@@ -12,10 +13,12 @@ import { GeminiApi } from "./apis/Gemini.js";
 import { InceptionApi } from "./apis/Inception.js";
 import { JinaApi } from "./apis/Jina.js";
 import { LlamastackApi } from "./apis/LlamaStack.js";
+import { MiniMaxApi } from "./apis/MiniMax.js";
 import { MockApi } from "./apis/Mock.js";
 import { MoonshotApi } from "./apis/Moonshot.js";
 import { OpenAIApi } from "./apis/OpenAI.js";
 import { OpenRouterApi } from "./apis/OpenRouter.js";
+import { ClawRouterApi } from "./apis/ClawRouter.js";
 import { RelaceApi } from "./apis/Relace.js";
 import { VertexAIApi } from "./apis/VertexAI.js";
 import { WatsonXApi } from "./apis/WatsonX.js";
@@ -62,7 +65,35 @@ function isHuggingFaceOpenAICompatible(url: string): boolean {
   return openAIPatterns.some((pattern) => normalizedUrl.includes(pattern));
 }
 
+function createAiSdkApiForProvider(
+  config: LLMConfig & { model?: string },
+  provider: string,
+): AiSdkApi | undefined {
+  if (!config.model) {
+    return undefined;
+  }
+  return new AiSdkApi({
+    provider: "ai-sdk",
+    model: `${provider}/${config.model}`,
+    apiKey: config.apiKey,
+    apiBase: config.apiBase,
+    requestOptions: config.requestOptions,
+  });
+}
+
 export function constructLlmApi(config: LLMConfig): BaseLlmApi | undefined {
+  if (process.env.CONTINUE_USE_AI_SDK) {
+    if (["openai", "anthropic"].includes(config.provider)) {
+      const aiSdkApi = createAiSdkApiForProvider(
+        config as LLMConfig & { model?: string },
+        config.provider,
+      );
+      if (aiSdkApi) {
+        return aiSdkApi;
+      }
+    }
+  }
+
   switch (config.provider) {
     case "openai":
       return new OpenAIApi(config);
@@ -100,6 +131,8 @@ export function constructLlmApi(config: LLMConfig): BaseLlmApi | undefined {
       return new ContinueProxyApi(config);
     case "xAI":
       return openAICompatible("https://api.x.ai/v1/", config);
+    case "zAI":
+      return openAICompatible("https://api.z.ai/api/paas/v4/", config);
     case "voyage":
       return openAICompatible("https://api.voyageai.com/v1/", config);
     case "mistral":
@@ -110,6 +143,8 @@ export function constructLlmApi(config: LLMConfig): BaseLlmApi | undefined {
       return openAICompatible("http://localhost:8000/v1/", config);
     case "groq":
       return openAICompatible("https://api.groq.com/openai/v1/", config);
+    case "minimax":
+      return new MiniMaxApi(config);
     case "sambanova":
       return openAICompatible("https://api.sambanova.ai/v1/", config);
     case "text-gen-webui":
@@ -141,8 +176,12 @@ export function constructLlmApi(config: LLMConfig): BaseLlmApi | undefined {
       return openAICompatible("https://api.studio.nebius.ai/v1/", config);
     case "function-network":
       return openAICompatible("https://api.function.network/v1/", config);
+    case "tensorix":
+      return openAICompatible("https://api.tensorix.ai/v1/", config);
     case "openrouter":
       return new OpenRouterApi(config);
+    case "clawrouter":
+      return new ClawRouterApi(config);
     case "llama.cpp":
     case "llamafile":
       return openAICompatible("http://localhost:8000/", config);
@@ -164,6 +203,8 @@ export function constructLlmApi(config: LLMConfig): BaseLlmApi | undefined {
       // Return undefined for native HuggingFace endpoints
       // (handled by HuggingFaceInferenceAPI class in core)
       return undefined;
+    case "ai-sdk":
+      return new AiSdkApi(config);
     default:
       return undefined;
   }
@@ -182,14 +223,16 @@ export {
 } from "openai/resources/index";
 
 // export
+export { AiSdkApi } from "./apis/AiSdk.js";
 export type { BaseLlmApi } from "./apis/base.js";
 export type {
-  LLMConfig,
-  AskSageTool,
-  AskSageToolChoice,
-  AskSageToolCall,
+  AiSdkConfig,
   AskSageResponse,
   AskSageTokenResponse,
+  AskSageTool,
+  AskSageToolCall,
+  AskSageToolChoice,
+  LLMConfig,
 } from "./types.js";
 
 export {
@@ -200,4 +243,5 @@ export {
 } from "./apis/AnthropicUtils.js";
 
 export { isResponsesModel } from "./apis/openaiResponses.js";
-export { parseDataUrl, extractBase64FromDataUrl } from "./util/url.js";
+export { OPENROUTER_HEADERS } from "./apis/OpenRouter.js";
+export { extractBase64FromDataUrl, parseDataUrl } from "./util/url.js";

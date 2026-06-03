@@ -15,6 +15,7 @@ import Azure from "./Azure";
 import Bedrock from "./Bedrock";
 import BedrockImport from "./BedrockImport";
 import Cerebras from "./Cerebras";
+import ClawRouter from "./ClawRouter";
 import Cloudflare from "./Cloudflare";
 import Cohere from "./Cohere";
 import CometAPI from "./CometAPI";
@@ -31,18 +32,20 @@ import HuggingFaceTEIEmbeddingsProvider from "./HuggingFaceTEI";
 import HuggingFaceTGI from "./HuggingFaceTGI";
 import Inception from "./Inception";
 import Kindo from "./Kindo";
+import Lemonade from "./Lemonade";
 import LlamaCpp from "./LlamaCpp";
 import Llamafile from "./Llamafile";
 import LlamaStack from "./LlamaStack";
-import Lemonade from "./Lemonade";
 import LMStudio from "./LMStudio";
-import Mistral from "./Mistral";
 import Mimo from "./Mimo";
+import MiniMax from "./MiniMax";
+import Mistral from "./Mistral";
 import MockLLM from "./Mock";
 import Moonshot from "./Moonshot";
 import Msty from "./Msty";
 import NCompass from "./NCompass";
 import Nebius from "./Nebius";
+import Nous from "./Nous";
 import Novita from "./Novita";
 import Nvidia from "./Nvidia";
 import Ollama from "./Ollama";
@@ -58,6 +61,7 @@ import SiliconFlow from "./SiliconFlow";
 import SSIDevBuddy from "./SSIDevBuddy";
 import ContinueProxy from "./stubs/ContinueProxy";
 import TARS from "./TARS";
+import Tensorix from "./Tensorix";
 import TestLLM from "./Test";
 import TextGenWebUI from "./TextGenWebUI";
 import Together from "./Together";
@@ -67,6 +71,7 @@ import Vllm from "./Vllm";
 import Voyage from "./Voyage";
 import WatsonX from "./WatsonX";
 import xAI from "./xAI";
+import zAI from "./zAI";
 export const LLMClasses = [
   Anthropic,
   Cohere,
@@ -91,6 +96,7 @@ export const LLMClasses = [
   LMStudio,
   Mistral,
   Mimo,
+  MiniMax,
   Bedrock,
   BedrockImport,
   SageMaker,
@@ -107,6 +113,7 @@ export const LLMClasses = [
   Azure,
   WatsonX,
   OpenRouter,
+  ClawRouter,
   Nvidia,
   Vllm,
   SambaNova,
@@ -116,16 +123,19 @@ export const LLMClasses = [
   Asksage,
   Nebius,
   SSIDevBuddy,
+  Nous,
   Venice,
   VertexAI,
   xAI,
   SiliconFlow,
+  Tensorix,
   Scaleway,
   Relace,
   Inception,
   Voyage,
   LlamaStack,
   TARS,
+  zAI,
 ];
 
 export async function llmFromDescription(

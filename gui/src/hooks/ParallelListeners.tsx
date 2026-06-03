@@ -43,6 +43,9 @@ function ParallelListeners() {
   const selectedProfileId = useAppSelector(
     (store) => store.profiles.selectedProfileId,
   );
+  const reasoningSettings = useAppSelector(
+    (store) => store.ui.reasoningSettings,
+  );
   const hasDoneInitialConfigLoad = useRef(false);
 
   // Load symbols for chat on any session change
@@ -59,6 +62,9 @@ function ParallelListeners() {
         selectedOrgId,
       } = result;
       if (isInitial && hasDoneInitialConfigLoad.current) {
+        return;
+      }
+      if (configResult.configLoadInterrupted || !configResult.config) {
         return;
       }
       hasDoneInitialConfigLoad.current = true;
@@ -88,11 +94,18 @@ function ParallelListeners() {
       const supportsReasoning = modelSupportsReasoning(chatModel);
       const isReasoningDisabled =
         chatModel?.completionOptions?.reasoning === false;
+      const wasReasoningPreviouslyEnabled = chatModel?.title
+        ? reasoningSettings[chatModel.title] !== false
+        : true;
       dispatch(
-        setHasReasoningEnabled(supportsReasoning && !isReasoningDisabled),
+        setHasReasoningEnabled(
+          supportsReasoning &&
+            !isReasoningDisabled &&
+            wasReasoningPreviouslyEnabled,
+        ),
       );
     },
-    [dispatch, hasDoneInitialConfigLoad, selectedProfileId],
+    [dispatch, hasDoneInitialConfigLoad, selectedProfileId, reasoningSettings],
   );
 
   // Load config from the IDE
