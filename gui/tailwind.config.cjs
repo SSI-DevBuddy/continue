@@ -68,6 +68,9 @@ module.exports = {
           DEFAULT: varWithFallback("description"),
           muted: varWithFallback("description-muted"),
         },
+        dropdown: {
+          DEFAULT: varWithFallback("dropdown-background"),
+        },
         input: {
           DEFAULT: varWithFallback("input-background"),
           foreground: varWithFallback("input-foreground"),
@@ -103,6 +106,7 @@ module.exports = {
         // DEPRECATED, slowly remove usages of these ide-named or explicit colors
         lightgray: "#999998", // use border, description, or description-muted instead - AVOID
         "vsc-input-background": varWithFallback("input-background"), // use "input-background" instead
+        "vsc-dropdown-background": varWithFallback("dropdown-background"),
         "vsc-background": varWithFallback("background"), // use "background" instead
         "vsc-foreground": varWithFallback("editor-foreground"), // use "foreground" instead
         "vsc-editor-background": varWithFallback("editor-background"), // use "editor" instead

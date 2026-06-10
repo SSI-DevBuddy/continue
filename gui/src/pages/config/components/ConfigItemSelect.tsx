@@ -61,7 +61,7 @@ export function ConfigItemSelect({
         </PopoverButton>
 
         <Transition>
-          <PopoverPanel className="bg-vsc-input-background absolute z-10 mt-1 w-full rounded-md border border-zinc-700 py-1">
+          <PopoverPanel className="bg-dropdown absolute z-10 mt-1 w-full rounded-md border border-zinc-700 py-1">
             {items.map((item) => (
               <div
                 key={item.id}

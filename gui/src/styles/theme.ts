@@ -84,6 +84,10 @@ export const THEME_COLORS = {
     vars: ["--vscode-list-deemphasizedForeground"],
     default: "#8c8c8c", // medium gray
   },
+  "dropdown-background": {
+    vars: ["--vscode-dropdown-background"],
+    default: "#3c3c3c", // medium dark gray
+  },
   "input-background": {
     vars: ["--vscode-input-background"],
     default: "#2d2d2d", // dark gray

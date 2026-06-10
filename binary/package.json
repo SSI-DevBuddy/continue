@@ -24,6 +24,7 @@
     "test": "jest",
     "build": "node build.js",
     "rebuild": "node build.js --esbuild-only",
+    "dev-server": "node build.js --esbuild-only && node core-dev-server.js",
     "build:darwin-x64": "node build.js --os darwin-x64"
   },
   "license": "Apache-2.0",
