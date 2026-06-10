@@ -51,6 +51,8 @@ interface ProcessSlashCommandResultOptions {
   onShowUpdateSelector?: () => void;
   onShowMCPSelector?: () => void;
   onShowSessionSelector?: () => void;
+  onShowJobsSelector?: () => void;
+  onShowExportSelector?: () => void;
   onClear?: () => void;
 }
 
@@ -66,6 +68,8 @@ export function processSlashCommandResult({
   onShowModelSelector,
   onShowMCPSelector,
   onShowSessionSelector,
+  onShowJobsSelector,
+  onShowExportSelector,
   onClear,
 }: ProcessSlashCommandResultOptions): string | null {
   if (result.exit) {
@@ -94,6 +98,16 @@ export function processSlashCommandResult({
 
   if (result.openSessionSelector && onShowSessionSelector) {
     onShowSessionSelector();
+    return null;
+  }
+
+  if (result.openJobsSelector && onShowJobsSelector) {
+    onShowJobsSelector();
+    return null;
+  }
+
+  if (result.openExportSelector && onShowExportSelector) {
+    onShowExportSelector();
     return null;
   }
 

@@ -9,16 +9,16 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { defaultBorderRadius, lightGray, vscInputBackground } from "..";
+import { defaultBorderRadius, lightGray, vscDropdownBackground } from "..";
 import { IdeMessengerContext } from "../../context/IdeMessenger";
 import { useAppSelector } from "../../redux/hooks";
 import {
   selectDefaultProjectId,
+  selectSelectedLlmKey,
   setDefaultProjectId,
   setLlmsLoading,
   setProjectLlms,
   setSelectedLlmKey,
-  selectSelectedLlmKey,
 } from "../../redux/slices/configSlice";
 import { getFontSize, isMetaEquivalentKeyPressed } from "../../util";
 
@@ -63,7 +63,7 @@ const StyledListboxOptions = styled(Listbox.Options)<{ $showabove: boolean }>`
 
   border-radius: ${defaultBorderRadius};
   border: 0.5px solid ${lightGray};
-  background-color: ${vscInputBackground};
+  background-color: ${vscDropdownBackground};
 
   max-height: ${MAX_HEIGHT_PX}px;
   overflow-y: scroll;

@@ -21,25 +21,25 @@
 
 </div>
 
-## Agent
+## VS Code Agent
 
 [Agent] to work on development tasks together with AI
 
 ![agent](docs/images/agent.gif)
 
-## Chat
+## VS Code Chat
 
 [Chat] to ask general questions and clarify code sections
 
 ![chat](docs/images/chat.gif)
 
-## Edit
+## VS Code Edit
 
 [Edit] to modify a code section without leaving your current file
 
 ![edit](docs/images/edit.gif)
 
-## Autocomplete
+## VS Code Autocomplete
 
 [Autocomplete] to receive inline code suggestions as you type
 

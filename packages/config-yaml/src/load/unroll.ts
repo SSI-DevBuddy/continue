@@ -310,10 +310,12 @@ export async function unrollAssistantFromContent(
   });
 
   if (!options.renderSecrets) {
+    const parsed = parseAssistantUnrolled(templatedYaml);
     return {
-      config: parseAssistantUnrolled(templatedYaml),
+      config: parsed,
       errors: [],
       configLoadInterrupted: false,
+      configName: parsed?.name || undefined,
     };
   }
 
@@ -333,7 +335,12 @@ export async function unrollAssistantFromContent(
     options.onPremProxyUrl,
   );
 
-  return { config: renderedConfig, errors, configLoadInterrupted };
+  return {
+    config: renderedConfig,
+    errors,
+    configLoadInterrupted,
+    configName: renderedConfig?.name || undefined,
+  };
 }
 
 function isPackageAllowed(
@@ -678,6 +685,7 @@ export async function unrollBlocks(
     config: undefined,
     errors: undefined,
     configLoadInterrupted: false,
+    configName: unrolledAssistant.name || undefined,
   };
   configResult.config = unrolledAssistant;
   if (errors.length > 0) {
@@ -739,6 +747,21 @@ export async function resolveBlock(
     inputs: renderedInputs,
     secrets: extractFQSNMap(rawYaml, [id]),
   });
+
+  // Check for unresolved input template variables (missing required inputs)
+  const unresolvedInputs = getTemplateVariables(templatedYaml).filter((v) =>
+    v.startsWith("inputs."),
+  );
+  if (unresolvedInputs.length > 0) {
+    const missingInputNames = unresolvedInputs.map((v) =>
+      v.replace("inputs.", ""),
+    );
+    const blockName = packageIdentifierToShorthandSlug(id);
+    throw new Error(
+      `Missing required input(s) for block "${blockName}": ${missingInputNames.join(", ")}. ` +
+        `Please provide these values in the "with" block.`,
+    );
+  }
 
   // Add source slug for mcp servers
   const parsed = parseMarkdownRuleOrAssistantUnrolled(templatedYaml, id);

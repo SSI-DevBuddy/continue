@@ -62,6 +62,7 @@ export const modelDescriptionSchema = z.object({
     "scaleway",
     "ssi-devbuddy",
     "watsonx",
+    "minimax",
   ]),
   model: z.string(),
   apiKey: z.string().optional(),

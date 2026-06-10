@@ -6,11 +6,13 @@ import "./init.js";
 import { Command } from "commander";
 
 import { chat } from "./commands/chat.js";
+import { checks } from "./commands/checks.js";
 import { login } from "./commands/login.js";
 import { logout } from "./commands/logout.js";
 import { listSessionsCommand } from "./commands/ls.js";
 import { remoteTest } from "./commands/remote-test.js";
 import { remote } from "./commands/remote.js";
+import { review } from "./commands/review.js";
 import { serve } from "./commands/serve.js";
 import {
   handleValidationErrors,
@@ -419,6 +421,31 @@ program
     await remoteTest(prompt, options.url);
   });
 
+// Checks subcommand
+program
+  .command("checks [action] [pr-url]")
+  .description("Show CI check statuses for a PR")
+  .action(async (action: string | undefined, prUrl: string | undefined) => {
+    await posthogService.capture("cliCommand", { command: "checks" });
+    await checks(action, prUrl);
+  });
+
+// Review subcommand
+program
+  .command("review")
+  .description("Run AI-powered reviews on your changes")
+  .option("--base <ref>", "Base git ref to diff against (default: auto-detect)")
+  .option("--format <format>", "Output format")
+  .option("--fix", "Automatically apply suggested fixes")
+  .option("--patch", "Show patches")
+  .option("--fail-fast", "Stop on first failure")
+  .option("--review-agents <agents...>", "Specific review agents to run")
+  .option("--verbose", "Enable verbose logging")
+  .action(async (options) => {
+    await posthogService.capture("cliCommand", { command: "review" });
+    await review(options);
+  });
+
 // Handle unknown commands
 program.on("command:*", () => {
   console.error(`Error: Unknown command '${program.args.join(" ")}'\n`);
@@ -427,6 +454,15 @@ program.on("command:*", () => {
 });
 
 export async function runCli(): Promise<void> {
+  // Handle internal worker subprocess for cn review
+  if (process.argv.includes("--internal-review-worker")) {
+    const { runReviewWorker } = await import(
+      "./commands/review/reviewWorker.js"
+    );
+    await runReviewWorker();
+    return;
+  }
+
   // Parse arguments and handle errors
   try {
     program.parse();

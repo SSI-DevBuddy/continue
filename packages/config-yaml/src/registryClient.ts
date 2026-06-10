@@ -24,6 +24,11 @@ export class RegistryClient implements Registry {
   }
 
   async getContent(id: PackageIdentifier): Promise<string> {
+    // Return pre-read content if available (for vscode-remote:// URIs in WSL)
+    if (id.uriType === "file" && id.content !== undefined) {
+      return id.content;
+    }
+
     switch (id.uriType) {
       case "file":
         return this.getContentFromFilePath(id.fileUri);
@@ -43,9 +48,16 @@ export class RegistryClient implements Registry {
       return fs.readFileSync(new URL(filepath), "utf8");
     } else if (path.isAbsolute(filepath)) {
       return fs.readFileSync(filepath, "utf8");
-    } else if (this.rootPath) {
-      return fs.readFileSync(path.join(this.rootPath, filepath), "utf8");
     } else {
+      // Try to resolve relative to current working directory first
+      const resolvedPath = path.resolve(filepath);
+      if (fs.existsSync(resolvedPath)) {
+        return fs.readFileSync(resolvedPath, "utf8");
+      }
+      // Fall back to rootPath if file doesn't exist relative to cwd
+      if (this.rootPath) {
+        return fs.readFileSync(path.join(this.rootPath, filepath), "utf8");
+      }
       throw new Error("No rootPath provided for relative file path");
     }
   }

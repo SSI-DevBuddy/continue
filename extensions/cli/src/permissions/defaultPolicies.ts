@@ -12,9 +12,11 @@ export function getDefaultToolPolicies(
     { tool: "Edit", permission: "ask" },
     { tool: "MultiEdit", permission: "ask" },
     { tool: "Write", permission: "ask" },
-
+    { tool: "CheckBackgroundJob", permission: "allow" },
+    { tool: "AskQuestion", permission: "allow" },
     { tool: "Checklist", permission: "allow" },
     { tool: "Diff", permission: "allow" },
+    { tool: "Skills", permission: "allow" },
     { tool: "Exit", permission: "allow" }, // Exit tool is generally safe (headless mode only)
     { tool: "Fetch", permission: "allow" }, // Technically not read only but edge casey to post w query params
     { tool: "List", permission: "allow" },
@@ -45,7 +47,8 @@ export const PLAN_MODE_POLICIES: ToolPermissionPolicy[] = [
 
   // TODO address bash read only concerns, maybe make permissions more granular
   { tool: "Bash", permission: "allow" },
-
+  { tool: "CheckBackgroundJob", permission: "allow" },
+  { tool: "AskQuestion", permission: "allow" },
   { tool: "Checklist", permission: "allow" },
   { tool: "Diff", permission: "allow" },
   { tool: "Exit", permission: "allow" },
@@ -54,6 +57,7 @@ export const PLAN_MODE_POLICIES: ToolPermissionPolicy[] = [
   { tool: "Read", permission: "allow" },
   { tool: "ReportFailure", permission: "allow" },
   { tool: "Search", permission: "allow" },
+  { tool: "Skills", permission: "allow" },
   { tool: "Status", permission: "allow" },
   { tool: "UploadArtifact", permission: "allow" },
 

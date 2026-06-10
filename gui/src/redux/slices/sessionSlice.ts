@@ -15,6 +15,7 @@ import {
   ContextItem,
   ContextItemWithId,
   FileSymbolMap,
+  McpUiState,
   MessageModes,
   PromptLog,
   RuleMetadata,
@@ -660,6 +661,14 @@ export const sessionSlice = createSlice({
             message.metadata?.responsesOutputItemId
           ) {
             lastMessage.metadata = lastMessage.metadata || {};
+            // Accumulate fc_ IDs for parallel tool calls (OpenAI Responses API)
+            if (!lastMessage.metadata.responsesOutputItemIds) {
+              lastMessage.metadata.responsesOutputItemIds = [];
+            }
+            (lastMessage.metadata.responsesOutputItemIds as string[]).push(
+              message.metadata.responsesOutputItemId as string,
+            );
+            // Also keep singular for backwards compatibility
             lastMessage.metadata.responsesOutputItemId = message.metadata
               .responsesOutputItemId as string;
           }
@@ -853,6 +862,7 @@ export const sessionSlice = createSlice({
       action: PayloadAction<{
         toolCallId: string;
         contextItems: ContextItem[];
+        mcpUiState?: McpUiState;
       }>,
     ) => {
       // Update tool call state and corresponding tool output message
@@ -862,6 +872,7 @@ export const sessionSlice = createSlice({
       );
       if (toolCallState) {
         toolCallState.output = action.payload.contextItems;
+        toolCallState.mcpUiState = action.payload.mcpUiState;
       }
       const toolItem = findChatHistoryItemByToolCallId(
         state.history,

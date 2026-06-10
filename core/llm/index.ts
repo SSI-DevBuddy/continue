@@ -31,8 +31,10 @@ import {
   RequestOptions,
   TabAutocompleteOptions,
   TemplateType,
+  ToolOverride,
   Usage,
 } from "../index.js";
+import { isAbortError } from "../util/isAbortError.js";
 import { isLemonadeInstalled } from "../util/lemonadeHelper.js";
 import { Logger } from "../util/Logger.js";
 import mergeJson from "../util/merge.js";
@@ -68,6 +70,8 @@ import {
   toCompleteBody,
   toFimBody,
 } from "./openaiTypeConverters.js";
+import { applyToolOverrides } from "../tools/applyToolOverrides.js";
+
 export class LLMError extends Error {
   constructor(
     message: string,
@@ -93,6 +97,7 @@ export abstract class BaseLLM implements ILLM {
   // Provider capabilities (overridable by subclasses)
   protected supportsReasoningField: boolean = false;
   protected supportsReasoningDetailsField: boolean = false;
+  protected supportsReasoningContentField: boolean = false;
 
   get providerName(): string {
     return (this.constructor as typeof BaseLLM).providerName;
@@ -199,6 +204,9 @@ export abstract class BaseLLM implements ILLM {
   sourceFile?: string;
 
   isFromAutoDetect?: boolean;
+
+  /** Tool overrides for this model */
+  toolOverrides?: ToolOverride[];
 
   lastRequestId: string | undefined;
 
@@ -308,6 +316,7 @@ export abstract class BaseLLM implements ILLM {
     this.autocompleteOptions = options.autocompleteOptions;
     this.sourceFile = options.sourceFile;
     this.isFromAutoDetect = options.isFromAutoDetect;
+    this.toolOverrides = options.toolOverrides;
   }
 
   get contextLength() {
@@ -325,6 +334,7 @@ export abstract class BaseLLM implements ILLM {
       apiBase: this.apiBase,
       requestOptions: this.requestOptions,
       env: this._llmOptions.env,
+      useResponsesApi: this._llmOptions.useResponsesApi,
     });
   }
 
@@ -391,7 +401,7 @@ export abstract class BaseLLM implements ILLM {
       });
       return "success";
     } else {
-      if (error === "cancel" || error?.name?.includes("AbortError")) {
+      if (isAbortError(error)) {
         interaction?.logItem({
           kind: "cancel",
           promptTokens,
@@ -528,7 +538,7 @@ export abstract class BaseLLM implements ILLM {
             `HTTP ${e.response.status} ${e.response.statusText} from ${e.response.url}\n\n${e.response.body}`,
           );
         } else {
-          if (e.name !== "AbortError") {
+          if (!isAbortError(e)) {
             // Don't pollute console with abort errors. Check on name instead of instanceof, to avoid importing node-fetch here
             console.debug(
               `${e.message}\n\nCode: ${e.code}\nError number: ${e.errno}\nSyscall: ${e.erroredSysCall}\nType: ${e.type}\n\n${e.stack}`,
@@ -1070,8 +1080,9 @@ export abstract class BaseLLM implements ILLM {
   private canUseOpenAIResponses(options: CompletionOptions): boolean {
     return (
       this.providerName === "openai" &&
+      this._llmOptions.useResponsesApi !== false &&
       typeof (this as any)._streamResponses === "function" &&
-      (this as any).isOSeriesOrGpt5Model(options.model)
+      (this as any).isOSeriesOrGpt5PlusModel(options.model)
     );
   }
 
@@ -1145,8 +1156,28 @@ export abstract class BaseLLM implements ILLM {
     messageOptions?: MessageOption,
   ): AsyncGenerator<ChatMessage, PromptLog> {
     this.lastRequestId = undefined;
+
+    // Apply per-model tool overrides if configured
+    let effectiveTools = options.tools;
+    if (this.toolOverrides?.length && options.tools?.length) {
+      const { tools: overriddenTools, errors } = applyToolOverrides(
+        options.tools,
+        this.toolOverrides,
+      );
+      effectiveTools = overriddenTools;
+      // Log any warnings for unknown tool names
+      for (const error of errors) {
+        if (!error.fatal) {
+          console.warn(`Tool override warning: ${error.message}`);
+        }
+      }
+    }
+
+    // Use effectiveTools for the rest of this method
+    const optionsWithOverrides = { ...options, tools: effectiveTools };
+
     let { completionOptions, logEnabled } =
-      this._parseCompletionOptions(options);
+      this._parseCompletionOptions(optionsWithOverrides);
     const interaction = logEnabled
       ? this.logger?.createInteractionLog()
       : undefined;
@@ -1164,7 +1195,7 @@ export abstract class BaseLLM implements ILLM {
         knownContextLength: this._contextLength,
         maxTokens: completionOptions.maxTokens ?? DEFAULT_MAX_TOKENS,
         supportsImages: this.supportsImages(),
-        tools: options.tools,
+        tools: optionsWithOverrides.tools,
       });
 
       messages = compiledChatMessages;
@@ -1216,6 +1247,7 @@ export abstract class BaseLLM implements ILLM {
           let body = toChatBody(messages, completionOptions, {
             includeReasoningField: this.supportsReasoningField,
             includeReasoningDetailsField: this.supportsReasoningDetailsField,
+            includeReasoningContentField: this.supportsReasoningContentField,
           });
           body = this.modifyChatBody(body);
 

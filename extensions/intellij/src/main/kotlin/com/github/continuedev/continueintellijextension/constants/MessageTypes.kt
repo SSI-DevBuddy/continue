@@ -86,6 +86,7 @@ class MessageTypes {
             "history/delete",
             "history/load",
             "history/save",
+            "history/loadRemote",
             "history/clear",
             "devdata/log",
             "config/addModel",
@@ -157,13 +158,16 @@ class MessageTypes {
             "tools/call",
             "tools/evaluatePolicy",
             "tools/preprocessArgs",
+            "controlPlane/getEnvironment",
+            "controlPlane/getCreditStatus",
             "controlPlane/openUrl",
             "isItemTooBig",
             "process/markAsBackgrounded",
             "process/isBackgrounded",
             "projects/users",
             "projects/llmConfigurations",
-            "process/killTerminalProcess"
+            "process/killTerminalProcess",
+            "models/fetch"
         )
     }
 }
