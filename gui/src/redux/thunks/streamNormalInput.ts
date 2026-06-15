@@ -166,6 +166,40 @@ export const streamNormalInput = createAsyncThunk<
       systemToolsFramework,
     );
 
+    const getContentPreview = (content: any): string => {
+      if (typeof content === "string") {
+        return content.substring(0, 200);
+      }
+      if (Array.isArray(content)) {
+        const textParts = content.filter((p: any) => p.type === "text");
+        if (textParts.length > 0) {
+          return textParts[0].text?.substring(0, 200) || "";
+        }
+      }
+      return "[non-text content]";
+    };
+
+    console.log("[streamNormalInput] Messages before sending to LLM:", {
+      totalMessages: messages.length,
+      systemMessagePreview: getContentPreview(
+        messages.find((m) => m.role === "system")?.content,
+      ),
+      hasSystemMessage: messages.some((m) => m.role === "system"),
+      messageRoles: messages.map((m) => m.role),
+      firstUserMessagePreview: getContentPreview(
+        messages.find((m) => m.role === "user")?.content,
+      ),
+    });
+
+    // Log the full system message for debugging
+    const fullSystemMessage = messages.find((m) => m.role === "system");
+    if (fullSystemMessage) {
+      console.log(
+        "[streamNormalInput] Full System Message:",
+        getContentPreview(fullSystemMessage.content),
+      );
+    }
+
     // TODO parallel tool calls will cause issues with this
     // because there will be multiple tool messages, so which one should have applied rules?
     dispatch(

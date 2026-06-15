@@ -166,6 +166,7 @@ class MessageTypes {
             "process/isBackgrounded",
             "projects/users",
             "projects/llmConfigurations",
+            "projects/context",
             "process/killTerminalProcess",
             "models/fetch"
         )

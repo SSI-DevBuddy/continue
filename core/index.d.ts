@@ -1225,6 +1225,20 @@ export interface BaseCompletionOptions {
   promptCaching?: boolean;
 }
 
+export interface ContextProviderExtras {
+  config: ContinueConfig;
+  fullInput: string;
+  embeddingsProvider: ILLM | null;
+  reranker: ILLM | null;
+  llm: ILLM;
+  ide: IDE;
+  selectedCode: RangeInFile[];
+  fetch: FetchFunction;
+  isInAgentMode: boolean;
+  selectedProjectId?: number | undefined;
+  cachedProjectContext?: Record<number, any[]>;
+}
+
 export interface ModelCapability {
   uploadImage?: boolean;
   tools?: boolean;

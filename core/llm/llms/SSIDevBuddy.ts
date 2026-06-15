@@ -102,6 +102,29 @@ class SSIDevBuddy extends BaseLLM {
       input.llmKey = this.llmKey;
     }
 
+    // Log the complete payload being sent to the API
+    console.log("═══════════════════════════════════════════════════════════");
+    console.log("SENDING PAYLOAD TO LLM:");
+    console.log("═══════════════════════════════════════════════════════════");
+    console.log("Model:", input.modelId);
+    console.log("Project ID:", input.projectId);
+    console.log("LLM Key:", input.llmKey);
+    console.log("\nSYSTEM MESSAGE:");
+    console.log(JSON.stringify(input.system, null, 2));
+    console.log("\nMESSAGES:");
+    console.log(JSON.stringify(input.messages, null, 2));
+    console.log("\nTOOL CONFIG:");
+    console.log(JSON.stringify(input.toolConfig, null, 2));
+    console.log("\nINFERENCE CONFIG:");
+    console.log(JSON.stringify(input.inferenceConfig, null, 2));
+    console.log("\nADDITIONAL MODEL FIELDS:");
+    console.log(JSON.stringify(input.additionalModelRequestFields, null, 2));
+    console.log("\nCOMPLETE PAYLOAD:");
+    console.log(JSON.stringify(input, null, 2));
+    console.log(
+      "═══════════════════════════════════════════════════════════\n",
+    );
+
     const response = await fetch(
       new URL("/chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL),
       {

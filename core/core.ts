@@ -1424,6 +1424,29 @@ export class Core {
       return { success: false, data: [] };
     });
 
+    on("projects/context", async (msg) => {
+      const token = getUserTokenForSSIDevBuddy();
+
+      if (token) {
+        try {
+          const { fetchProjectContext } = await import(
+            "./context/providers/util.js"
+          );
+          const contextMessages = await fetchProjectContext({
+            projectId: msg.data.projectId,
+            apiKey: token,
+          });
+
+          return { data: contextMessages };
+        } catch (ex) {
+          console.error("[core] projects/context handler error:", ex);
+          return { data: [] };
+        }
+      }
+
+      return { data: [] };
+    });
+
     on("projects/llmConfigurations", async (msg) => {
       const token = getUserTokenForSSIDevBuddy();
 
@@ -1449,9 +1472,7 @@ export class Core {
             throw new Error(await resp.text());
           }
           const rawData: string[] = await resp.json();
-          console.log(rawData);
           data = rawData.map((k) => ({ key: k, label: k }));
-          console.log(data);
           return { data };
         } catch (ex) {
           console.log(ex);
@@ -1738,6 +1759,7 @@ export class Core {
       selectedCode: RangeInFile[];
       isInAgentMode: boolean;
       selectedProjectId?: number;
+      cachedProjectContext?: Record<number, any[]>;
     }>,
   ) => {
     const { config } = await this.configHandler.loadConfig();
@@ -1745,8 +1767,14 @@ export class Core {
       return [];
     }
 
-    const { name, query, fullInput, selectedCode, selectedProjectId } =
-      msg.data;
+    const {
+      name,
+      query,
+      fullInput,
+      selectedCode,
+      selectedProjectId,
+      cachedProjectContext,
+    } = msg.data;
 
     const llm = (await this.configHandler.loadConfig()).config
       ?.selectedModelByRole.chat;
@@ -1776,6 +1804,7 @@ export class Core {
         selectedCode,
         reranker: config.selectedModelByRole.rerank,
         selectedProjectId: selectedProjectId,
+        cachedProjectContext: cachedProjectContext,
         fetch: (url, init) =>
           // Important note: context providers fetch uses global request options not LLM request options
           // Because LLM calls are handled separately

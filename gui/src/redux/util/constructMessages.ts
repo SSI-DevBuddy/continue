@@ -77,19 +77,51 @@ export function constructMessages(
 
     if (item.message.role === "user") {
       appliedRuleIndex = index;
-      // Gather context items for user messages
       let content = normalizeToMessageParts(item.message);
 
-      const ctxItemParts = item.contextItems
-        .map((ctxItem) => {
-          return {
-            type: "text",
-            text: `${ctxItem.content}\n`,
-          } as TextMessagePart;
-        })
-        .filter((part) => !!part.text.trim());
+      const devBuddyContext = item.contextItems.filter(
+        (ctxItem) =>
+          ctxItem.id?.providerTitle === "ssi-devbuddy-context" ||
+          ctxItem.name === "SSI DevBuddy Context" ||
+          ctxItem.name === "ssi-devbuddy-context",
+      );
+      const otherContextItems = item.contextItems.filter(
+        (ctxItem) => !devBuddyContext.includes(ctxItem),
+      );
 
-      content = [...ctxItemParts, ...content];
+      const userText = content
+        .filter((part): part is TextMessagePart => part.type === "text")
+        .map((part) => part.text)
+        .join("\n")
+        .trim();
+
+      if (devBuddyContext.length > 0) {
+        const promptTemplate = devBuddyContext
+          .map((ctxItem) => ctxItem.content)
+          .join("\n")
+          .trim();
+        const wrappedUserContent = userText
+          ? `${promptTemplate}\n\n${userText}`
+          : promptTemplate;
+        const nonTextParts = content.filter((part) => part.type !== "text");
+
+        content = [
+          { type: "text", text: wrappedUserContent } as TextMessagePart,
+          ...nonTextParts,
+        ];
+      } else {
+        const ctxItemParts = otherContextItems
+          .map((ctxItem) => {
+            return {
+              type: "text",
+              text: `${ctxItem.content}\n`,
+            } as TextMessagePart;
+          })
+          .filter((part) => !!part.text.trim());
+
+        content = [...ctxItemParts, ...content];
+      }
+
       msgs.push({
         ctxItems: item.contextItems,
         message: {

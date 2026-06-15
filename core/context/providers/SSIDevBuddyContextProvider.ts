@@ -1,10 +1,43 @@
-import { SSI_DEVBUDDY_CONFIG } from "../../../SSI_DEVBUDDY_CONFIG.js";
 import {
   ContextItem,
   ContextProviderDescription,
   ContextProviderExtras,
 } from "../../index.js";
 import { BaseContextProvider } from "../index.js";
+
+// Dummy project context for development/testing
+// TODO: Replace with actual API call when backend is ready
+const DUMMY_PROJECT_CONTEXT = `You are an expert React developer. Follow these best practices:
+
+1. **Component Structure:**
+   - Use functional components with hooks
+   - Keep components small and focused
+   - Use TypeScript for type safety
+
+2. **State Management:**
+   - Use useState for local state
+   - Use useContext for shared state
+   - Consider Redux for complex state
+
+3. **Code Style:**
+   - Use descriptive variable names
+   - Add JSDoc comments for complex functions
+   - Follow consistent formatting
+
+4. **Performance:**
+   - Memoize expensive calculations with useMemo
+   - Use useCallback for functions passed as props
+   - Implement proper key props in lists
+
+5. **Testing:**
+   - Write unit tests for utilities
+   - Test component behavior, not implementation
+   - Aim for good coverage of critical paths`;
+
+interface ProjectContextMessage {
+  message: string;
+  role: string;
+}
 
 class SSIDevBuddyContextProvider extends BaseContextProvider {
   static description: ContextProviderDescription = {
@@ -29,47 +62,56 @@ class SSIDevBuddyContextProvider extends BaseContextProvider {
     query: string,
     extras: ContextProviderExtras,
   ): Promise<ContextItem[]> {
-    const body = {
-      query: query || "",
-      fullInput: extras.fullInput,
-      options: this.options.options,
-      projectId: extras.selectedProjectId,
-      messages: [],
-    };
-    console.log("edta", extras);
-
-    const response = await extras.fetch(
-      new URL("/chat/fetch_context", SSI_DEVBUDDY_CONFIG.CHAT_URL),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.options.options.apiKey}`,
-        },
-        body: JSON.stringify(body),
-      },
-    );
-    console.log(body);
-    const json = await response.json();
-    console.log(json);
+    console.log("[SSIDevBuddyContextProvider] getContextItems called", {
+      hasSelectedProjectId: !!extras.selectedProjectId,
+      hasCachedContext: !!extras.cachedProjectContext,
+      selectedProjectId: extras.selectedProjectId,
+    });
 
     try {
-      const createContextItem = (item: any) => ({
-        description: item.description ?? "SSI DevBuddy Context Item",
-        content: item.content ?? "",
-        name: item.name ?? this.options.title ?? "SSI DevBuddy Context",
-      });
+      // Use cached context if available
+      if (extras.selectedProjectId && extras.cachedProjectContext) {
+        const cachedContext =
+          extras.cachedProjectContext[extras.selectedProjectId];
+        console.log("[SSIDevBuddyContextProvider] Cached context lookup:", {
+          projectId: extras.selectedProjectId,
+          foundContext: !!cachedContext,
+          contextLength: cachedContext?.length,
+        });
 
-      return Array.isArray(json)
-        ? json.map(createContextItem)
-        : [createContextItem(json)];
+        if (cachedContext && Array.isArray(cachedContext)) {
+          const items = this.convertContextMessagesToItems(cachedContext);
+          console.log(
+            "[SSIDevBuddyContextProvider] Returning cached context items:",
+            {
+              itemCount: items.length,
+              firstItemPreview: items[0]?.content?.substring(0, 100),
+            },
+          );
+          return items;
+        }
+      }
+
+      console.log("[SSIDevBuddyContextProvider] No cached context available");
+      // No cache available - return empty array
+      // Context will be loaded when project is selected
+      return [];
     } catch (e) {
       console.warn(
-        `Failed to parse response from SSI DevBuddy context provider.\nError:\n${e}\nResponse from server:\n`,
-        json,
+        `[SSIDevBuddyContextProvider] Failed to get context from SSI DevBuddy context provider.\nError:\n${e}`,
       );
       return [];
     }
+  }
+
+  private convertContextMessagesToItems(
+    messages: ProjectContextMessage[],
+  ): ContextItem[] {
+    return messages.map((item) => ({
+      description: "SSI DevBuddy Project Context",
+      content: item.message || "",
+      name: this.options.title || "SSI DevBuddy Context",
+    }));
   }
 }
 

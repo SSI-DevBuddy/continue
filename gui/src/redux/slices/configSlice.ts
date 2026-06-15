@@ -8,6 +8,11 @@ export interface LlmConfig {
   label: string;
 }
 
+export interface ProjectContextMessage {
+  message: string;
+  role: string;
+}
+
 export type ConfigState = {
   configError: ConfigValidationError[] | undefined;
   config: BrowserSerializedContinueConfig;
@@ -16,6 +21,9 @@ export type ConfigState = {
   projectLlms: LlmConfig[];
   selectedLlmKey: string | undefined;
   llmsLoading: boolean;
+  projectContext: Record<number, ProjectContextMessage[]>;
+  projectContextLoading: boolean;
+  projectContextError: string | null;
 };
 
 export const EMPTY_CONFIG: BrowserSerializedContinueConfig = {
@@ -55,6 +63,9 @@ export const INITIAL_CONFIG_SLICE: ConfigState = {
   projectLlms: [],
   selectedLlmKey: undefined,
   llmsLoading: false,
+  projectContext: {},
+  projectContextLoading: false,
+  projectContextError: null,
 };
 
 export const configSlice = createSlice({
@@ -115,6 +126,30 @@ export const configSlice = createSlice({
     setLlmsLoading: (state, { payload }: PayloadAction<boolean>) => {
       state.llmsLoading = payload;
     },
+    setProjectContext: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ projectId: number; context: ProjectContextMessage[] }>,
+    ) => {
+      state.projectContext[payload.projectId] = payload.context;
+      state.projectContextLoading = false;
+      state.projectContextError = null;
+    },
+    setProjectContextLoading: (state, { payload }: PayloadAction<boolean>) => {
+      state.projectContextLoading = payload;
+    },
+    setProjectContextError: (
+      state,
+      { payload }: PayloadAction<string | null>,
+    ) => {
+      state.projectContextError = payload;
+      state.projectContextLoading = false;
+    },
+    clearProjectContext: (state) => {
+      state.projectContext = {};
+      state.projectContextError = null;
+    },
   },
   selectors: {
     selectSelectedChatModelContextLength: (state): number => {
@@ -135,6 +170,10 @@ export const configSlice = createSlice({
     selectProjectLlms: (state) => state.projectLlms,
     selectSelectedLlmKey: (state) => state.selectedLlmKey,
     selectLlmsLoading: (state) => state.llmsLoading,
+    selectProjectContext: (state) => (projectId: number | undefined) =>
+      projectId ? state.projectContext[projectId] : undefined,
+    selectProjectContextLoading: (state) => state.projectContextLoading,
+    selectProjectContextError: (state) => state.projectContextError,
   },
 });
 
@@ -146,6 +185,10 @@ export const {
   setProjectLlms,
   setSelectedLlmKey,
   setLlmsLoading,
+  setProjectContext,
+  setProjectContextLoading,
+  setProjectContextError,
+  clearProjectContext,
 } = configSlice.actions;
 
 export const {
@@ -156,6 +199,9 @@ export const {
   selectProjectLlms,
   selectSelectedLlmKey,
   selectLlmsLoading,
+  selectProjectContext,
+  selectProjectContextLoading,
+  selectProjectContextError,
 } = configSlice.selectors;
 
 export default configSlice.reducer;

@@ -51,6 +51,13 @@ const val DEFAULT_CONFIG =
       "params": {}
     }
   ],
+  "experimental": {
+    "defaultContext": [
+      {
+        "name": "ssi-devbuddy-context"
+      }
+    ]
+  },
   "slashCommands": [
     {
       "name": "share",

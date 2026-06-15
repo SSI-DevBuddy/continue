@@ -98,6 +98,7 @@ export const WEBVIEW_TO_CORE_PASS_THROUGH: (keyof ToCoreFromWebviewProtocol)[] =
     "process/isBackgrounded",
     "projects/users",
     "projects/llmConfigurations",
+    "projects/context",
     "process/killTerminalProcess",
     "models/fetch",
   ];

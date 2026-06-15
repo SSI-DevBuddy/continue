@@ -17,6 +17,9 @@ import {
   selectSelectedLlmKey,
   setDefaultProjectId,
   setLlmsLoading,
+  setProjectContext,
+  setProjectContextError,
+  setProjectContextLoading,
   setProjectLlms,
   setSelectedLlmKey,
 } from "../../redux/slices/configSlice";
@@ -161,6 +164,59 @@ function ProjectOption({ option, idx }: ProjectOptionProps) {
   );
 }
 
+/**
+ * Fetches project context from the backend and stores it in Redux
+ * Currently uses dummy data while backend endpoint is being implemented
+ *
+ * @param projectId - The project ID to fetch context for
+ * @param ideMessenger - The IDE messenger for making requests
+ * @param dispatch - Redux dispatch function
+ */
+async function fetchProjectContext(
+  projectId: number,
+  ideMessenger: any,
+  dispatch: any,
+) {
+  console.log("[ProjectSelect] fetchProjectContext called:", { projectId });
+  dispatch(setProjectContextLoading(true));
+  dispatch(setProjectContextError(null));
+
+  try {
+    const result = await ideMessenger.request("projects/context", {
+      projectId,
+    });
+
+    console.log("[ProjectSelect] Received context result:", {
+      status: result.status,
+      hasData: !!result.content?.data,
+      dataLength: result.content?.data?.length,
+      dataPreview: result.content?.data?.[0]?.message?.substring(0, 100),
+    });
+
+    if (result.status !== "error" && result.content?.data) {
+      dispatch(
+        setProjectContext({
+          projectId,
+          context: result.content.data,
+        }),
+      );
+      console.log("[ProjectSelect] Context stored in Redux:", {
+        projectId,
+        contextLength: result.content.data.length,
+      });
+    } else {
+      throw new Error(
+        result.content?.message || "Failed to fetch project context",
+      );
+    }
+  } catch (error: any) {
+    console.error("[ProjectSelect] Failed to fetch project context:", error);
+    dispatch(
+      setProjectContextError(error.message || "Failed to load project context"),
+    );
+  }
+}
+
 function ProjecSelect() {
   const dispatch = useDispatch();
   const ideMessenger = useContext(IdeMessengerContext);
@@ -170,6 +226,7 @@ function ProjecSelect() {
   const defaultProjectId = useAppSelector(selectDefaultProjectId);
   const selectedLlmKey = useAppSelector(selectSelectedLlmKey);
   const navigate = useNavigate();
+
   async function fetchLlmsForProject(projectId: number) {
     dispatch(setLlmsLoading(true));
     try {
@@ -196,7 +253,7 @@ function ProjecSelect() {
     }
   }
 
-  // Sort so that options without an API key are at the end
+  // Fetch user projects and initialize on mount
   useEffect(() => {
     const fetchUserProject = async () => {
       try {
@@ -211,7 +268,12 @@ function ProjecSelect() {
             dispatch(setDefaultProjectId({ value: initialProjectId }));
           }
           setOptions(projectOptions);
-          await fetchLlmsForProject(initialProjectId);
+
+          // Fetch both LLMs and context in parallel on initial load
+          await Promise.all([
+            fetchLlmsForProject(initialProjectId),
+            fetchProjectContext(initialProjectId, ideMessenger, dispatch),
+          ]);
         }
       } catch (err) {
         navigate("/login");
@@ -258,13 +320,19 @@ function ProjecSelect() {
 
     setShowAbove(spaceBelow < dropdownHeight && spaceAbove > spaceBelow);
   }
+
   return (
     <Listbox
       onChange={async (val: string) => {
         const newProjectId = parseInt(val);
         if (newProjectId === defaultProjectId) return;
         dispatch(setDefaultProjectId({ value: newProjectId }));
-        await fetchLlmsForProject(newProjectId);
+
+        // Fetch both LLMs and context when project changes
+        await Promise.all([
+          fetchLlmsForProject(newProjectId),
+          fetchProjectContext(newProjectId, ideMessenger, dispatch),
+        ]);
       }}
     >
       <div className="relative">

@@ -13,7 +13,10 @@ import { memo, useContext, useRef } from "react";
 import { IdeMessengerContext } from "../../context/IdeMessenger";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { selectUseActiveFile } from "../../redux/selectors";
-import { selectSelectedChatModel } from "../../redux/slices/configSlice";
+import {
+  selectProjectContextLoading,
+  selectSelectedChatModel,
+} from "../../redux/slices/configSlice";
 import { setHasReasoningEnabled } from "../../redux/slices/sessionSlice";
 import { setReasoningSetting } from "../../redux/slices/uiSlice";
 import { exitEdit } from "../../redux/thunks/edit";
@@ -58,8 +61,12 @@ function InputToolbar(props: InputToolbarProps) {
   const hasReasoningEnabled = useAppSelector(
     (store) => store.session.hasReasoningEnabled,
   );
+  const projectContextLoading = useAppSelector(selectProjectContextLoading);
+
   const isEnterDisabled =
-    props.disabled || (isInEdit && codeToEdit.length === 0);
+    props.disabled ||
+    (isInEdit && codeToEdit.length === 0) ||
+    projectContextLoading;
 
   const supportsImages =
     defaultModel &&
@@ -227,7 +234,12 @@ function InputToolbar(props: InputToolbarProps) {
               </span>
             </HoverItem>
           )}
-          <ToolTip place="top" content="Send (⏎)">
+          <ToolTip
+            place="top"
+            content={
+              projectContextLoading ? "Loading project context..." : "Send (⏎)"
+            }
+          >
             <Button
               variant={props.isMainInput ? "primary" : "secondary"}
               size="sm"

@@ -152,8 +152,22 @@ async function gatherContextItems({
 
   const isInAgentMode = getState().session.mode === "agent";
 
+  // Get cached project context from Redux state
+  const cachedProjectContext = getState().config.projectContext;
+
+  console.log("[resolveEditorContent] Context gathering started:", {
+    selectedProjectId,
+    hasCachedContext: !!cachedProjectContext,
+    cachedProjectKeys: Object.keys(cachedProjectContext || {}),
+    contextItemsCount: deduplicatedInputs.length,
+    providers: deduplicatedInputs.map((i) => i.provider),
+  });
+
   // Process context item attributes
   for (const item of deduplicatedInputs) {
+    console.log(
+      `[resolveEditorContent] Fetching context for provider: ${item.provider}`,
+    );
     const result = await ideMessenger.request("context/getContextItems", {
       name: item.provider,
       query: item.query ?? "",
@@ -161,9 +175,18 @@ async function gatherContextItems({
       selectedCode,
       isInAgentMode,
       selectedProjectId,
+      cachedProjectContext,
     });
     if (result.status === "success") {
+      console.log(
+        `[resolveEditorContent] Provider ${item.provider} returned ${result.content.length} items`,
+      );
       contextItems.push(...result.content);
+    } else {
+      console.log(
+        `[resolveEditorContent] Provider ${item.provider} failed:`,
+        result,
+      );
     }
   }
 
@@ -179,8 +202,8 @@ async function gatherContextItems({
       selectedCode,
       isInAgentMode,
       selectedProjectId,
+      cachedProjectContext,
     });
-
     if (result.status === "success") {
       contextItems.push(...result.content);
     }
@@ -200,6 +223,7 @@ async function gatherContextItems({
         selectedCode: [],
         isInAgentMode,
         selectedProjectId,
+        cachedProjectContext,
       },
     );
     if (currentFileResponse.status === "success") {
@@ -234,5 +258,15 @@ async function gatherContextItems({
     },
     [],
   );
+
+  console.log("[resolveEditorContent] Final context items:", {
+    totalItems: deduplicatedOutputs.length,
+    itemTypes: deduplicatedOutputs.map((i) => i.name),
+    firstItemContentPreview:
+      typeof deduplicatedOutputs[0]?.content === "string"
+        ? deduplicatedOutputs[0]?.content?.substring(0, 100)
+        : "[non-string content]",
+  });
+
   return deduplicatedOutputs;
 }

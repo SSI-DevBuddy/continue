@@ -8,6 +8,7 @@ import { LocalStorageProvider } from "../context/LocalStorage";
 import TelemetryProviders from "../hooks/TelemetryProviders";
 import { useWebviewListener } from "../hooks/useWebviewListener";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { clearProjectContext } from "../redux/slices/configSlice";
 import { setCodeToEdit } from "../redux/slices/editState";
 import { setLoggedInUser } from "../redux/slices/sessionSlice";
 import { setDialogMessage, setShowDialog } from "../redux/slices/uiSlice";
@@ -162,6 +163,7 @@ const Layout = () => {
     async () => {
       //onboardingCard.open(OnboardingModes.API_KEY);
       dispatch(setLoggedInUser(null));
+      dispatch(clearProjectContext());
       navigate("/login");
     },
     [navigate],

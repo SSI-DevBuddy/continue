@@ -140,6 +140,7 @@ export type ToCoreFromIdeOrWebviewProtocol = {
       selectedCode: RangeInFile[];
       isInAgentMode: boolean;
       selectedProjectId?: number;
+      cachedProjectContext?: Record<number, any[]>;
     },
     ContextItemWithId[],
   ];
@@ -368,6 +369,10 @@ export type ToCoreFromIdeOrWebviewProtocol = {
   "projects/llmConfigurations": [
     { projectId: number },
     { data: { key: string; label: string }[] },
+  ];
+  "projects/context": [
+    { projectId: number },
+    { data: { message: string; role: string }[] },
   ];
   "models/fetch": [
     { provider: string; apiKey?: string; apiBase?: string },
