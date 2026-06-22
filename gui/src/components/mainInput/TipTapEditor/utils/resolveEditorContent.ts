@@ -11,11 +11,36 @@ import {
 } from "core";
 import { stripImages } from "core/util/messageContent";
 import { IIdeMessenger } from "../../../../context/IdeMessenger";
+import { ProjectContextMessage } from "../../../../redux/slices/configSlice";
 import { setIsGatheringContext } from "../../../../redux/slices/sessionSlice";
 import { RootState } from "../../../../redux/store";
 import { processEditorContent } from "./processEditorContent";
 import { renderSlashCommandPrompt } from "./renderSlashCommand";
 import { GetContextRequest } from "./types";
+
+function buildProjectContextItems(
+  selectedProjectId: number | undefined,
+  cachedProjectContext: Record<number, ProjectContextMessage[]>,
+): ContextItemWithId[] {
+  if (!selectedProjectId) {
+    return [];
+  }
+
+  const messages = cachedProjectContext[selectedProjectId];
+  if (!messages?.length) {
+    return [];
+  }
+
+  return messages.map((msg, index) => ({
+    description: "Project Context",
+    content: msg.message || "",
+    name: "Project Context",
+    id: {
+      providerTitle: "project-context",
+      itemId: `project-${selectedProjectId}-${index}`,
+    },
+  }));
+}
 
 interface ResolveEditorContentInput {
   editorState: JSONContent;
@@ -130,12 +155,13 @@ async function gatherContextItems({
   getState: () => RootState;
   selectedProjectId?: number;
 }): Promise<ContextItemWithId[]> {
-  const defaultRequests: GetContextRequest[] = defaultContextProviders.map(
-    (def) => ({
+  // Project context is injected separately from Redux; never auto-fetch via @ provider
+  const defaultRequests: GetContextRequest[] = defaultContextProviders
+    .filter((def) => def.name !== "ssi-devbuddy-context")
+    .map((def) => ({
       provider: def.name,
       query: def.query,
-    }),
-  );
+    }));
   const withDefaults = [...contextRequests, ...defaultRequests];
   const deduplicatedInputs = withDefaults.reduce<GetContextRequest[]>(
     (acc, item) => {
@@ -237,6 +263,13 @@ async function gatherContextItems({
       }
     }
   }
+
+  // Prepend cached project context (separate from @ssi-devbuddy-context API fetch)
+  const projectContextItems = buildProjectContextItems(
+    selectedProjectId,
+    cachedProjectContext,
+  );
+  contextItems = [...projectContextItems, ...contextItems];
 
   // Deduplicates based on either providerTitle + itemId or uri type + value
   const deduplicatedOutputs = contextItems.reduce<ContextItemWithId[]>(

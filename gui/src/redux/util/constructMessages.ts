@@ -79,17 +79,20 @@ export function constructMessages(
       appliedRuleIndex = index;
       let content = normalizeToMessageParts(item.message);
 
+      const projectContext = item.contextItems.filter(
+        (ctxItem) => ctxItem.id?.providerTitle === "project-context",
+      );
       const devBuddyContext = item.contextItems.filter(
-        (ctxItem) =>
-          ctxItem.id?.providerTitle === "ssi-devbuddy-context" ||
-          ctxItem.name === "SSI DevBuddy Context" ||
-          ctxItem.name === "ssi-devbuddy-context",
+        (ctxItem) => ctxItem.id?.providerTitle === "ssi-devbuddy-context",
       );
       const otherContextItems = item.contextItems.filter(
-        (ctxItem) => !devBuddyContext.includes(ctxItem),
+        (ctxItem) =>
+          !projectContext.includes(ctxItem) &&
+          !devBuddyContext.includes(ctxItem),
       );
 
-      const userText = content
+      const nonTextParts = content.filter((part) => part.type !== "text");
+      let userText = content
         .filter((part): part is TextMessagePart => part.type === "text")
         .map((part) => part.text)
         .join("\n")
@@ -100,13 +103,22 @@ export function constructMessages(
           .map((ctxItem) => ctxItem.content)
           .join("\n")
           .trim();
-        const wrappedUserContent = userText
+        userText = userText
           ? `${promptTemplate}\n\n${userText}`
           : promptTemplate;
-        const nonTextParts = content.filter((part) => part.type !== "text");
+      }
 
+      if (projectContext.length > 0) {
+        const projectTemplate = projectContext
+          .map((ctxItem) => ctxItem.content)
+          .join("\n")
+          .trim();
+        userText = userText ? `${projectTemplate}${userText}` : projectTemplate;
+      }
+
+      if (projectContext.length > 0 || devBuddyContext.length > 0) {
         content = [
-          { type: "text", text: wrappedUserContent } as TextMessagePart,
+          { type: "text", text: userText } as TextMessagePart,
           ...nonTextParts,
         ];
       } else {

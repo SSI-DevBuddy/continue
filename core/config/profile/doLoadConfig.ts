@@ -173,20 +173,6 @@ export default async function doLoadConfig(options: {
   errors.push(...rulesErrors);
   newConfig.rules.unshift(...rules);
 
-  // Inject default context providers if not already configured
-  // This ensures SSI DevBuddy context is automatically included
-  if (!newConfig.experimental) {
-    newConfig.experimental = {};
-  }
-  if (!newConfig.experimental.defaultContext) {
-    newConfig.experimental.defaultContext = [
-      {
-        name: "ssi-devbuddy-context",
-        params: {},
-      },
-    ];
-  }
-
   // Convert invokable rules to slash commands
   for (const rule of newConfig.rules) {
     if (rule.invokable) {
