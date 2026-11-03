@@ -6,6 +6,7 @@ import {
   ToolConfiguration,
 } from "@aws-sdk/client-bedrock-runtime";
 import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
+import crypto from "crypto";
 
 import { SSI_DEVBUDDY_CONFIG } from "../../../SSI_DEVBUDDY_CONFIG.js";
 import type { CompletionOptions } from "../../index.js";
@@ -101,6 +102,17 @@ class SSIDevBuddy extends BaseLLM {
     if (this.llmKey) {
       input.llmKey = this.llmKey;
     }
+
+    // Generate SHA-256 hash of API key //
+    // const hash = crypto.createHash('sha256');
+    // hash.update(apiKey);
+    // input.keyHash =  hash.digest('hex');
+    input.keyHash = null;
+
+    // Get IDE type from options (passed from caller), default to "vscode"
+    // Map "jetbrains" to "intellij" for backend compatibility
+    const ideType = (options as any).ideType;
+    input.accessType = ideType === "jetbrains" ? "intellij" : "vscode";
 
     const response = await fetch(
       new URL("/chat/vscode", SSI_DEVBUDDY_CONFIG.CHAT_URL),
